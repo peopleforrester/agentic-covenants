@@ -1,0 +1,65 @@
+# ABOUTME: Declarative tier definitions consumed by pre_tool_use_tiered.sh. Edit here to update tiers without touching the script.
+# ABOUTME: Patterns are POSIX extended regular expressions, applied to the tool_input.command field.
+schema_version: 1
+
+session_destructive_limit: 10
+approval_timeout_sec: 600
+confirmation_timeout_sec: 60
+
+# Default: deny-on-timeout. Never set to "allow"; out-of-band channels exist
+# precisely so the operator's absence is treated as a no.
+out_of_band_default: deny
+
+tiers:
+
+  # Tier 1: read-only operations. Auto-allow without prompt.
+  tier_1:
+    description: "Read-only; no operator confirmation"
+    patterns:
+      - '^(ls|cat|grep|find|head|tail|wc|stat|file|pwd|whoami|date|hostname)\b'
+      - '^kubectl\s+(get|describe|logs|version|api-resources|api-versions)\b'
+      - '^aws\s+[a-z0-9-]+\s+(get|list|describe|head)-'
+      - '^git\s+(status|diff|log|show|branch|rev-parse|rev-list)\b'
+      - '^docker\s+(ps|images|inspect|version|info)\b'
+      - '^helm\s+(list|status|history|version|repo|search)\b'
+      - '^terraform\s+(plan|show|state\s+list|state\s+show|version)\b'
+
+  # Tier 2: routine mutations. The hook does not gate these directly; the
+  # Claude Code permissions.ask block does (per controls/authorization/client-side/settings.json).
+  tier_2:
+    description: "Routine mutations; Claude Code ask-prompt"
+    patterns:
+      - '^git\s+(add|commit)\b'
+      - '^npm\s+install\b'
+      - '^pip\s+install\b'
+
+  # Tier 3: destructive but recoverable. Typed verbatim confirmation.
+  # Counts against session_destructive_limit.
+  tier_3:
+    description: "Destructive; typed verbatim confirmation; session-limit"
+    patterns:
+      - '\bkubectl\s+delete\b'
+      - '\baws\s+s3\s+rb\b'
+      - '\bgh\s+repo\s+delete\b'
+      - '\bdocker\s+system\s+prune\b'
+      - '\bhelm\s+uninstall\b'
+      - '\bkubectl\s+scale\b.*--replicas[= ]0\b'
+
+  # Tier 4: production-touching. Out-of-band approval channel.
+  # No session-limit because these always require explicit human approval.
+  tier_4:
+    description: "Production-touching; out-of-band approval; deny on timeout"
+    patterns:
+      - '\bterraform\s+apply\b.*-auto-approve'
+      - '\bkubectl\s+apply\b.*--server[ =]\S*prod'
+      - '\baws\s+ec2\s+terminate-instances\b'
+      - '\baws\s+rds\s+delete-db-instance\b'
+      - '\bhelm\s+install\b.*--namespace[ =]?prod'
+
+# Out-of-band channel configuration
+approval_service:
+  url: https://approvals.example.com
+  # Token must be readable by the operator account that runs the hook,
+  # NOT by the agent's own user. Store in /etc/agents/approvals/token with
+  # mode 0640 owner root group operators.
+  token_path: /etc/agents/approvals/token

@@ -1,0 +1,66 @@
+# ABOUTME: Workflow that polls PagerDuty for active incidents and sets the DEPLOY_FREEZE repo variable.
+# ABOUTME: The IaC pipeline reads vars.DEPLOY_FREEZE and refuses to apply when true. Drop in .github/workflows/.
+name: Deployment Freeze
+
+on:
+  schedule:
+    # Poll every minute. PagerDuty's free tier rate-limit easily accommodates 1/min.
+    - cron: '* * * * *'
+  workflow_dispatch:
+    inputs:
+      override:
+        description: "Manual override: 'freeze' or 'unfreeze'"
+        required: true
+        default: 'unfreeze'
+
+permissions:
+  contents: read
+  actions: write   # to set repo variables
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Manual override
+        id: override
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          case "${{ inputs.override }}" in
+            freeze)   echo "value=true" >> $GITHUB_OUTPUT ;;
+            unfreeze) echo "value=false" >> $GITHUB_OUTPUT ;;
+            *)        echo "::error::override must be 'freeze' or 'unfreeze'"; exit 1 ;;
+          esac
+
+      - name: Check PagerDuty for active incidents
+        id: pd
+        if: github.event_name == 'schedule'
+        env:
+          PD_TOKEN: ${{ secrets.PAGERDUTY_TOKEN }}
+          PD_SERVICE_ID: ${{ secrets.PAGERDUTY_SERVICE_ID }}
+        run: |
+          ACTIVE=$(curl -sS -H "Authorization: Token token=$PD_TOKEN" \
+            -H "Accept: application/vnd.pagerduty+json;version=2" \
+            "https://api.pagerduty.com/incidents?statuses[]=triggered&statuses[]=acknowledged&service_ids[]=$PD_SERVICE_ID" \
+            | jq '.incidents | length')
+          if [[ "$ACTIVE" -gt 0 ]]; then
+            echo "value=true"  >> $GITHUB_OUTPUT
+          else
+            echo "value=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set DEPLOY_FREEZE repo variable
+        env:
+          GH_TOKEN: ${{ secrets.PLATFORM_PAT }}
+        run: |
+          DESIRED="${{ steps.override.outputs.value || steps.pd.outputs.value }}"
+          if [[ -z "$DESIRED" ]]; then
+            echo "::error::No DESIRED value computed (this should not happen)"
+            exit 1
+          fi
+          CURRENT="$(gh variable get DEPLOY_FREEZE -R "${{ github.repository }}" 2>/dev/null || echo unset)"
+          if [[ "$CURRENT" == "$DESIRED" ]]; then
+            echo "DEPLOY_FREEZE already $DESIRED; no change."
+          else
+            gh variable set DEPLOY_FREEZE -b "$DESIRED" -R "${{ github.repository }}"
+            echo "DEPLOY_FREEZE: $CURRENT -> $DESIRED"
+          fi

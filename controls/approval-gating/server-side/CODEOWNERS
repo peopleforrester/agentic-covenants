@@ -1,0 +1,36 @@
+# ABOUTME: Template CODEOWNERS. Substitute @your-org/team-name placeholders. Place at .github/CODEOWNERS or repo root.
+
+# Default owner for everything not otherwise covered.
+*                               @your-org/platform-team
+
+# Infrastructure-as-code is owned by platform.
+/infrastructure/                @your-org/platform-team @your-org/security-team
+/terraform/                     @your-org/platform-team @your-org/security-team
+
+# Production-specific changes need senior platform engineers.
+/infrastructure/prod/           @your-org/platform-leads @your-org/security-team
+/k8s/prod/                      @your-org/platform-leads @your-org/security-team
+
+# CI configuration is supply-chain-adjacent; security-team review required.
+/.github/workflows/             @your-org/security-team @your-org/platform-leads
+/.github/CODEOWNERS             @your-org/security-leads
+/.github/branch-protection-expected.json  @your-org/security-leads
+
+# Secrets, key material, sealed secrets.
+/secrets/                       @your-org/security-leads
+*.tfvars                        @your-org/security-team
+**/*.encrypted                  @your-org/security-team
+**/*.sops.yaml                  @your-org/security-team
+
+# Agent runtime configuration. The agent must NOT be a CODEOWNER for these.
+/.claude/                       @your-org/platform-team @your-org/security-team
+/etc/agents/                    @your-org/platform-team @your-org/security-team
+/.mcp.json                      @your-org/security-team
+
+# Database migrations and schema.
+/db/migrations/                 @your-org/platform-leads @your-org/data-platform
+/schema/                        @your-org/data-platform
+
+# Public-facing API contracts. Both backend and SRE need to sign off.
+/api/                           @your-org/api-team @your-org/sre-team
+/openapi.yaml                   @your-org/api-team
