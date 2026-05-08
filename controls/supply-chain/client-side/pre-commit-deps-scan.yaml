@@ -1,0 +1,36 @@
+# ABOUTME: pre-commit framework hooks adding dependency vulnerability scans. Append to .pre-commit-config.yaml.
+# ABOUTME: pre-commit is bypassable with --no-verify; the server-side lockfile-integrity job is the real backstop.
+repos:
+  - repo: https://github.com/pypa/pip-audit
+    rev: v2.7.3
+    hooks:
+      - id: pip-audit
+        args: ["--strict"]
+        files: '^(requirements.*\.txt|pyproject\.toml|Pipfile\.lock|poetry\.lock)$'
+
+  - repo: https://github.com/aquasecurity/trivy
+    rev: v0.51.0
+    hooks:
+      - id: trivy-fs
+        args: ["--severity", "HIGH,CRITICAL", "--exit-code", "1"]
+
+  - repo: https://github.com/python-poetry/poetry
+    rev: 1.8.3
+    hooks:
+      - id: poetry-check
+      - id: poetry-lock
+        args: ["--check"]   # fails if pyproject.toml and poetry.lock are out of sync
+
+  - repo: local
+    hooks:
+      - id: lockfile-not-edited-by-agent
+        name: Detect agent-style lockfile edits (heuristic)
+        # Heuristic: an agent that just edited the manifest also re-resolved
+        # the lock without running the package manager's recommended command.
+        # This hook checks that lockfile changes accompany manifest changes
+        # and that the lockfile generation timestamp is recent. Tune for your
+        # ecosystem.
+        language: script
+        entry: ./scripts/lockfile-sanity-check.sh
+        files: '(package-lock\.json|requirements.*\.txt|Pipfile\.lock|poetry\.lock|go\.sum|Cargo\.lock)$'
+        always_run: false

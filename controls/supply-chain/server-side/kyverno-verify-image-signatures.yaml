@@ -1,0 +1,71 @@
+# ABOUTME: Kyverno ClusterPolicy verifying cosign keyless signatures + SPDX SBOM attestation. Requires Kyverno 1.13+.
+# ABOUTME: Substitute example-org for your GitHub org. The keyless subject regex pins signatures to your org's workflow runs only.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-image-signatures
+  annotations:
+    policies.kyverno.io/title: Verify cosign signatures and SPDX attestations
+    policies.kyverno.io/category: Agentic Covenants / Supply Chain
+    policies.kyverno.io/severity: critical
+spec:
+  validationFailureAction: Enforce
+  background: false
+  webhookTimeoutSeconds: 30
+  failurePolicy: Fail
+  rules:
+
+  - name: verify-cosign-keyless-signature
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+          namespaces:
+          - "agent-*"
+          - "default"
+    verifyImages:
+    - imageReferences:
+      - "ghcr.io/example-org/*"
+      attestors:
+      - entries:
+        - keyless:
+            # Subject regex pins signatures to GitHub Actions workflows in this org.
+            # subject: "*" accepts anyone's signature; that is the most common
+            # misconfiguration of cosign verification.
+            subject: "https://github.com/example-org/*/.github/workflows/*"
+            issuer: "https://token.actions.githubusercontent.com"
+            rekor:
+              url: https://rekor.sigstore.dev
+
+  - name: verify-spdx-sbom-attestation
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+          namespaces:
+          - "agent-*"
+          - "default"
+    verifyImages:
+    - imageReferences:
+      - "ghcr.io/example-org/*"
+      attestations:
+      - type: https://spdx.dev/Document
+        attestors:
+        - entries:
+          - keyless:
+              subject: "https://github.com/example-org/*"
+              issuer: "https://token.actions.githubusercontent.com"
+
+  - name: deny-non-allowlisted-registries
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+    validate:
+      message: >-
+        Images must come from approved registries only:
+        ghcr.io/example-org/* or registry.example.com/*
+      pattern:
+        spec:
+          containers:
+          - image: "ghcr.io/example-org/* | registry.example.com/*"

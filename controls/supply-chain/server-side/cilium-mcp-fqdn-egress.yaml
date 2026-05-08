@@ -1,0 +1,45 @@
+# ABOUTME: CiliumNetworkPolicy restricting agent egress to a fixed list of approved FQDNs at L7 (DNS-aware).
+# ABOUTME: Requires Cilium with enable-l7-proxy: true. On a CNI without FQDN support, layer at the egress proxy instead.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: agent-mcp-fqdn-egress
+  namespace: agent-claude-prod
+spec:
+  endpointSelector:
+    matchLabels:
+      app: claude-code
+  egress:
+
+  # Allow HTTPS to a fixed list of FQDNs. Anything not in this list is
+  # blocked at the Cilium L7 DNS proxy.
+  - toFQDNs:
+    - matchName: api.anthropic.com
+    - matchName: api.github.com
+    - matchName: registry.example.com
+    - matchName: ghcr.io
+    - matchPattern: "*.s3.us-east-1.amazonaws.com"   # narrow further if you can
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+      rules:
+        http:
+        - method: "GET|HEAD|POST|PUT"
+          # Optionally constrain paths per host; left open here for breadth.
+
+  # Allow DNS to kube-dns. Without this, FQDN matching cannot resolve names
+  # and the agent cannot reach any host, including the allowed ones.
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: kube-system
+        k8s:k8s-app: kube-dns
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: UDP
+      - port: "53"
+        protocol: TCP
+      rules:
+        dns:
+        - matchPattern: "*"

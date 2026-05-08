@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# ABOUTME: Verifies an MCP server's binary hash against the allowlist before exec, optionally checks Sigstore signature.
+# ABOUTME: Refuses to launch servers not in the allowlist or whose hash differs. Run as the user the MCP server should run as.
+
+set -euo pipefail
+
+ALLOWLIST="${MCP_ALLOWLIST:-/etc/agents/mcp-allowlist.json}"
+SERVER_NAME="${1:-}"
+
+if [[ -z "$SERVER_NAME" ]]; then
+  cat <<'USAGE' >&2
+Usage: mcp-launch <server-name> [args...]
+
+Reads /etc/agents/mcp-allowlist.json (or $MCP_ALLOWLIST), looks up the server,
+verifies the command's sha256 against the recorded value, optionally verifies
+the Sigstore signature, then execs the command with the remaining args.
+USAGE
+  exit 64
+fi
+
+if [[ ! -r "$ALLOWLIST" ]]; then
+  echo "BLOCKED: cannot read MCP allowlist at $ALLOWLIST" >&2
+  exit 2
+fi
+
+EXPECTED_SHA="$(jq -r ".servers[\"$SERVER_NAME\"].sha256 // \"\"" "$ALLOWLIST")"
+COMMAND="$(jq -r ".servers[\"$SERVER_NAME\"].command // \"\"" "$ALLOWLIST")"
+ARGS_JSON="$(jq -r ".servers[\"$SERVER_NAME\"].args // [] | @json" "$ALLOWLIST")"
+COSIGN_CERT="$(jq -r ".servers[\"$SERVER_NAME\"].cosign_certificate // \"\"" "$ALLOWLIST")"
+REQUIRE_SIGNATURE="$(jq -r '.policy.require_signature // false' "$ALLOWLIST")"
+
+if [[ -z "$EXPECTED_SHA" || "$EXPECTED_SHA" == "REPLACE_WITH_ACTUAL_SHA256_OF_BINARY"* ]]; then
+  echo "BLOCKED: $SERVER_NAME has no recorded sha256 (or placeholder still present)" >&2
+  exit 2
+fi
+if [[ -z "$COMMAND" ]]; then
+  echo "BLOCKED: $SERVER_NAME not in allowlist" >&2
+  exit 2
+fi
+
+# Resolve the actual binary. For npx-style commands, the binary to hash is
+# the resolved package's main. Operators must record the resolved sha256
+# (npm pack --json | jq .integrity), not the wrapper's.
+if [[ -x "$COMMAND" ]]; then
+  ACTUAL_SHA="$(sha256sum "$COMMAND" | awk '{print $1}')"
+else
+  echo "BLOCKED: $SERVER_NAME command $COMMAND is not an executable file" >&2
+  echo "  For npx-style commands, record the resolved package's sha256 and ensure mcp-launch points to the resolved binary." >&2
+  exit 2
+fi
+
+if [[ "$ACTUAL_SHA" != "$EXPECTED_SHA" ]]; then
+  echo "BLOCKED: $SERVER_NAME sha256 mismatch" >&2
+  echo "  expected: $EXPECTED_SHA" >&2
+  echo "  actual:   $ACTUAL_SHA" >&2
+  echo "  Re-approve with: mcp-approve $SERVER_NAME --sha $ACTUAL_SHA" >&2
+  exit 2
+fi
+
+# Optional Sigstore signature verification.
+if [[ -n "$COSIGN_CERT" && "$COSIGN_CERT" != "null" ]]; then
+  if command -v cosign >/dev/null 2>&1; then
+    if cosign verify-blob \
+        --signature "${COMMAND}.sig" \
+        --certificate "$COSIGN_CERT" \
+        "$COMMAND" >/dev/null 2>&1; then
+      echo "OK: $SERVER_NAME cosign verified" >&2
+    else
+      if [[ "$REQUIRE_SIGNATURE" == "true" ]]; then
+        echo "BLOCKED: $SERVER_NAME cosign verification failed (required by policy)" >&2
+        exit 2
+      else
+        echo "WARN: $SERVER_NAME cosign verification failed (allowed by policy)" >&2
+      fi
+    fi
+  fi
+fi
+
+# Successful pre-flight; exec the server with the remaining args.
+shift
+exec "$COMMAND" $(echo "$ARGS_JSON" | jq -r '.[]') "$@"

@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "_comment": "Operator-owned. The agent's user MUST NOT have write permission on this file. Update the sha256 fields after every legitimate version bump; mcp-launch refuses to start servers whose binary hash does not match.",
+  "servers": {
+    "filesystem": {
+      "command": "/usr/local/bin/mcp-filesystem",
+      "args": [],
+      "sha256": "REPLACE_WITH_ACTUAL_SHA256_OF_BINARY",
+      "tool_descriptions_sha256": "REPLACE_AFTER_FIRST_HANDSHAKE",
+      "cosign_certificate": "/etc/agents/mcp-signing/mcp-filesystem.cert",
+      "permissions": ["read"],
+      "approved_at": "2026-04-15T00:00:00Z",
+      "approved_by": "michael@example.com",
+      "approval_notes": "Read-only filesystem access scoped to /workspace by the launcher."
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github@1.4.2"],
+      "sha256": "REPLACE_WITH_ACTUAL_SHA256_OF_PINNED_VERSION",
+      "tool_descriptions_sha256": "REPLACE_AFTER_FIRST_HANDSHAKE",
+      "cosign_certificate": null,
+      "permissions": ["issues:read", "pulls:read"],
+      "approved_at": "2026-04-15T00:00:00Z",
+      "approved_by": "michael@example.com",
+      "approval_notes": "Read-only GitHub access; never approve a version that adds write permissions without re-review."
+    }
+  },
+  "policy": {
+    "_comment": "Settings consumed by mcp-launch and mcp-verify-tools.py.",
+    "require_signature": false,
+    "fail_on_unsigned": false,
+    "fail_on_tool_description_change": true,
+    "rug_pull_grace_period_seconds": 0
+  }
+}

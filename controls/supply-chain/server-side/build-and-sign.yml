@@ -1,0 +1,83 @@
+# ABOUTME: Builds the agent image, signs with cosign (keyless via GitHub OIDC), generates SPDX SBOM, attaches as attestation.
+# ABOUTME: id-token: write is required for keyless signing. Drop in .github/workflows/. Match the OIDC subject in the Kyverno verifyImages policy.
+name: Build and sign agent image
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+    paths:
+      - 'src/**'
+      - 'Dockerfile'
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write   # required for cosign keyless signing
+  attestations: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE: ${{ github.repository }}/claude-agent
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE }}
+          tags: |
+            type=sha,format=long
+            type=ref,event=branch
+            type=ref,event=tag
+
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max
+          sbom: true
+
+      - uses: sigstore/cosign-installer@v3
+
+      - name: Cosign sign image (keyless)
+        run: |
+          cosign sign --yes \
+            "${REGISTRY}/${IMAGE}@${{ steps.build.outputs.digest }}"
+
+      - name: Generate SPDX SBOM with syft
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE }}@${{ steps.build.outputs.digest }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Attach SBOM as cosign attestation
+        run: |
+          cosign attest --yes \
+            --predicate sbom.spdx.json \
+            --type spdxjson \
+            "${REGISTRY}/${IMAGE}@${{ steps.build.outputs.digest }}"
+
+      - name: Verify signature locally before publishing
+        run: |
+          cosign verify \
+            --certificate-identity-regexp "^https://github.com/${{ github.repository_owner }}/.+/.github/workflows/.+$" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+            "${REGISTRY}/${IMAGE}@${{ steps.build.outputs.digest }}"

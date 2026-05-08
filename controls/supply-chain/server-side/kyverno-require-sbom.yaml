@@ -1,0 +1,38 @@
+# ABOUTME: Kyverno ClusterPolicy requiring an SPDX SBOM attestation on every Pod image. Requires Kyverno 1.13+.
+# ABOUTME: The condition asserts a syft-generated SBOM; tune for your build tool. Without an SBOM, admission is rejected.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-spdx-sbom
+  annotations:
+    policies.kyverno.io/title: Require SPDX SBOM attestation on every image
+    policies.kyverno.io/category: Agentic Covenants / Supply Chain
+    policies.kyverno.io/severity: high
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+
+  - name: require-spdx-attestation
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+    verifyImages:
+    - imageReferences:
+      - "*"
+      attestations:
+      - type: https://spdx.dev/Document
+        conditions:
+        - all:
+          # Heuristic: assert that syft is named in the SBOM creators block.
+          # If you build SBOMs with a different tool (Trivy, cyclonedx-bom),
+          # adjust the JMESPath to match.
+          - key: "{{ creationInfo.creators[?contains(@, 'syft')] }}"
+            operator: NotEquals
+            value: ""
+        attestors:
+        - entries:
+          - keyless:
+              subject: "https://github.com/example-org/*"
+              issuer: "https://token.actions.githubusercontent.com"

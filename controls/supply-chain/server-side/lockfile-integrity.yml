@@ -1,0 +1,99 @@
+# ABOUTME: CI workflow that validates lockfile integrity even when pre-commit was bypassed with --no-verify.
+# ABOUTME: This is the real backstop for client-side lockfile pinning. Drop in .github/workflows/.
+name: Lockfile Integrity
+
+on:
+  pull_request:
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'requirements*.txt'
+      - 'requirements.in'
+      - 'pyproject.toml'
+      - 'Pipfile'
+      - 'Pipfile.lock'
+      - 'poetry.lock'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+
+jobs:
+
+  npm:
+    if: hashFiles('package-lock.json') != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verify package-lock.json matches package.json
+        # npm ci --dry-run fails if the lockfile and manifest are out of sync.
+        run: npm ci --dry-run
+
+      - name: Run npm audit (high severity, fail-on)
+        run: npm audit --audit-level=high
+
+  python-requirements:
+    if: hashFiles('requirements.in') != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify requirements.txt is the compiled output of requirements.in
+        run: |
+          pip install pip-tools==7.4.1
+          pip-compile --no-header --no-emit-index-url \
+            --output-file=/tmp/requirements.lock requirements.in
+          if ! diff -q requirements.txt /tmp/requirements.lock >/dev/null 2>&1; then
+            echo "::error::requirements.txt does not match the compiled output of requirements.in."
+            echo "An agent that edits requirements.txt directly bypasses pip-compile review."
+            diff -u requirements.txt /tmp/requirements.lock || true
+            exit 1
+          fi
+
+      - name: Run pip-audit
+        run: |
+          pip install pip-audit==2.7.3
+          pip-audit --requirement requirements.txt --strict
+
+  poetry:
+    if: hashFiles('poetry.lock') != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install poetry==1.8.3
+      - name: Verify poetry.lock is in sync with pyproject.toml
+        run: poetry check --lock
+
+  go:
+    if: hashFiles('go.mod') != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+      - name: Verify go.sum matches go.mod
+        run: |
+          go mod verify
+          go mod tidy -diff
+
+  cargo:
+    if: hashFiles('Cargo.lock') != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: cargo audit
+        run: |
+          cargo install cargo-audit --locked
+          cargo audit --deny warnings
+      - name: Verify Cargo.lock is up to date
+        run: cargo update --workspace --locked
