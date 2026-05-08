@@ -1,0 +1,37 @@
+# ABOUTME: Sigma rule firing when a user's mean tier-≥2 response time is <2s across >50 approvals.
+# ABOUTME: Calibrated against AHRQ PSNet alarm-fatigue research and Anthropic Auto Mode telemetry. Tune for your team.
+title: Operator approval fatigue pattern
+id: 5a7b8c9d-0e1f-2a3b-4c5d-6e7f8a9b0c1d
+status: experimental
+description: >
+  Detects an operator whose typed-confirmation response time has dropped to
+  reflexive levels: mean response under 2 seconds across 50 or more
+  tier-≥2 approvals. Reflexive approval is the failure mode tiered approval
+  exists to fight; when this rule fires, the tiering is no longer adding
+  meaningful friction to the approval flow.
+references:
+  - https://github.com/peopleforrester/agentic-covenants/blob/main/SENTINELS_MATRIX.md
+  - https://psnet.ahrq.gov/perspective/alert-fatigue
+  - Anthropic Auto Mode (March 2026 paper)
+author: agentic-covenants
+date: 2026/05/08
+logsource:
+  category: agent_hook
+detection:
+  selection:
+    event: approval_timing
+    tier|gte: 2
+  timeframe: 1d
+  condition: |
+    selection
+    | aggregate avg(response_ms) as avg_ms, count() as n by user
+    | where avg_ms < 2000 and n > 50
+falsepositives:
+  - Operator running a batch script that pre-types confirmations (legitimate but indicates a scope mismatch — those operations probably don't need tiered approval at all).
+  - Single very-long approval inflating one user's average without other indicators (re-check; the rule uses mean, not median).
+level: medium
+tags:
+  - agent
+  - approval_gating
+  - sentinels
+  - human_factors

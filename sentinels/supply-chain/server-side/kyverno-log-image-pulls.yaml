@@ -1,0 +1,24 @@
+# ABOUTME: Mutating Kyverno ClusterPolicy that annotates every Pod with image references and pull timestamp.
+# ABOUTME: The annotation is read by ship-policy-reports CronJob and shipped to SIEM. validationFailureAction is irrelevant for mutate.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: log-image-pulls
+  annotations:
+    policies.kyverno.io/title: Annotate every Pod with its image references for SIEM ingestion
+    policies.kyverno.io/category: Agentic Sentinels / Supply Chain
+spec:
+  background: false
+  rules:
+  - name: annotate-image-pull
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+    mutate:
+      patchStrategicMerge:
+        metadata:
+          annotations:
+            agent-sentinel/image-audit: "{{ request.object.spec.containers[].image | join(', ') }}"
+            agent-sentinel/image-pull-ts: "{{ time_now_utc() }}"
+            agent-sentinel/namespace: "{{ request.object.metadata.namespace }}"

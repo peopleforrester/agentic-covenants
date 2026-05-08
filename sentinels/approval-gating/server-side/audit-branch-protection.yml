@@ -1,0 +1,55 @@
+# ABOUTME: Hourly workflow that diffs live branch protection against a checked-in expected JSON. Drift fires a SIEM event.
+# ABOUTME: The expected JSON lives at controls/approval-gating/server-side/branch-protection-expected.json and is CODEOWNERS-protected.
+name: Audit Branch Protection
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # hourly
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get current protection
+        env:
+          GH_TOKEN: ${{ secrets.AUDIT_PAT }}
+        run: |
+          gh api repos/${{ github.repository }}/branches/main/protection > current.json
+
+      - name: Compare to expected
+        id: diff
+        run: |
+          if diff -u controls/approval-gating/server-side/branch-protection-expected.json current.json > /tmp/drift.diff 2>&1; then
+            echo "drift=false" >> $GITHUB_OUTPUT
+          else
+            echo "drift=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Ship drift to SIEM
+        if: steps.diff.outputs.drift == 'true'
+        env:
+          SIEM_TOKEN: ${{ secrets.SIEM_TOKEN }}
+          SIEM_URL: ${{ vars.SIEM_URL }}
+        run: |
+          DIFF_JSON=$(jq -R -s . < /tmp/drift.diff)
+          curl -sS -X POST "$SIEM_URL/agent-sentinel-bp/_doc" \
+            -H "Authorization: Bearer $SIEM_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"event\": \"branch_protection_drift\",
+              \"repo\": \"${{ github.repository }}\",
+              \"diff\": $DIFF_JSON,
+              \"ts\": \"$(date -Iseconds)\"
+            }"
+
+      - name: Fail the job on drift
+        if: steps.diff.outputs.drift == 'true'
+        run: |
+          echo "::error::Branch protection drift detected. See ship-to-SIEM step output."
+          exit 1

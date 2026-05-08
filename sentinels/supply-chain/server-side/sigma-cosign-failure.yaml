@@ -1,0 +1,31 @@
+# ABOUTME: Sigma rule firing on PolicyReport entries where the verify-image-signatures Kyverno policy failed.
+# ABOUTME: Pair with rich context (PR, build SHA, image digest) at alert generation; bare image SHA pages waste oncall time.
+title: Cosign image-signature verification failure
+id: 9b0c1d2e-3f4a-5b6c-7d8e-9f0a1b2c3d4e
+status: experimental
+description: >
+  Detects an admission failure on the verify-image-signatures Kyverno
+  policy. Either an image was deployed without a cosign signature, or its
+  signature did not match the trusted issuer. This is high signal: the
+  signing pipeline failed, the registry is serving an unsigned image, or
+  someone is attempting to deploy a non-allowlisted image.
+references:
+  - https://github.com/peopleforrester/agentic-covenants/blob/main/SENTINELS_MATRIX.md
+author: agentic-covenants
+date: 2026/05/08
+logsource:
+  category: kyverno_policy_report
+detection:
+  selection:
+    event: policy_report
+    data.policy: verify-image-signatures
+    data.failed|gt: 0
+  condition: selection
+falsepositives:
+  - First-deploy of a new image before its signature has propagated to Rekor (rare with current Sigstore latencies; treat as worth investigating).
+  - Mirror registry stripping signatures (treat as a misconfiguration and fix).
+level: high
+tags:
+  - agent
+  - supply_chain
+  - sentinels

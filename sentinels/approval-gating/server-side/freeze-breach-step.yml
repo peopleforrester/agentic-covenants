@@ -1,0 +1,21 @@
+# ABOUTME: Workflow-step snippet for the IaC apply job that ships a freeze_breach_attempt event when DEPLOY_FREEZE=true.
+# ABOUTME: Drop into the apply job in controls/blast-radius/server-side/iac-gated-pipeline.yml before the existing freeze-deny step.
+- name: Freeze breach detection
+  if: vars.DEPLOY_FREEZE == 'true'
+  env:
+    SIEM_TOKEN: ${{ secrets.SIEM_TOKEN }}
+    SIEM_URL: ${{ vars.SIEM_URL }}
+  run: |
+    curl -sS -X POST "$SIEM_URL/agent-sentinel-freeze/_doc" \
+      -H "Authorization: Bearer $SIEM_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "{
+        \"event\": \"freeze_breach_attempt\",
+        \"repo\": \"${{ github.repository }}\",
+        \"actor\": \"${{ github.actor }}\",
+        \"workflow\": \"${{ github.workflow }}\",
+        \"run_id\": \"${{ github.run_id }}\",
+        \"ts\": \"$(date -Iseconds)\"
+      }"
+    echo "::error::Deployment freeze active. Apply blocked. SIEM event shipped."
+    exit 1

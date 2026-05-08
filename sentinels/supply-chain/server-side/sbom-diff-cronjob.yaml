@@ -1,0 +1,97 @@
+# ABOUTME: Daily CronJob that runs syft against every image in agent namespaces, compares SBOM hashes day-over-day, ships diffs.
+# ABOUTME: SBOM hash captures transitive dependency changes; comparing only top-level package counts misses those.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sbom-differ
+  namespace: kyverno
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sbom-differ-read
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sbom-differ-read
+subjects:
+- kind: ServiceAccount
+  name: sbom-differ
+  namespace: kyverno
+roleRef:
+  kind: ClusterRole
+  name: sbom-differ-read
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sbom-cache
+  namespace: kyverno
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sbom-diff
+  namespace: kyverno
+spec:
+  schedule: "0 6 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: sbom-differ
+          restartPolicy: OnFailure
+          containers:
+          - name: differ
+            # Pin by digest. Resolve current digest with: crane digest anchore/syft:v1.20.0
+            image: anchore/syft@sha256:REPLACE_WITH_DIGEST_FROM_CRANE
+            envFrom:
+            - secretRef:
+                name: siem-credentials
+            volumeMounts:
+            - name: cache
+              mountPath: /var/lib/sbom-cache
+            command: ["/bin/sh", "-c"]
+            args:
+            - |
+              set -eu
+              for ns in $(kubectl get ns -l agentic-covenants.io/role=agent -o jsonpath='{.items[*].metadata.name}'); do
+                for img in $(kubectl get pods -n "$ns" -o jsonpath='{.items[*].spec.containers[*].image}' | tr ' ' '\n' | sort -u); do
+                  CURRENT="$(syft "$img" -o spdx-json 2>/dev/null | sha256sum | awk '{print $1}')"
+                  KEY="$(printf '%s' "$img" | tr / _).hash"
+                  LAST="$(cat "/var/lib/sbom-cache/$KEY" 2>/dev/null || echo none)"
+                  if [ "$CURRENT" != "$LAST" ]; then
+                    curl -sS -X POST "$SIEM_URL/agent-sentinel-sbom/_doc" \
+                      -H "Authorization: Bearer $SIEM_TOKEN" \
+                      -H "Content-Type: application/json" \
+                      -d "{
+                        \"event\": \"sbom_diff\",
+                        \"image\": \"$img\",
+                        \"namespace\": \"$ns\",
+                        \"prev_hash\": \"$LAST\",
+                        \"curr_hash\": \"$CURRENT\",
+                        \"ts\": \"$(date -Iseconds)\"
+                      }"
+                    echo "$CURRENT" > "/var/lib/sbom-cache/$KEY"
+                  fi
+                done
+              done
+          volumes:
+          - name: cache
+            persistentVolumeClaim:
+              claimName: sbom-cache

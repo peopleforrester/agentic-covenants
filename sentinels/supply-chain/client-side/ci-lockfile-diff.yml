@@ -1,0 +1,26 @@
+# ABOUTME: Workflow step shipping truncated lockfile diff to SIEM on every PR. Add to lockfile-integrity.yml.
+# ABOUTME: Diff is truncated to first 200 lines so a huge PR does not flood the SIEM payload; full diff is in CI artifacts.
+- name: Ship lockfile diff to SIEM
+  if: always() && github.event_name == 'pull_request'
+  env:
+    SIEM_TOKEN: ${{ secrets.SIEM_TOKEN }}
+    SIEM_URL: ${{ vars.SIEM_URL }}
+  run: |
+    DIFF=$(git diff origin/${{ github.base_ref }} -- \
+      package-lock.json requirements.txt requirements*.txt \
+      Pipfile.lock poetry.lock go.sum Cargo.lock 2>/dev/null \
+      | head -200)
+    if [[ -n "$DIFF" ]]; then
+      DIFF_JSON=$(printf '%s' "$DIFF" | jq -R -s .)
+      curl -sS -X POST "$SIEM_URL/agent-sentinel-ci/_doc" \
+        -H "Authorization: Bearer $SIEM_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d "{
+          \"event\": \"lockfile_diff\",
+          \"repo\": \"${{ github.repository }}\",
+          \"pr\": ${{ github.event.pull_request.number }},
+          \"actor\": \"${{ github.actor }}\",
+          \"diff\": $DIFF_JSON,
+          \"ts\": \"$(date -Iseconds)\"
+        }"
+    fi
