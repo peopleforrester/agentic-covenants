@@ -81,8 +81,12 @@ See [`LICENSE`](./LICENSE) for the split rule.
 
 A reviewer who finds an additional citation mapping is welcome to contribute it; a reviewer who finds an incorrect mapping is welcome to flag it. Both improve the document. See [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
-## Status
+## Companion: Sentinels (Detect)
 
-Prevention-only by design. Detect / Respond / Recover companion matrices are tracked separately.
+Co-located in this repo. The Covenants Matrix is the **Protect** view; the Sentinels Matrix at [`SENTINELS_MATRIX.md`](./SENTINELS_MATRIX.md) and [`sentinels/`](./sentinels/) is the **Detect** view — Falco rules, eBPF, audit-log pipelines, SIEM detection rules per cell. Architecturally distinct (Covenants asks "what stops it?"; Sentinels asks "what just happened?") but co-located so a single platform team walks both in one pass.
+
+Response and Recovery (NIST CSF 2.0 RS / RC) live elsewhere.
+
+## Status
 
 This repo is the practitioner layer beneath OWASP (which catalogs the threats), NIST (which governs and structures), CSA MAESTRO (which models the attack surface), and lab-side capability frameworks (which govern what models are released). None of those tells a platform engineer what to commit on Monday morning. This does.

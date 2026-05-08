@@ -1,0 +1,19 @@
+# ABOUTME: Dedicated namespace for one agent with restricted Pod Security Standards enforced at admission.
+# ABOUTME: Substitute agent-claude-prod with your agent name; one namespace per agent, never shared.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: agent-claude-prod
+  labels:
+    # Pod Security Standards: enforce restricted at admission. This blocks
+    # pods that request privileged capabilities, host networking, host paths,
+    # or run as root.
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+    # Tag identifying this as an agent namespace; consumed by Kyverno policies
+    # in controls/authorization/server-side/ and NetworkPolicy selectors in
+    # controls/blast-radius/server-side/.
+    agentic-covenants.io/role: agent
+    agentic-covenants.io/agent-name: claude-code-prod

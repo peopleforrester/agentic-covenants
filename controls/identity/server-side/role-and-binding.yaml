@@ -1,0 +1,40 @@
+# ABOUTME: Namespace-scoped Role and RoleBinding for one agent. Never a ClusterRole. Never wildcard verbs.
+# ABOUTME: Lists every API group, resource, and verb explicitly. Add lines as needed; do not collapse to "*".
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: claude-code
+  namespace: agent-claude-prod
+rules:
+# Read-only on workload state in this namespace. The agent diagnoses but does
+# not mutate.
+- apiGroups: [""]
+  resources: ["pods", "configmaps", "services", "endpoints"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch"]
+# Pod logs and exec. Note: pods/exec is a separate resource from pods.
+# Denying pods does not deny pods/exec; subresources must be enumerated.
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get"]
+# Deliberately omitted: pods/exec, pods/portforward, secrets, serviceaccounts,
+# rolebindings, anything that would let the agent escalate or read credentials.
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: claude-code
+  namespace: agent-claude-prod
+subjects:
+- kind: ServiceAccount
+  name: claude-code
+  namespace: agent-claude-prod
+roleRef:
+  kind: Role
+  name: claude-code
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,51 @@
+# ABOUTME: systemd unit binding the Claude Code agent to a dedicated user with a per-agent credential.
+# ABOUTME: The credential file in EnvironmentFile is read by systemd as root; the agent process never reads it at rest.
+
+[Unit]
+Description=Claude Code agent (production)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=agent-runner
+Group=agent-runner
+
+# Read the per-agent credentials. systemd reads this as root before the
+# User= switch; the agent process inherits the env vars but never sees the
+# file directly (the filesystem ACL from provision-credential.sh denies the
+# agent's own user read access).
+EnvironmentFile=/etc/agents/claude-code-prod/env
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+ReadWritePaths=/var/lib/agents/claude-code-prod /workspace
+
+# The agent gets a working directory it can write to; everything else is
+# read-only or hidden via ProtectSystem and ProtectHome.
+WorkingDirectory=/workspace
+
+ExecStart=/usr/local/bin/claude --config /etc/agents/claude-code-prod/config.json
+
+# Restart on crash, but rate-limit so a crash loop doesn't burn API quota.
+Restart=on-failure
+RestartSec=30s
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Install]
+WantedBy=multi-user.target

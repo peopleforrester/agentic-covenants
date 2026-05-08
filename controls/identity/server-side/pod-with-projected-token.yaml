@@ -1,0 +1,70 @@
+# ABOUTME: Agent Pod that mounts a projected ServiceAccount token with 15-minute TTL and audience binding.
+# ABOUTME: Image is pinned by digest; substitute with your registry. The 900s TTL is the load-bearing line.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: claude-code
+  namespace: agent-claude-prod
+  labels:
+    app: claude-code
+    agentic-covenants.io/agent-name: claude-code-prod
+spec:
+  serviceAccountName: claude-code
+  automountServiceAccountToken: false   # using projected token volume below
+
+  # Restricted Pod Security Standards compliance.
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+
+  containers:
+  - name: claude
+    # Pin the agent image by digest. Resolve current digest with:
+    #   crane digest registry.example.com/claude-agent:v1
+    image: registry.example.com/claude-agent@sha256:REPLACE_WITH_DIGEST_FROM_CRANE
+    imagePullPolicy: IfNotPresent
+    securityContext:
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 1000
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: ["ALL"]
+      seccompProfile:
+        type: RuntimeDefault
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 1
+        memory: 1Gi
+        ephemeral-storage: 1Gi
+    volumeMounts:
+    - name: agent-token
+      mountPath: /var/run/secrets/agents
+      readOnly: true
+    - name: workdir
+      mountPath: /workspace
+
+  volumes:
+  - name: agent-token
+    projected:
+      sources:
+      - serviceAccountToken:
+          path: token
+          # 15 minutes. The kubelet rotates the token automatically before
+          # expiration. The agent process must re-read the file periodically;
+          # most Kubernetes client libraries do this transparently.
+          expirationSeconds: 900
+          # Audience scopes the token to a specific consumer. A token with
+          # audience=agent-claude-prod cannot be replayed against any other
+          # API. Auth providers MUST verify the audience claim.
+          audience: agent-claude-prod
+  - name: workdir
+    emptyDir:
+      sizeLimit: 500Mi

@@ -1,0 +1,19 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowAssumeRoleByOneSpecificAgentSA",
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::123456789012:oidc-provider/oidc.eks.us-east-1.amazonaws.com/id/EXAMPLE_OIDC_ID"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "oidc.eks.us-east-1.amazonaws.com/id/EXAMPLE_OIDC_ID:sub": "system:serviceaccount:agent-claude-prod:claude-code",
+          "oidc.eks.us-east-1.amazonaws.com/id/EXAMPLE_OIDC_ID:aud": "sts.amazonaws.com"
+        }
+      }
+    }
+  ]
+}
