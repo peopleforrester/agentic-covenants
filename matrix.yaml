@@ -1,0 +1,253 @@
+# ABOUTME: Machine-readable source-of-truth for the Agentic Covenants Matrix.
+# ABOUTME: Used to generate checklists, render docs, and cross-link controls/ artifacts to citations and bypasses.
+schema_version: 1
+title: Agentic Covenants Matrix
+question: "If the agent decides to violate this concern, what stops it at this layer?"
+
+layers:
+  - id: in-agent
+    label: In-agent
+    strength: advisory
+    summary: System prompts, model training, tool descriptions, refusals. No homeostatic stake, no pre-action pause, no learning loop. Treat as nudge, not control.
+  - id: client-side
+    label: Client-side hooks
+    strength: deterministic-when-invoked
+    summary: Operator-machine or agent-execution context. Strong against language attacks. Weak against an agent with shell access and time.
+  - id: server-side
+    label: Server-side enforcement
+    strength: deterministic-and-external
+    summary: Runs on the target system, not on the agent. Bypass requires compromise, policy gaps, or operator manipulation.
+
+concerns:
+  - id: identity
+    label: Identity
+    intent: The agent is distinguishable from any human or other agent.
+  - id: authorization
+    label: Authorization
+    intent: Least-privilege scoped access. No wildcards, no inherited operator permissions.
+  - id: blast-radius
+    label: Blast radius
+    intent: One bad action stays contained.
+  - id: approval-gating
+    label: Approval gating
+    intent: Friction scaled to risk.
+  - id: supply-chain
+    label: Supply chain
+    intent: Every dependency, MCP server, registry, and tool call verified before trusted.
+
+cells:
+  # ---- IDENTITY ----
+  - concern: identity
+    layer: in-agent
+    summary: System prompt declares "you are an automation agent named X." Advisory only.
+    controls_path: controls/identity/in-agent/
+    citations:
+      nist_csf_2_0: ["(advisory)"]
+      nist_ai_rmf: ["GOVERN 1.5", "MAP 4.1"]
+      owasp_llm: ["LLM07"]
+      owasp_agentic: ["ASI03"]
+    primary_bypasses:
+      - prompt injection
+      - jailbreak
+      - tool-description manipulation via upstream content
+
+  - concern: identity
+    layer: client-side
+    summary: Per-agent credentials, no shared keys, filesystem ACLs.
+    controls_path: controls/identity/client-side/
+    citations:
+      nist_csf_2_0: ["PR.AA-01", "PR.AA-03"]
+      nist_ai_rmf: ["MANAGE 2.4"]
+      owasp_llm: ["LLM02"]
+      owasp_agentic: ["ASI03"]
+      other: ["NIST SP 800-207", "NIST SP 800-63"]
+    primary_bypasses:
+      - token theft
+      - credential leakage in logs
+
+  - concern: identity
+    layer: server-side
+    summary: Dedicated ServiceAccount or IAM principal per agent. OIDC federation. Short-TTL bound tokens.
+    controls_path: controls/identity/server-side/
+    citations:
+      nist_csf_2_0: ["PR.AA-01", "PR.AA-02", "PR.AA-03", "PR.AA-04"]
+      nist_ai_rmf: ["MANAGE 4.1"]
+      owasp_llm: ["LLM02", "LLM06"]
+      owasp_agentic: ["ASI03", "ASI10"]
+      other: ["NIST SP 800-207 §3.4.1", "NIST SP 800-63B"]
+    primary_bypasses:
+      - IdP compromise
+      - token replay within TTL
+      - misconfigured trust policy accepting unintended issuers
+
+  # ---- AUTHORIZATION ----
+  - concern: authorization
+    layer: in-agent
+    summary: Model instructions and scoped tool descriptions.
+    controls_path: controls/authorization/in-agent/
+    citations:
+      nist_csf_2_0: ["(advisory)"]
+      nist_ai_rmf: ["MAP 5.1"]
+      owasp_llm: ["LLM06"]
+      owasp_agentic: ["ASI02"]
+    primary_bypasses:
+      - prompt injection
+      - novel framing
+
+  - concern: authorization
+    layer: client-side
+    summary: Deny-by-default tool allowlist, capability-based restriction, PreToolUse hooks, pre-commit hooks.
+    controls_path: controls/authorization/client-side/
+    citations:
+      nist_csf_2_0: ["PR.AA-05", "PR.PS-01"]
+      nist_ai_rmf: ["MANAGE 2.4", "MANAGE 4.1"]
+      owasp_llm: ["LLM05", "LLM06"]
+      owasp_agentic: ["ASI02", "ASI05"]
+      other: ["OWASP Agentic Least Agency", "NIST SP 800-207 §2.1"]
+    primary_bypasses:
+      - shell-out via allowlisted Bash
+      - pattern evasion (equivalent commands)
+      - --no-verify on pre-commit
+
+  - concern: authorization
+    layer: server-side
+    summary: Scoped RBAC Roles, IAM with explicit ARN, Kyverno or OPA admission, namespace scoping.
+    controls_path: controls/authorization/server-side/
+    citations:
+      nist_csf_2_0: ["PR.AA-05", "PR.PS-01", "PR.PS-05"]
+      nist_ai_rmf: ["MANAGE 2.4", "MANAGE 4.1"]
+      owasp_llm: ["LLM05", "LLM06"]
+      owasp_agentic: ["ASI02", "ASI03", "ASI05"]
+      other: ["NIST SP 800-207", "CIS Kubernetes Benchmark"]
+    primary_bypasses:
+      - escalate/bind/impersonate in RBAC
+      - subresource access not denied
+      - admission webhook fail-open
+
+  # ---- BLAST RADIUS ----
+  - concern: blast-radius
+    layer: in-agent
+    summary: Model declines destructive operations. Verified failure mode in Kiro, Replit, DataTalks.Club incidents.
+    controls_path: controls/blast-radius/in-agent/
+    citations:
+      nist_csf_2_0: ["(advisory)"]
+      nist_ai_rmf: ["MAP 5.1", "MEASURE 2.6"]
+      owasp_llm: ["LLM06"]
+      owasp_agentic: ["ASI02", "ASI05"]
+    primary_bypasses:
+      - documented failure-to-refuse incidents
+
+  - concern: blast-radius
+    layer: client-side
+    summary: Sandbox at launch (Seatbelt, bubblewrap, gVisor), seccomp/AppArmor, --network none, read-only mounts, dry-run defaults.
+    controls_path: controls/blast-radius/client-side/
+    citations:
+      nist_csf_2_0: ["PR.PS-01", "PR.PS-05", "PR.PS-06", "PR.IR-01"]
+      nist_ai_rmf: ["MANAGE 2.4"]
+      owasp_llm: ["LLM05", "LLM10"]
+      owasp_agentic: ["ASI02", "ASI05"]
+      other: ["NIST SP 800-160 Vol. 1"]
+    primary_bypasses:
+      - unsandboxed children when inheritance not enforced
+      - profile gaps
+      - kernel-level escape
+
+  - concern: blast-radius
+    layer: server-side
+    summary: Gated IaC apply pipeline, ResourceQuota, NetworkPolicy default-deny, prod/non-prod separation, immutable backups, PDB.
+    controls_path: controls/blast-radius/server-side/
+    citations:
+      nist_csf_2_0: ["PR.IR-01", "PR.IR-02", "PR.IR-03", "PR.IR-04", "PR.DS-11"]
+      nist_ai_rmf: ["MANAGE 2.4", "MANAGE 4.1"]
+      owasp_llm: ["LLM05", "LLM10"]
+      owasp_agentic: ["ASI05", "ASI08"]
+      other: ["NIST SP 800-160 Vol. 1", "NIST SP 800-34"]
+    primary_bypasses:
+      - prevent_destroy edited away then applied
+      - quota set too generously
+      - DNS exfiltration when DNS not filtered
+
+  # ---- APPROVAL GATING ----
+  - concern: approval-gating
+    layer: in-agent
+    summary: Model says "are you sure?" Silently bypassable.
+    controls_path: controls/approval-gating/in-agent/
+    citations:
+      nist_csf_2_0: ["(advisory)"]
+      nist_ai_rmf: ["MANAGE 4.1"]
+      owasp_llm: ["LLM06"]
+      owasp_agentic: ["ASI09"]
+    primary_bypasses:
+      - the model can be talked out of asking
+
+  - concern: approval-gating
+    layer: client-side
+    summary: PreToolUse pattern hooks, tiered config, typed confirmation for tier-3, out-of-band for highest tier, judgment-query escalation.
+    controls_path: controls/approval-gating/client-side/
+    citations:
+      nist_csf_2_0: ["PR.AA-05", "PR.PS-01"]
+      nist_ai_rmf: ["MANAGE 4.1"]
+      owasp_llm: ["LLM06"]
+      owasp_agentic: ["ASI02", "ASI09"]
+      other: ["OWASP Agentic Least Agency", "Russell 2019 (assistance games)"]
+    primary_bypasses:
+      - alert fatigue
+      - pattern evasion (kubectl scale --replicas=0)
+      - flat workflows degrade fastest
+
+  - concern: approval-gating
+    layer: server-side
+    summary: Branch protection + PR review, CODEOWNERS, multi-party prod approval, plan-and-apply split, deployment freezes.
+    controls_path: controls/approval-gating/server-side/
+    citations:
+      nist_csf_2_0: ["PR.AA-05", "PR.PS-01", "GV.RR-04"]
+      nist_ai_rmf: ["GOVERN 4.1", "MANAGE 4.1"]
+      owasp_llm: ["LLM06"]
+      owasp_agentic: ["ASI02", "ASI03"]
+      other: ["NIST SP 800-160 Vol. 1"]
+    primary_bypasses:
+      - persuasive PR description influencing reviewers
+      - admin force-push override
+      - bot accounts approving via misconfigured CODEOWNERS
+
+  # ---- SUPPLY CHAIN ----
+  - concern: supply-chain
+    layer: in-agent
+    summary: Model warns about unvetted packages or unfamiliar MCP servers. Unreliable.
+    controls_path: controls/supply-chain/in-agent/
+    citations:
+      nist_csf_2_0: ["(advisory)"]
+      nist_ai_rmf: ["MAP 4.1"]
+      owasp_llm: ["LLM03"]
+      owasp_agentic: ["ASI04"]
+    primary_bypasses:
+      - frequently wrong about provenance
+
+  - concern: supply-chain
+    layer: client-side
+    summary: MCP server allowlist with hash pinning, Sigstore verification, lockfile pinning, pre-commit deps scan.
+    controls_path: controls/supply-chain/client-side/
+    citations:
+      nist_csf_2_0: ["PR.PS-01", "PR.PS-02", "ID.SC-04"]
+      nist_ai_rmf: ["MAP 4.1", "MANAGE 3.1"]
+      owasp_llm: ["LLM03", "LLM04"]
+      owasp_agentic: ["ASI04", "ASI06"]
+      other: ["NIST SP 800-218 PS.2", "NIST SP 800-218A"]
+    primary_bypasses:
+      - lockfile rewrite if agent has FS write
+      - allowlist edited by agent
+
+  - concern: supply-chain
+    layer: server-side
+    summary: OCI signature verification (cosign), SBOM admission, egress NetworkPolicy, OPA attestation policy, MCP domain allowlist at network layer.
+    controls_path: controls/supply-chain/server-side/
+    citations:
+      nist_csf_2_0: ["PR.PS-02", "PR.PS-05", "PR.IR-01", "ID.SC-04", "ID.RA-09"]
+      nist_ai_rmf: ["MAP 4.1", "MANAGE 3.1"]
+      owasp_llm: ["LLM03", "LLM04"]
+      owasp_agentic: ["ASI04"]
+      other: ["NIST SP 800-218 PS.3", "NIST SP 800-161", "SLSA"]
+    primary_bypasses:
+      - signing infrastructure compromise
+      - signature stripping at registry mirror
+      - signed-but-malicious images

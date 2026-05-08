@@ -1,0 +1,66 @@
+SPDX-License-Identifier: Apache-2.0 AND CC-BY-SA-4.0
+
+# Agentic Covenants — License
+
+This repository is dual-licensed:
+
+## Code → Apache License 2.0
+
+Files containing executable code or machine-consumed configuration are licensed
+under the Apache License, Version 2.0. The full text is in `LICENSE-CODE`.
+
+This includes (non-exhaustive):
+
+- Shell scripts (`*.sh`)
+- Python (`*.py`)
+- Terraform (`*.tf`)
+- Rego (`*.rego`)
+- Kubernetes / Kyverno / OPA / cosign YAML policies (`controls/**/*.yaml` and similar)
+- GitHub Actions workflows
+- Seccomp profiles, AppArmor profiles, Seatbelt sandbox profiles
+- Pre-commit configurations
+- Hook scripts
+- The machine-readable matrix at `matrix.yaml`
+
+## Content → Creative Commons Attribution-ShareAlike 4.0 International
+
+Files containing prose, framework explanations, citations, and the matrix as a
+human-readable artifact are licensed under CC BY-SA 4.0. The full text is in
+`LICENSE-CONTENT`.
+
+This includes (non-exhaustive):
+
+- `README.md`
+- `MATRIX.md`
+- `BYPASSES.md`
+- `CITATIONS.md`
+- `CONTRIBUTING.md`
+- `CODE_OF_CONDUCT.md`
+- All `README.md` and explanatory `.md` files inside `controls/`, `checklists/`,
+  and `examples/`
+
+## Why two licenses
+
+The matrix is a knowledge artifact: it should be sharable, citable, remixable,
+and attribution-required when adapted. CC BY-SA 4.0 is the standard for that.
+
+The hooks, policies, and scripts are software: they should be drop-in usable in
+commercial deployments without share-alike contamination. Apache 2.0 is the
+standard for that.
+
+## When in doubt
+
+If a single file is genuinely mixed (e.g., a heavily commented YAML policy that
+also contains framework discussion), default to CC BY-SA 4.0 for the file as a
+whole. The Apache 2.0 license still applies to the executable portion when it is
+extracted and used as code.
+
+## Attribution
+
+Copyright (c) 2026 Michael R. Forrester and contributors.
+
+When attributing the matrix or this repository in talks, papers, blog posts, or
+derivative work, please cite as:
+
+> Forrester, M. R. and contributors. *The Agentic Covenants Matrix*.
+> https://github.com/peopleforrester/agentic-covenants
