@@ -1,0 +1,24 @@
+# ABOUTME: auditd rules for authorization-layer events: hook config edits, allowlist edits, Claude settings edits, --no-verify execve.
+# ABOUTME: Drop in /etc/audit/rules.d/ and reload with `augenrules --load`. Confirm with `auditctl -l`.
+
+# Hook directory and individual scripts.
+-w /etc/agents/hooks/ -p wa -k hook_config_edit
+
+# MCP allowlist.
+-w /etc/agents/mcp-allowlist.json -p wa -k allowlist_edit
+
+# Claude Code per-user settings (if the agent runs as agent-runner). Adjust
+# path for other agent users or for project-local .claude/settings.json by
+# adding additional -w lines.
+-w /home/agent-runner/.claude/settings.json -p wa -k claude_settings_edit
+-w /etc/agents/claude-code-prod/config.json -p wa -k claude_settings_edit
+
+# Tier config for the tiered approval hook.
+-w /etc/agents/tier-config.yaml -p wa -k tier_config_edit
+
+# --no-verify in any execve. Both long form and short form.
+-a always,exit -F arch=b64 -S execve -F a1=*--no-verify* -k git_no_verify
+-a always,exit -F arch=b64 -S execve -F a1=*-n* -F exe=/usr/bin/git -k git_no_verify_short
+
+# core.hooksPath manipulation (the documented bypass for pre-commit hooks).
+-a always,exit -F arch=b64 -S execve -F a1=*core.hooksPath* -k git_hooks_path_bypass

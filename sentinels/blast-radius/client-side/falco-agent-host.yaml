@@ -1,0 +1,45 @@
+# ABOUTME: Falco userspace rules for an operator host running agents outside Kubernetes. Detects sandbox escapes and unexpected writes.
+# ABOUTME: Pair with json_output: true in falco.yaml so SIEM can parse the events. proc.aname catches multi-level ancestry.
+- macro: agent_process
+  condition: proc.name in (claude, node, agent-bwrap, mcp-launch)
+
+- macro: agent_ancestor
+  condition: proc.aname[0] in (claude, node, agent-bwrap, mcp-launch)
+            or proc.aname[1] in (claude, node, agent-bwrap, mcp-launch)
+            or proc.aname[2] in (claude, node, agent-bwrap, mcp-launch)
+
+- rule: Agent Process Spawned Outside Sandbox
+  desc: A child of an agent process is running outside the agent-sandbox cgroup
+  condition: spawned_process and agent_ancestor and not proc.cgroup contains "agent-sandbox"
+  output: >
+    Unsandboxed child of agent
+    (pid=%proc.pid cmd=%proc.cmdline parent=%proc.pname cgroup=%proc.cgroup)
+  priority: WARNING
+  tags: [agent, sandbox, blast_radius]
+
+- rule: Agent Wrote to Unexpected Path
+  desc: Agent process or descendant wrote outside /workspace and tmpfs
+  condition: >
+    open_write
+    and agent_ancestor
+    and not fd.name startswith /workspace
+    and not fd.name startswith /tmp
+    and not fd.name startswith /var/tmp
+    and not fd.name startswith /proc
+    and not fd.name startswith /dev/null
+  output: >
+    Agent wrote to unexpected path
+    (pid=%proc.pid file=%fd.name parent=%proc.pname)
+  priority: WARNING
+  tags: [agent, blast_radius]
+
+- rule: Agent Attempted Privilege Escalation
+  desc: Agent process or descendant called setuid, setgid, or capset
+  condition: >
+    evt.type in (setuid, setgid, capset)
+    and agent_ancestor
+  output: >
+    Agent privilege-escalation syscall
+    (pid=%proc.pid syscall=%evt.type parent=%proc.pname)
+  priority: ERROR
+  tags: [agent, sandbox, blast_radius]

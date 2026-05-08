@@ -1,0 +1,47 @@
+# ABOUTME: Prometheus AlertManager rules firing when an agent namespace hits 85%/95% of its ResourceQuota.
+# ABOUTME: Pair with kube-state-metrics; the kube_resourcequota series is what these expressions read.
+groups:
+- name: agent-namespace-quota
+  rules:
+
+  - alert: AgentNamespaceQuotaApproaching
+    expr: |
+      (kube_resourcequota{namespace=~"agent-.*",resource="requests.cpu",type="used"}
+        / kube_resourcequota{namespace=~"agent-.*",resource="requests.cpu",type="hard"}) > 0.85
+    for: 5m
+    labels:
+      severity: warning
+      framework: agentic-sentinels
+    annotations:
+      summary: "Agent namespace {{ $labels.namespace }} CPU quota at >85% for 5m"
+      description: |
+        Namespace {{ $labels.namespace }} has been consuming over 85% of its
+        ResourceQuota.requests.cpu for the last 5 minutes. This is the early
+        warning. Either scale capacity or investigate runaway agent.
+      runbook: "https://runbooks.example.com/agent-quota-approaching"
+
+  - alert: AgentNamespaceQuotaExceeded
+    expr: |
+      (kube_resourcequota{namespace=~"agent-.*",resource="requests.cpu",type="used"}
+        / kube_resourcequota{namespace=~"agent-.*",resource="requests.cpu",type="hard"}) > 0.95
+    for: 1m
+    labels:
+      severity: critical
+      framework: agentic-sentinels
+    annotations:
+      summary: "Agent namespace {{ $labels.namespace }} CPU quota at >95%"
+      description: |
+        New Pod admissions in {{ $labels.namespace }} are likely failing.
+        Investigate immediately.
+      runbook: "https://runbooks.example.com/agent-quota-exceeded"
+
+  - alert: AgentNamespaceMemoryQuotaApproaching
+    expr: |
+      (kube_resourcequota{namespace=~"agent-.*",resource="requests.memory",type="used"}
+        / kube_resourcequota{namespace=~"agent-.*",resource="requests.memory",type="hard"}) > 0.85
+    for: 5m
+    labels:
+      severity: warning
+      framework: agentic-sentinels
+    annotations:
+      summary: "Agent namespace {{ $labels.namespace }} memory quota at >85% for 5m"

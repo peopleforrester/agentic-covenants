@@ -1,0 +1,23 @@
+# ABOUTME: OPA config that streams decision logs to the SIEM, filtered to deny decisions only.
+# ABOUTME: Without filtering, OPA emits one event per admission decision and floods the SIEM.
+decision_logs:
+  console: false
+  service: siem
+  reporting:
+    min_delay_seconds: 5
+    max_delay_seconds: 30
+  # Drop allow decisions; keep only denies. Tune per your alerting needs.
+  mask_decision: |
+    package system.log
+    mask["/result"] {
+      input.result == true
+    }
+
+services:
+  - name: siem
+    url: https://siem.example.com:9200/opa-decisions/_doc
+    credentials:
+      bearer:
+        token: ${SIEM_TOKEN}
+    # Index per day so retention rotation works.
+    response_header_timeout_seconds: 5

@@ -1,0 +1,82 @@
+# ABOUTME: CronJob that ships Kyverno PolicyReports with summary.fail > 0 to the SIEM every 5 minutes.
+# ABOUTME: kubectl image is pinned by digest; replace before applying. SIEM_TOKEN comes from a Secret.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kyverno-reporter
+  namespace: kyverno
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno-reporter-read
+rules:
+- apiGroups: ["wgpolicyk8s.io"]
+  resources: ["policyreports", "clusterpolicyreports"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kyverno-reporter-read
+subjects:
+- kind: ServiceAccount
+  name: kyverno-reporter
+  namespace: kyverno
+roleRef:
+  kind: ClusterRole
+  name: kyverno-reporter-read
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: siem-credentials
+  namespace: kyverno
+type: Opaque
+stringData:
+  SIEM_TOKEN: "REPLACE_WITH_BEARER_TOKEN"
+  SIEM_URL: "https://siem.example.com:9200/agent-sentinel-policy/_doc"
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ship-policy-reports
+  namespace: kyverno
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: kyverno-reporter
+          restartPolicy: OnFailure
+          containers:
+          - name: shipper
+            # Pin by digest. Resolve current digest with: crane digest bitnami/kubectl:1.31.0
+            image: bitnami/kubectl@sha256:REPLACE_WITH_DIGEST_FROM_CRANE
+            envFrom:
+            - secretRef:
+                name: siem-credentials
+            command: ["/bin/sh", "-c"]
+            args:
+            - |
+              set -eu
+              kubectl get policyreports,clusterpolicyreports -A -o json \
+              | jq -c '.items[] | select(.summary.fail > 0) | {
+                  event: "policy_report",
+                  namespace: (.metadata.namespace // "cluster"),
+                  policy: (.metadata.labels."policy.kyverno.io/policy-name" // ""),
+                  failed: .summary.fail,
+                  results: [.results[] | select(.result == "fail")],
+                  ts: (now | strftime("%Y-%m-%dT%H:%M:%SZ"))
+                }' \
+              | while IFS= read -r line; do
+                  curl -sS -X POST "$SIEM_URL" \
+                    -H "Authorization: Bearer $SIEM_TOKEN" \
+                    -H "Content-Type: application/json" \
+                    -d "$line"
+                done

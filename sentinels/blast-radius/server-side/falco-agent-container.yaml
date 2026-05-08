@@ -1,0 +1,57 @@
+# ABOUTME: Falco runtime rules for agent Pods. Shell spawn, sensitive-path writes, non-allowlisted egress.
+# ABOUTME: agent_pod macro matches namespaces matching agent-*; align with the namespace label from controls/identity/server-side/namespace.yaml.
+- macro: agent_pod
+  condition: k8s.ns.name startswith "agent-"
+
+- list: allowed_agent_egress_ips
+  items:
+    # Populate from the FQDN allowlist in controls/supply-chain/server-side/cilium-mcp-fqdn-egress.yaml
+    # by resolving the names; refresh nightly via a CronJob.
+    - "0.0.0.0"   # placeholder; replace
+
+- rule: Agent Container Spawned Shell
+  desc: Agent containers should not spawn interactive shells
+  condition: >
+    spawned_process and agent_pod
+    and proc.name in (sh, bash, zsh, fish, dash)
+    and proc.tty != 0
+  output: >
+    Agent pod spawned shell
+    (pod=%k8s.pod.name container=%container.name cmd=%proc.cmdline)
+  priority: WARNING
+  tags: [agent, blast_radius]
+
+- rule: Agent Container Wrote to Sensitive Path
+  desc: Agent container writing to /etc, /var/lib, or /usr
+  condition: >
+    open_write and agent_pod
+    and (fd.name startswith /etc
+         or fd.name startswith /var/lib
+         or fd.name startswith /usr)
+  output: >
+    Agent pod wrote to sensitive path
+    (pod=%k8s.pod.name file=%fd.name)
+  priority: ERROR
+  tags: [agent, blast_radius]
+
+- rule: Agent Container Outbound to Non-Allowlisted Host
+  desc: Agent egress to a host outside the per-agent allowlist
+  condition: >
+    outbound and agent_pod
+    and not fd.sip in (allowed_agent_egress_ips)
+  output: >
+    Agent pod outbound to non-allowlisted
+    (pod=%k8s.pod.name dest=%fd.sip:%fd.sport)
+  priority: WARNING
+  tags: [agent, blast_radius, supply_chain]
+
+- rule: Agent Container Attempted Privilege Escalation
+  desc: Agent container called setuid, setgid, or modified capabilities
+  condition: >
+    evt.type in (setuid, setgid, capset)
+    and agent_pod
+  output: >
+    Agent privilege-escalation syscall
+    (pod=%k8s.pod.name syscall=%evt.type)
+  priority: ERROR
+  tags: [agent, sandbox, blast_radius]

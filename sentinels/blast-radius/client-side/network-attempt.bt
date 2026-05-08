@@ -1,0 +1,20 @@
+#!/usr/bin/env bpftrace
+// ABOUTME: bpftrace probe that prints agent_network_attempt for connect() syscalls from agent processes.
+// ABOUTME: Tune the comm filter for your runtime; "claude" and "node" cover the most common agent process names.
+
+BEGIN {
+  printf("agent-sentinel: bpftrace blast-radius probe attached\n");
+}
+
+tracepoint:syscalls:sys_enter_connect
+/comm == "claude" || comm == "node"/
+{
+  // Print pid, tgid, comm. Add @pid_to_session map population if you wire
+  // the session ID through bubblewrap's --setenv at launch.
+  printf("agent_network_attempt pid=%d tgid=%d comm=%s\n",
+         pid, tgid, comm);
+}
+
+END {
+  printf("agent-sentinel: bpftrace blast-radius probe detached\n");
+}

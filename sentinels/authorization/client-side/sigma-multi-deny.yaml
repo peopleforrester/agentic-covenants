@@ -1,0 +1,30 @@
+# ABOUTME: Sigma rule that fires when a single agent session accumulates >5 deny events from the PreToolUse hook.
+# ABOUTME: Probing pattern indicator. Tune the threshold to your environment's normal deny rate before alerting.
+title: Agent session with multi-deny pattern (probing indicator)
+id: 4d2c1e8a-9b7f-4c5d-8e6f-2a1b3c4d5e6f
+status: experimental
+description: >
+  Detects an agent session that hits more than five deny events from the
+  PreToolUse hook within a 10-minute window. A correctly behaving agent
+  encounters denies occasionally; an agent probing for a bypass triggers
+  many denies in a row. Tune the threshold and window for your environment.
+references:
+  - https://github.com/peopleforrester/agentic-covenants/blob/main/SENTINELS_MATRIX.md
+author: agentic-covenants
+date: 2026/05/08
+logsource:
+  category: agent_hook
+detection:
+  selection:
+    event: hook_decision
+    decision: deny
+  timeframe: 10m
+  condition: selection | count(session) > 5
+falsepositives:
+  - Operator iterating on a denylist pattern (mute the alert manually).
+  - First-run misconfiguration where the deny list is too aggressive (treat as a tuning indicator).
+level: medium
+tags:
+  - agent
+  - authorization
+  - sentinels
