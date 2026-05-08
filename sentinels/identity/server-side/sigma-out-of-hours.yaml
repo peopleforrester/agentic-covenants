@@ -1,0 +1,38 @@
+# ABOUTME: Sigma detection rule for agent SA used outside the expected business-hours window.
+# ABOUTME: Tune the hours range, weekend behavior, and on-call exception list for your team's working pattern.
+title: Agent identity used outside expected hours
+id: 6f6c8b3a-1e2d-4a3c-9d4e-3b7c8a9f0e1d
+status: experimental
+description: >
+  Detects use of an agent ServiceAccount or IAM principal outside the
+  expected business-hours window. Most agents in our environment operate
+  09:00-18:00 weekdays. Off-hours activity is an indicator of compromised
+  credentials, a forgotten cron job firing under an agent identity, or a
+  legitimate but undocumented operator action.
+references:
+  - https://github.com/peopleforrester/agentic-covenants/blob/main/SENTINELS_MATRIX.md
+author: agentic-covenants
+date: 2026/05/08
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    user.username|startswith: 'system:serviceaccount:agent-'
+  filter_business_hours:
+    requestReceivedTimestamp|in_window:
+      hours_local: '09:00..18:00'
+      weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+  filter_oncall_exceptions:
+    user.username|in:
+      - 'system:serviceaccount:agent-oncall-pager:rotate-on-call'
+  condition: selection and not filter_business_hours and not filter_oncall_exceptions
+falsepositives:
+  - On-call rotation agents (add to filter_oncall_exceptions).
+  - Engineers running agents during incident response (treat as alert worth surfacing, not silencing).
+  - Cross-timezone teams (parameterize hours_local per agent or per region).
+level: medium
+tags:
+  - agent
+  - identity
+  - sentinels

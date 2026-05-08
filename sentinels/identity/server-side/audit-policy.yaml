@@ -1,0 +1,55 @@
+# ABOUTME: Kubernetes API server audit policy. Captures every agent SA action; identity-binding events at full request body.
+# ABOUTME: Apply with --audit-policy-file= on kube-apiserver. Combined with --audit-log-path= or an audit webhook to a SIEM.
+apiVersion: audit.k8s.io/v1
+kind: Policy
+omitStages:
+- RequestReceived
+
+rules:
+
+# 1. All agent SA mutations at RequestResponse level (full body).
+- level: RequestResponse
+  users:
+  - "system:serviceaccount:agent-*"
+  verbs: ["create", "update", "patch", "delete", "deletecollection"]
+
+# 2. Agent SA reads at Metadata level (which user, which resource, no body).
+- level: Metadata
+  users:
+  - "system:serviceaccount:agent-*"
+  verbs: ["get", "list", "watch"]
+
+# 3. Identity-binding events at full body, regardless of who initiated.
+# These are the events that change who can do what; logging them at full
+# detail lets the SIEM reconstruct privilege changes.
+- level: RequestResponse
+  resources:
+  - group: "rbac.authorization.k8s.io"
+    resources: ["rolebindings", "clusterrolebindings", "roles", "clusterroles"]
+- level: RequestResponse
+  resources:
+  - group: ""
+    resources: ["serviceaccounts"]
+
+# 4. Secret reads/writes at full body. Secrets are credential material.
+- level: RequestResponse
+  resources:
+  - group: ""
+    resources: ["secrets"]
+  verbs: ["get", "create", "update", "patch", "delete"]
+
+# 5. Drop noisy health checks and well-known events that do not warrant
+# durable audit storage. Tune for your cluster's actual chatter.
+- level: None
+  users:
+  - "system:kube-proxy"
+  - "system:kube-scheduler"
+  - "system:kube-controller-manager"
+  resources:
+  - group: ""
+    resources: ["endpoints", "services", "nodes"]
+  verbs: ["get", "list", "watch"]
+
+# 6. Default: log at Metadata level so we have at least the who-and-what
+# for everything not covered above.
+- level: Metadata

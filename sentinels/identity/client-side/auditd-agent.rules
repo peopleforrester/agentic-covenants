@@ -1,0 +1,20 @@
+# ABOUTME: auditd rules for agent process startup. Drop in /etc/audit/rules.d/ and reload with augenrules --load.
+# ABOUTME: Watches by absolute path; if the agent binary is moved or symlinked elsewhere the rule misses, so re-audit periodically.
+
+# Watch for execve of any agent binary. The -k tag is what audit search uses.
+-a always,exit -F arch=b64 -S execve -F path=/usr/local/bin/claude -k agent_exec
+-a always,exit -F arch=b64 -S execve -F path=/usr/local/bin/agent-bwrap -k agent_exec
+-a always,exit -F arch=b64 -S execve -F path=/usr/local/bin/mcp-launch -k agent_exec
+
+# Watch for credential file reads (ACL should already deny these to the agent
+# user, but a rule on the file detects attempts).
+-w /etc/agents/ -p ra -k agent_credential_access
+
+# Watch for hook config edits.
+-w /etc/agents/hooks/ -p wa -k hook_config_edit
+-w /etc/agents/mcp-allowlist.json -p wa -k allowlist_edit
+
+# Watch for --no-verify in any process arg (the agent attempting to bypass
+# pre-commit). The short form -n is also caught by the second rule.
+-a always,exit -F arch=b64 -S execve -F a1=*--no-verify* -k git_no_verify
+-a always,exit -F arch=b64 -S execve -F a1=*-n* -k git_short_no_verify

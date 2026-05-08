@@ -1,0 +1,56 @@
+# ABOUTME: Vector config that ingests local syslog and ships parsed agent-sentinel events to Elasticsearch.
+# ABOUTME: Substitute siem.example.com and SIEM_TOKEN. Vector 0.40+ required for the parse_json! built-in used here.
+
+[sources.syslog_local]
+type = "syslog"
+mode = "tcp"
+address = "127.0.0.1:6514"
+max_length = 102400
+
+[transforms.parse_agent]
+type = "remap"
+inputs = ["syslog_local"]
+source = '''
+  # Only process events tagged "agent-sentinel".
+  if .appname != "agent-sentinel" {
+    abort
+  }
+  parsed, err = parse_json(.message)
+  if err != null {
+    .parse_error = err
+  } else {
+    . = merge(., parsed)
+  }
+  .source = "agent-sentinel"
+  .ingested_at = now()
+'''
+
+# Drop events that failed to parse so we don't pollute the index. The parse
+# error is logged at WARN by Vector's internal stats.
+[transforms.drop_unparsed]
+type = "filter"
+inputs = ["parse_agent"]
+condition = '''
+  exists(.event)
+'''
+
+[sinks.siem]
+type = "elasticsearch"
+inputs = ["drop_unparsed"]
+endpoints = ["https://siem.example.com:9200"]
+mode = "bulk"
+bulk.index = "agent-sentinel-%Y.%m.%d"
+
+[sinks.siem.auth]
+strategy = "bearer"
+token = "${SIEM_TOKEN}"
+
+# Ship to a local file as a backstop in case the SIEM is unreachable.
+# Vector buffers and replays automatically, but this gives us a last-resort
+# audit trail on the operator host itself.
+[sinks.local_archive]
+type = "file"
+inputs = ["drop_unparsed"]
+path = "/var/log/agent-sentinel/%Y-%m-%d.jsonl"
+encoding.codec = "json"
+compression = "gzip"

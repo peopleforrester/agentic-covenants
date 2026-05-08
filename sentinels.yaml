@@ -1,0 +1,205 @@
+# ABOUTME: Machine-readable source-of-truth for the Agentic Sentinels Matrix (Detect framework).
+# ABOUTME: Sibling to matrix.yaml; cells map 1:1 with the Covenants matrix concerns and layers but describe detection, not prevention.
+schema_version: 1
+title: Agentic Sentinels Matrix
+question: "If this concern is breached, how do we know?"
+companion: matrix.yaml
+
+layers:
+  - id: in-agent
+    label: In-agent (forensic only)
+    strength: forensic
+    summary: Transcript and tool-call logs from the agent runtime. Forensic value, not real-time. Lethal-trifecta detector at the wrapper layer is the only L1 with detection value.
+  - id: client-side
+    label: Client-side hooks
+    strength: deterministic-when-shipped
+    summary: auditd, eBPF, hook decision logs, MCP allowlist violation logs. Tamper-evident only if logs ship to a remote sink owned by the operator, not the agent.
+  - id: server-side
+    label: Server-side enforcement
+    strength: external-and-authoritative
+    summary: Kubernetes audit logs, CloudTrail, Falco, Hubble, Kyverno PolicyReports, GitHub webhooks. External to the agent's compromise model.
+
+concerns:
+  - id: identity
+    label: Identity
+    intent: Identity used outside expected hours, source IP, or by an unexpected principal.
+  - id: authorization
+    label: Authorization
+    intent: Hook denial events, RBAC denials, IAM Access Analyzer findings, OPA decision logs.
+  - id: blast-radius
+    label: Blast radius
+    intent: Sandbox boundary events, network attempts on --network none agents, NetworkPolicy denials, ResourceQuota near-limit alerts, VPC Flow Log REJECTs.
+  - id: approval-gating
+    label: Approval gating
+    intent: Hook decision-log timing analysis (alert fatigue), branch-protection bypass events, deployment-freeze breach attempts.
+  - id: supply-chain
+    label: Supply chain
+    intent: MCP allowlist violations, lockfile diff, tool-description hash mismatch, image-pull events with signature status, SBOM diff, cosign verification failures.
+
+principles:
+  - id: detection-needs-response
+    summary: Every detection must have a defined response. Alerts without runbooks are theatre.
+  - id: false-positive-cost
+    summary: Detection has false-positive cost. Tune thresholds against your traffic; defaults are starting points.
+
+cells:
+
+  # ---- IDENTITY ----
+  - concern: identity
+    layer: in-agent
+    summary: Tool-call logs include credential fingerprint (hash, never raw token); session correlation.
+    sentinels_path: sentinels/identity/in-agent/
+    citations:
+      nist_csf_2_0: ["DE.CM-09"]
+    primary_failure_modes:
+      - logs not shipped to a remote sink (agent edits local-only logs)
+
+  - concern: identity
+    layer: client-side
+    summary: PreToolUse hook emits structured identity events; auditd watches agent process startup; Vector/Fluent Bit ships to SIEM.
+    sentinels_path: sentinels/identity/client-side/
+    citations:
+      nist_csf_2_0: ["DE.CM-01", "DE.CM-09"]
+      other: ["NIST SP 800-92", "NIST NCCoE Concept Paper on AI Agent Identity (Feb 5, 2026)"]
+    primary_failure_modes:
+      - logging the raw token instead of a hash
+      - hook ships only to local file
+      - auditd rule on binary path defeated by binary move
+
+  - concern: identity
+    layer: server-side
+    summary: K8s audit log captures every agent SA action; CloudTrail with Object Lock; SIEM rules on out-of-hours, unexpected source IP, identity reuse.
+    sentinels_path: sentinels/identity/server-side/
+    citations:
+      nist_csf_2_0: ["DE.CM-01", "DE.CM-09", "DE.AE-02"]
+      other: ["NIST SP 800-92"]
+    primary_failure_modes:
+      - K8s audit policy not applied
+      - CloudTrail bucket without Object Lock
+      - SIEM rule based on userIdentity.principalId instead of resolved role ARN
+
+  # ---- AUTHORIZATION ----
+  - concern: authorization
+    layer: in-agent
+    summary: Tool descriptions logged with each call (forensic).
+    sentinels_path: sentinels/authorization/in-agent/
+    citations:
+      nist_csf_2_0: ["DE.CM-09"]
+
+  - concern: authorization
+    layer: client-side
+    summary: Hook decision events (allow/ask/deny/error); auditd watches hook config edits and --no-verify; SIEM rule for multi-deny patterns.
+    sentinels_path: sentinels/authorization/client-side/
+    citations:
+      nist_csf_2_0: ["DE.CM-01", "DE.CM-03", "DE.CM-09"]
+    primary_failure_modes:
+      - decision events not correlated with tool input
+      - auditd rule format errors silently disable the rule
+      - --no-verify rule misses git commit -n short form
+
+  - concern: authorization
+    layer: server-side
+    summary: RBAC denial events from K8s audit; IAM Access Analyzer findings; Kyverno PolicyReports; OPA decision logs centralized.
+    sentinels_path: sentinels/authorization/server-side/
+    citations:
+      nist_csf_2_0: ["DE.CM-01", "DE.CM-09", "DE.AE-02"]
+      other: ["NIST SP 800-207"]
+    primary_failure_modes:
+      - Kyverno in Audit mode (logs but does not enforce)
+      - OPA decision log streams everything (floods SIEM)
+      - Access Analyzer is regional; multi-region misses
+
+  # ---- BLAST RADIUS ----
+  - concern: blast-radius
+    layer: in-agent
+    summary: Forensic only; sandbox events do not surface in-agent.
+    sentinels_path: sentinels/blast-radius/in-agent/
+    citations:
+      nist_csf_2_0: ["DE.CM-09"]
+
+  - concern: blast-radius
+    layer: client-side
+    summary: bpftrace or Falco userspace catches unsandboxed children, sandbox EPERM events, unexpected network attempts; correlates by session ID.
+    sentinels_path: sentinels/blast-radius/client-side/
+    citations:
+      nist_csf_2_0: ["DE.CM-01", "DE.CM-09"]
+      other: ["NIST SP 800-160 Vol. 1"]
+    primary_failure_modes:
+      - Falco proc.pname only catches one level (use proc.aname)
+      - bpftrace requires kernel headers and root
+      - boundary events not correlated with session ID
+
+  - concern: blast-radius
+    layer: server-side
+    summary: Falco runtime rules for shells in agent containers and writes to sensitive paths; Cilium Hubble drops; ResourceQuota near-limit Prometheus alert; VPC Flow Log REJECTs.
+    sentinels_path: sentinels/blast-radius/server-side/
+    citations:
+      nist_csf_2_0: ["DE.CM-01", "DE.CM-09", "DE.AE-03"]
+      other: ["NISTIR 8596"]
+    primary_failure_modes:
+      - Falco rules tagged WARNING that should be ERROR
+      - Hubble flow export not configured
+      - ResourceQuota alert without auto-scale
+
+  # ---- APPROVAL GATING ----
+  - concern: approval-gating
+    layer: in-agent
+    summary: Confirmation-prompt usage forensically logged.
+    sentinels_path: sentinels/approval-gating/in-agent/
+    citations:
+      nist_csf_2_0: ["DE.CM-09"]
+
+  - concern: approval-gating
+    layer: client-side
+    summary: Approval-timing analysis surfaces alert-fatigue (response under 2s across more than 50 approvals); typed-confirmation mismatch events; out-of-band channel decisions joined to session.
+    sentinels_path: sentinels/approval-gating/client-side/
+    citations:
+      nist_csf_2_0: ["DE.CM-03", "DE.AE-02"]
+      other: ["AHRQ PSNet alarm fatigue", "Anthropic Auto Mode (March 2026)"]
+    primary_failure_modes:
+      - timing measurement includes network latency
+      - threshold too aggressive (5s false-positives) or too lenient (100ms never fires)
+
+  - concern: approval-gating
+    layer: server-side
+    summary: GitHub webhook for branch-protection bypass; hourly drift-detection job; deployment-freeze breach alerts; audit on changes to branch protection itself.
+    sentinels_path: sentinels/approval-gating/server-side/
+    citations:
+      nist_csf_2_0: ["DE.CM-09", "DE.AE-02", "GV.RR-02"]
+      other: ["EU AI Act Art. 14"]
+    primary_failure_modes:
+      - webhook secret not verified (anyone spoofs events)
+      - audit cron at 24h interval (bypass-then-restore undetected)
+      - expected protection JSON not version-controlled
+
+  # ---- SUPPLY CHAIN ----
+  - concern: supply-chain
+    layer: in-agent
+    summary: "Where did this dependency come from" forensically traceable through tool-call log.
+    sentinels_path: sentinels/supply-chain/in-agent/
+    citations:
+      nist_csf_2_0: ["DE.CM-09"]
+
+  - concern: supply-chain
+    layer: client-side
+    summary: MCP allowlist violation events; tool-description hash mismatch alerting; lockfile diff in CI logs centralized; pre-commit dependency scan results.
+    sentinels_path: sentinels/supply-chain/client-side/
+    citations:
+      nist_csf_2_0: ["DE.CM-09", "ID.RA-09"]
+      owasp_mcp: ["MCP08", "MCP09"]
+    primary_failure_modes:
+      - MCP wrapper logs only successful connections (failures are interesting events)
+      - lockfile diff log includes full diff for huge PRs (truncate)
+      - tool-description hash mismatch suppressed on legitimate update
+
+  - concern: supply-chain
+    layer: server-side
+    summary: Image-pull events with signature verification status; SBOM diff over time per workload; cosign verification failures; egress NetworkPolicy denials to non-allowlisted MCP domains.
+    sentinels_path: sentinels/supply-chain/server-side/
+    citations:
+      nist_csf_2_0: ["DE.CM-09", "ID.RA-09", "GV.SC-07"]
+      other: ["NIST SP 800-161 Rev. 1", "SLSA framework", "CISA/NSA/FBI AI Data Security CSI (May 2025)"]
+    primary_failure_modes:
+      - SBOM diff compares only top-level package counts (misses transitive)
+      - image pull annotation runs as mutate in Audit mode (does not annotate)
+      - Hubble FQDN logs disabled by default in some Cilium installs

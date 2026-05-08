@@ -1,0 +1,32 @@
+# ABOUTME: Sigma detection rule for agent identity used from a source IP outside the known agent-egress set.
+# ABOUTME: known_agent_ips_lookup is a SIEM lookup table the operator maintains; the rule's correctness depends on it.
+title: Agent identity used from unexpected source IP
+id: 7e5f9c2b-2f3e-5b4d-ae5f-4c8d9b0e1f2a
+status: experimental
+description: >
+  Detects use of an agent ServiceAccount or IAM principal from a source IP
+  not in the known agent-egress set. Agent egress IPs are stable: NAT
+  gateway, EKS node CIDR, GitHub Actions IP ranges. A source IP outside this
+  set is an indicator of credential exfiltration to an external host or of
+  a misconfigured cluster path.
+references:
+  - https://github.com/peopleforrester/agentic-covenants/blob/main/SENTINELS_MATRIX.md
+author: agentic-covenants
+date: 2026/05/08
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    userIdentity.sessionContext.sessionIssuer.userName|startswith: 'claude-'
+  filter:
+    sourceIPAddress|in: '@known_agent_ips_lookup'
+  condition: selection and not filter
+falsepositives:
+  - New NAT gateway provisioned and lookup table not updated (process; do not silence).
+  - GitHub Actions runner IP rotation (use the published IP range, not specific IPs).
+level: high
+tags:
+  - agent
+  - identity
+  - sentinels
