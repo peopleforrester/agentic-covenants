@@ -1,0 +1,12 @@
+# ABOUTME: Namespace-wide default deny on ingress and egress. Apply first, then layer specific allow rules on top.
+# ABOUTME: Without a CNI that supports NetworkPolicy (some legacy setups), this object is accepted but does nothing.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: agent-claude-prod
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress

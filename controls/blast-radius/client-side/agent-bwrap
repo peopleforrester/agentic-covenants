@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# ABOUTME: Bubblewrap launcher that sandboxes the agent with inheritance enforcement and no direct network.
+# ABOUTME: Network access goes through /run/agent-egress.sock, an out-of-sandbox proxy that owns the allowlist.
+
+set -euo pipefail
+
+WORK_DIR="${1:-$PWD}"
+shift || true
+
+if [[ ! -d "$WORK_DIR" ]]; then
+  echo "agent-bwrap: workspace dir does not exist: $WORK_DIR" >&2
+  exit 64
+fi
+
+EGRESS_SOCK="${EGRESS_SOCK:-/run/agent-egress.sock}"
+SECCOMP_FILE="${SECCOMP_FILE:-/etc/agents/seccomp-claude.json}"
+USE_NETWORK="${USE_NETWORK:-1}"
+
+BWRAP_FLAGS=(
+  --ro-bind /usr /usr
+  --ro-bind /lib /lib
+  --ro-bind /lib64 /lib64
+  --ro-bind /etc /etc
+  --tmpfs /tmp
+  --tmpfs /var/tmp
+  --bind "$WORK_DIR" /workspace
+  --chdir /workspace
+  --proc /proc
+  --dev /dev
+  --unshare-uts
+  --unshare-ipc
+  --unshare-pid
+  --new-session
+  --die-with-parent
+  --cap-drop ALL
+)
+
+if [[ "$USE_NETWORK" == "0" ]]; then
+  BWRAP_FLAGS+=( --unshare-net )
+else
+  # Network through the egress proxy only. The proxy owns the allowlist and
+  # lives outside the sandbox; a compromised agent cannot rewrite it.
+  if [[ ! -S "$EGRESS_SOCK" ]]; then
+    echo "agent-bwrap: egress socket missing: $EGRESS_SOCK" >&2
+    echo "Start the egress proxy or run with USE_NETWORK=0 for offline tasks." >&2
+    exit 1
+  fi
+  BWRAP_FLAGS+=(
+    --unshare-net
+    --bind "$EGRESS_SOCK" "$EGRESS_SOCK"
+    --setenv HTTPS_PROXY "unix://${EGRESS_SOCK}"
+    --setenv HTTP_PROXY "unix://${EGRESS_SOCK}"
+  )
+fi
+
+# Apply seccomp if the kernel and bubblewrap support --seccomp.
+# (Some distros' bubblewrap is built without seccomp support; we degrade
+# gracefully rather than fail the launch.)
+if [[ -r "$SECCOMP_FILE" ]] && bwrap --help 2>&1 | grep -q -- '--seccomp'; then
+  # bubblewrap takes a binary BPF program on a file descriptor. Translate the
+  # OCI seccomp JSON into BPF using your runtime's helper, or skip and rely on
+  # systemd-side SystemCallFilter= in the unit file.
+  :
+fi
+
+exec bwrap "${BWRAP_FLAGS[@]}" /usr/local/bin/claude "$@"

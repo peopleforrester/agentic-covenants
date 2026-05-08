@@ -1,0 +1,44 @@
+# ABOUTME: Explicit allow rules layered on top of default-deny. DNS is required or pods silently fail to resolve names.
+# ABOUTME: HTTPS egress is allowed only to non-RFC1918 ranges to keep the agent off the internal network.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: claude-code-egress
+  namespace: agent-claude-prod
+spec:
+  podSelector:
+    matchLabels:
+      app: claude-code
+  policyTypes:
+  - Egress
+  egress:
+
+  # 1. DNS to kube-dns (or whatever CoreDNS is labeled in your cluster).
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+
+  # 2. HTTPS to public internet only. The except: list strips out RFC1918
+  # and link-local; the agent cannot reach internal services this way.
+  # For granular per-host egress, layer a Cilium FQDN policy on top.
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 10.0.0.0/8
+        - 172.16.0.0/12
+        - 192.168.0.0/16
+        - 169.254.0.0/16    # link-local (cloud metadata)
+        - 100.64.0.0/10     # carrier-grade NAT
+    ports:
+    - protocol: TCP
+      port: 443

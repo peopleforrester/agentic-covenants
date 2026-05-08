@@ -1,0 +1,29 @@
+# ABOUTME: Namespace-level quota that caps CPU, memory, pod count, PVC count, and forbids LoadBalancer/NodePort services.
+# ABOUTME: Pair with the LimitRange so individual pods get sensible defaults; without LimitRange the quota's requests ceiling rejects them.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: agent-claude-prod-quota
+  namespace: agent-claude-prod
+spec:
+  hard:
+    requests.cpu: "10"
+    requests.memory: 20Gi
+    requests.ephemeral-storage: 50Gi
+    limits.cpu: "20"
+    limits.memory: 40Gi
+    limits.ephemeral-storage: 100Gi
+
+    pods: "20"
+    persistentvolumeclaims: "5"
+    requests.storage: 100Gi
+
+    # Block service types that expose the agent's namespace to the public
+    # network or to external load balancers.
+    services.loadbalancers: "0"
+    services.nodeports: "0"
+
+    # Block secrets and configmaps growing without bound. Tune for your
+    # specific agent's actual config-loading pattern.
+    secrets: "20"
+    configmaps: "20"

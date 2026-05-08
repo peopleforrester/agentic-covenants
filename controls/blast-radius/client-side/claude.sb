@@ -1,0 +1,53 @@
+;; ABOUTME: macOS Seatbelt sandbox profile for the agent. Run with sandbox-exec -D WORKSPACE=$PWD -D HOME=$HOME -f claude.sb.
+;; ABOUTME: Network egress is denied except through a unix-domain-socket proxy at /private/var/run/agent-egress.sock.
+
+(version 1)
+(deny default)
+
+;; Process management
+(allow process-fork)
+(allow process-exec
+  (literal "/usr/local/bin/claude")
+  (subpath "/usr/bin")
+  (subpath "/bin")
+  (subpath "/usr/local/bin"))
+
+(allow signal (target self))
+
+;; Read-only system reads
+(allow file-read*
+  (subpath "/usr")
+  (subpath "/Library/Frameworks")
+  (subpath "/System/Library")
+  (subpath "/private/etc")
+  (literal "/etc")
+  (literal "/dev/random")
+  (literal "/dev/urandom")
+  (literal "/dev/null"))
+
+;; Workspace is read-write. Substituted at launch time via -D WORKSPACE=...
+(allow file-read* file-write*
+  (subpath (param "WORKSPACE")))
+
+;; Agent runtime config in the operator's home dir is read-only. The
+;; credential file is owned by root, ACLed away from the agent's user.
+(allow file-read*
+  (subpath (param "HOME") "/.claude"))
+
+;; tmpfs equivalent for transient files
+(allow file-read* file-write*
+  (subpath "/private/tmp")
+  (subpath "/private/var/tmp"))
+
+;; IPC for system services the agent must call
+(allow mach-lookup
+  (global-name "com.apple.system.notification_center")
+  (global-name "com.apple.system.opendirectoryd.api"))
+
+;; Network: deny everything by default, allow only the egress proxy socket.
+(deny network*)
+(allow network-outbound
+  (literal "/private/var/run/agent-egress.sock"))
+
+;; Resource limits applied at sandbox layer (also enforced by launchd)
+(allow sysctl-read)

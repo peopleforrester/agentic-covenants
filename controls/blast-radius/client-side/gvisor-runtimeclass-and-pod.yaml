@@ -1,0 +1,69 @@
+# ABOUTME: gVisor RuntimeClass and an example Pod using runsc for syscall-level isolation in Kubernetes.
+# ABOUTME: Pair with the projected-token Pod in controls/identity/server-side/. Substitute the image digest.
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: gvisor
+handler: runsc
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: claude-agent
+  namespace: agent-claude-prod
+  labels:
+    app: claude-code
+spec:
+  runtimeClassName: gvisor
+  serviceAccountName: claude-code
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: claude
+    # Pin by digest. Resolve current digest with: crane digest registry.example.com/claude-agent:v1
+    image: registry.example.com/claude-agent@sha256:REPLACE_WITH_DIGEST_FROM_CRANE
+    securityContext:
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 1000
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: ["ALL"]
+      seccompProfile:
+        type: RuntimeDefault
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 1
+        memory: 1Gi
+        ephemeral-storage: 1Gi
+    volumeMounts:
+    - name: agent-token
+      mountPath: /var/run/secrets/agents
+      readOnly: true
+    - name: workdir
+      mountPath: /workspace
+    - name: tmp
+      mountPath: /tmp
+  volumes:
+  - name: agent-token
+    projected:
+      sources:
+      - serviceAccountToken:
+          path: token
+          expirationSeconds: 900
+          audience: agent-claude-prod
+  - name: workdir
+    emptyDir:
+      sizeLimit: 500Mi
+  - name: tmp
+    emptyDir:
+      sizeLimit: 100Mi

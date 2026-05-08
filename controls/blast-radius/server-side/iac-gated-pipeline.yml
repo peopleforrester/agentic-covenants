@@ -1,0 +1,81 @@
+# ABOUTME: GitHub Actions workflow with plan-and-apply split. The apply job is gated by a GitHub environment with required reviewers.
+# ABOUTME: The DEPLOY_FREEZE repo variable, set by a separate workflow when an incident is active, blocks apply.
+name: Terraform (gated apply)
+
+on:
+  pull_request:
+    paths: ['infrastructure/**']
+  push:
+    branches: [main]
+    paths: ['infrastructure/**']
+
+permissions:
+  contents: read
+  id-token: write   # for OIDC AssumeRole
+
+jobs:
+
+  plan:
+    name: terraform plan (read-only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/terraform-plan-readonly
+          aws-region: us-east-1
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+      - name: terraform fmt
+        working-directory: infrastructure
+        run: terraform fmt -check -recursive
+      - name: terraform init
+        working-directory: infrastructure
+        run: terraform init -backend-config=backend.hcl
+      - name: terraform validate
+        working-directory: infrastructure
+        run: terraform validate
+      - name: terraform plan
+        working-directory: infrastructure
+        run: terraform plan -out=tfplan -no-color
+      - name: archive plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: infrastructure/tfplan
+          retention-days: 7
+
+  apply:
+    name: terraform apply (gated)
+    needs: plan
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: production       # Configure this environment with required reviewers in GitHub settings.
+      url: https://console.aws.amazon.com
+    steps:
+      - name: deploy freeze check
+        if: vars.DEPLOY_FREEZE == 'true'
+        run: |
+          echo "::error::Deployment freeze is active. Apply blocked."
+          exit 1
+
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+          path: infrastructure
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/terraform-apply-prod
+          aws-region: us-east-1
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+      - name: terraform init
+        working-directory: infrastructure
+        run: terraform init -backend-config=backend.hcl
+      - name: terraform apply
+        working-directory: infrastructure
+        run: terraform apply -auto-approve tfplan
