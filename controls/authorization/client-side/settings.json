@@ -1,0 +1,53 @@
+{
+  "permissions": {
+    "defaultMode": "deny",
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep"
+    ],
+    "ask": [
+      "Edit",
+      "Write",
+      "Bash(git:status)",
+      "Bash(git:diff)",
+      "Bash(git:log)",
+      "Bash(git:add:*)",
+      "Bash(git:commit:*)",
+      "Bash(npm:install)",
+      "Bash(pip:install)"
+    ],
+    "deny": [
+      "Bash(rm:-rf)",
+      "Bash(rm:-rf:/)",
+      "Bash(terraform:destroy)",
+      "Bash(terraform:apply:-auto-approve)",
+      "Bash(kubectl:delete:*)",
+      "Bash(kubectl:scale:*--replicas=0*)",
+      "Bash(aws:s3:rb)",
+      "Bash(aws:ec2:terminate-instances)",
+      "Bash(aws:rds:delete-db-instance)",
+      "Bash(gh:repo:delete)",
+      "Bash(curl:*-X:DELETE*)",
+      "Bash(docker:system:prune)",
+      "Bash(helm:uninstall)",
+      "Bash(git:push:--force)",
+      "Bash(git:reset:--hard)",
+      "Bash(dd:*)",
+      "Bash(mkfs:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/etc/agents/hooks/pre_tool_use.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

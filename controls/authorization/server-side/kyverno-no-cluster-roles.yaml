@@ -1,0 +1,100 @@
+# ABOUTME: Kyverno ClusterPolicy denying ClusterRoleBindings, wildcard verbs, and prod-namespace bindings on agent SAs.
+# ABOUTME: Requires Kyverno 1.13+ for the policy syntax used here. validationFailureAction must be Enforce, not Audit.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: agents-no-cluster-roles
+  annotations:
+    policies.kyverno.io/title: Agents must use namespace-scoped Roles only
+    policies.kyverno.io/category: Agentic Covenants / Authorization
+    policies.kyverno.io/severity: high
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+
+  - name: deny-clusterrolebinding-for-agent-sa
+    match:
+      any:
+      - resources:
+          kinds: [ClusterRoleBinding]
+    validate:
+      message: >-
+        Agents must use namespace-scoped RoleBindings, never ClusterRoleBindings.
+        ServiceAccounts in namespaces matching agent-* may not be ClusterRoleBinding subjects.
+      foreach:
+      - list: "request.object.subjects"
+        deny:
+          conditions:
+            all:
+            - key: "{{ element.kind }}"
+              operator: Equals
+              value: "ServiceAccount"
+            - key: "{{ element.namespace }}"
+              operator: AnyIn
+              value: ["agent-*"]
+
+  - name: deny-wildcard-verbs-in-roles
+    match:
+      any:
+      - resources:
+          kinds: [Role, ClusterRole]
+    validate:
+      message: >-
+        Wildcard verbs are not permitted. List the verbs explicitly: get, list, watch, etc.
+      pattern:
+        rules:
+        - verbs:
+            X(verbs): "!*"
+
+  - name: deny-wildcard-resources-in-roles
+    match:
+      any:
+      - resources:
+          kinds: [Role, ClusterRole]
+    validate:
+      message: >-
+        Wildcard resources are not permitted. List resources explicitly, including subresources
+        such as pods/exec where access must be explicit.
+      pattern:
+        rules:
+        - resources:
+            X(resources): "!*"
+
+  - name: deny-agent-sa-binding-into-prod-namespaces
+    match:
+      any:
+      - resources:
+          kinds: [RoleBinding]
+          namespaces:
+          - "prod-*"
+          - "production"
+          - "prd"
+    validate:
+      message: >-
+        Agent ServiceAccounts (namespaces matching agent-*) cannot be bound into production namespaces.
+        Production work belongs to a human operator with their own credentials.
+      foreach:
+      - list: "request.object.subjects"
+        deny:
+          conditions:
+            all:
+            - key: "{{ element.kind }}"
+              operator: Equals
+              value: "ServiceAccount"
+            - key: "{{ element.namespace }}"
+              operator: AnyIn
+              value: ["agent-*"]
+
+  - name: require-explicit-resource-on-rolebinding
+    match:
+      any:
+      - resources:
+          kinds: [RoleBinding, ClusterRoleBinding]
+    validate:
+      message: >-
+        RoleBinding/ClusterRoleBinding must reference a Role or ClusterRole that exists.
+        roleRef.name must be set.
+      pattern:
+        roleRef:
+          name: "?*"

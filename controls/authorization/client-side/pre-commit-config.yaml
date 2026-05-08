@@ -1,0 +1,26 @@
+# ABOUTME: pre-commit framework config running gitleaks and a protected-paths gate.
+# ABOUTME: Drop at repo root as .pre-commit-config.yaml and run `pre-commit install`. Backstopped by server-side pre-receive.
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.22.1
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: ["--maxkb=512"]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: local
+    hooks:
+      - id: deny-protected-paths
+        name: Deny edits to protected paths from agent commits
+        language: script
+        entry: ./scripts/deny-protected-paths.sh
+        files: '^(infrastructure/prod/|\.github/workflows/|secrets/|\.claude/|/etc/agents/)'
+        always_run: false
+        pass_filenames: true
