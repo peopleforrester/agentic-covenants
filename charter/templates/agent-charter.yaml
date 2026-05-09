@@ -1,0 +1,91 @@
+# ABOUTME: Canonical YAML template for an Agent Charter. One file per agent. Branch-protected. PR-reviewed. Signed.
+# ABOUTME: Drop into your governance repo. Replace placeholders. Approval signatures become PR review approvals or detached PGP signatures.
+
+charter_version: 1.0
+
+agent:
+  name: claude-code-prod
+  identifier: agent-claude-code-prod-001
+  description: "Production DevOps automation. Read-only k8s, scoped IAM."
+
+ownership:
+  owner_name: Michael Forrester
+  owner_role: Principal Training Architect
+  owner_email: michael@example.com
+  backup_owner_name: Steven Heckler
+  backup_owner_role: Managing Director
+  backup_owner_email: steven@example.com
+
+risk_tier: 2
+# Tier 1 = read-only, 2 = scoped writes, 3 = destructive ops, 4 = production-critical.
+# Tier determines which Covenants/Sentinels/Interventions cells must be populated.
+
+damage_cap:
+  max_records_per_session: 100
+  max_cloud_spend_per_day_usd: 50
+  forbidden_operations:
+    - prod_database_writes
+    - secret_modifications
+    - branch_protection_changes
+    - charter_self_modification
+
+authorized_scope:
+  environments: [dev, staging]
+  tools_allowlist:
+    - Read
+    - Glob
+    - Grep
+    - "Bash(git:status)"
+    - "Bash(git:diff)"
+    - "Bash(kubectl:get:*)"
+  mcp_servers_allowlist: [filesystem, github]
+  rbac_role_ref: agent-claude-code-prod-role
+  iam_role_arn: arn:aws:iam::123456789012:role/claude-code-prod
+
+dependencies:
+  foundation_model: claude-opus-4-7
+  foundation_model_pinned_at: 2026-04-15
+  mcp_server_hashes:
+    filesystem: sha256:REPLACE_WITH_ACTUAL_SHA256
+    github: sha256:REPLACE_WITH_ACTUAL_SHA256
+  base_image: ghcr.io/example-org/claude-agent
+  base_image_digest: sha256:REPLACE_WITH_DIGEST_FROM_CRANE
+  agent_runtime_version: 2.1.40
+  pinned_at: 2026-04-15
+
+approvals:
+  - approver_name: Steven Heckler
+    approver_role: Managing Director
+    approval_date: 2026-04-15
+    approval_signature: <PGP signature or commit SHA of approval PR>
+  - approver_name: Tapas Banerjee
+    approver_role: Security Review
+    approval_date: 2026-04-15
+    approval_signature: <PGP signature or commit SHA of approval PR>
+
+review_cadence: quarterly
+next_review_due: 2026-07-15
+
+retirement_criteria:
+  - "Owner departs and no backup-owner accepts handoff within 30 days"
+  - "Sustained false-positive rate above 30% for 14 days"
+  - "Sustained Sentinels-detected scope drift for 7 days"
+  - "Foundation model deprecated by vendor"
+  - "Domain charter retired or substantially amended"
+
+incident_revocation:
+  conditions:
+    - "Detected lethal-trifecta pattern in agent context"
+    - "Two or more Sentinels alerts at severity ERROR within 24h"
+    - "Owner judgment"
+  authority: owner_or_domain_lead
+  procedure: "Run interventions/identity/server-side/agent-revoke-server then notify charter@example.com"
+
+parent_charters:
+  domain: charter-platform-engineering-domain.yaml
+  organizational: charter-organizational-ai-policy.yaml
+
+audit_trail:
+  created_at: 2026-04-15T00:00:00Z
+  last_amended_at: 2026-04-15T00:00:00Z
+  amendment_history_ref: "git log charters/agent-charter-claude-code-prod.yaml"
