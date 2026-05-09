@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# ABOUTME: Server-side blast-radius containment runbook. NetworkPolicy default-deny, scale to zero, force-delete pods.
+# ABOUTME: Pre-stage networkpolicy-emergency-deny.yaml and sg-deny-all-egress.json under /etc/agents/emergency/.
+
+set -euo pipefail
+
+if [[ $# -lt 1 ]]; then
+  echo "Usage: agent-contain-server <AGENT_NAME>" >&2
+  exit 64
+fi
+
+AGENT_NAME="$1"
+NAMESPACE="agent-${AGENT_NAME}"
+INCIDENT_ID="$(uuidgen 2>/dev/null || python3 -c 'import uuid; print(uuid.uuid4())')"
+EMERGENCY_DIR="${EMERGENCY_DIR:-/etc/agents/emergency}"
+DRAIN_NODES="${DRAIN_NODES:-0}"   # set to 1 to cordon and drain nodes hosting the agent
+BLOCK_EGRESS_SG="${BLOCK_EGRESS_SG:-1}"
+
+if [[ ! -r "$EMERGENCY_DIR/networkpolicy-emergency-deny.yaml" ]]; then
+  echo "REFUSING: $EMERGENCY_DIR/networkpolicy-emergency-deny.yaml not pre-staged" >&2
+  exit 1
+fi
+
+# 1. Apply emergency NetworkPolicy default-deny in the agent's namespace.
+kubectl apply -n "$NAMESPACE" -f "$EMERGENCY_DIR/networkpolicy-emergency-deny.yaml"
+
+# 2. Scale all Deployments in the agent namespace to zero.
+kubectl scale deployment -n "$NAMESPACE" --all --replicas=0 2>/dev/null || true
+
+# 3. Force-delete pods that did not respect scale-down.
+kubectl delete pods -n "$NAMESPACE" --all --force --grace-period=0 2>/dev/null &
+DELETE_PID=$!
+
+# 4. Optional: cordon and drain the nodes hosting the agent if compromise
+# extends to the host (Falco events from outside the namespace, kernel-level
+# escape suspected, etc.).
+if [[ "$DRAIN_NODES" == "1" ]]; then
+  mapfile -t AGENT_NODES < <(
+    kubectl get pods -n "$NAMESPACE" -o jsonpath='{.items[*].spec.nodeName}' 2>/dev/null \
+      | tr ' ' '\n' | sort -u
+  )
+  for node in "${AGENT_NODES[@]}"; do
+    [[ -z "$node" ]] && continue
+    kubectl cordon "$node" 2>/dev/null || true
+    kubectl drain "$node" \
+      --grace-period=0 --force \
+      --delete-emptydir-data --ignore-daemonsets &
+  done
+fi
+
+# 5. Block egress at cloud firewall (AWS Security Group example).
+if [[ "$BLOCK_EGRESS_SG" == "1" ]] && command -v aws >/dev/null 2>&1; then
+  SG_ID="$(aws ec2 describe-security-groups \
+    --filters "Name=tag:agent,Values=$AGENT_NAME" \
+    --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null || true)"
+  if [[ -n "$SG_ID" && "$SG_ID" != "None" ]]; then
+    aws ec2 update-security-group-rule-descriptions-egress \
+      --group-id "$SG_ID" \
+      --ip-permissions "$(cat "$EMERGENCY_DIR/sg-deny-all-egress.json")" \
+      2>/dev/null || echo "WARN: SG rule update failed; SG may be referenced elsewhere" >&2
+  fi
+fi
+
+wait
+
+logger -t agent-incident -p user.warning \
+  "$(jq -n \
+      --arg event "blast_radius_contained_server" \
+      --arg agent "$AGENT_NAME" \
+      --arg incident "$INCIDENT_ID" \
+      --arg actor "$(whoami)" \
+      --arg ts "$(date -Iseconds)" \
+      '{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}')"
+
+echo "Server-side blast radius contained for $AGENT_NAME (incident $INCIDENT_ID)"

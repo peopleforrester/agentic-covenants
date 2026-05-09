@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# ABOUTME: Server-side identity-revocation runbook. Disables SA, force-deletes pods, attaches IAM deny-all, revokes OIDC sessions.
+# ABOUTME: Pre-authorized at on-call level. Reversible. Pre-stage iam-deny-all.json under /etc/agents/emergency/ before relying on this script.
+
+set -euo pipefail
+
+if [[ $# -lt 1 ]]; then
+  echo "Usage: agent-revoke-server <AGENT_NAME>" >&2
+  exit 64
+fi
+
+AGENT_NAME="$1"
+NAMESPACE="agent-${AGENT_NAME}"
+INCIDENT_ID="$(uuidgen 2>/dev/null || python3 -c 'import uuid; print(uuid.uuid4())')"
+EMERGENCY_DIR="${EMERGENCY_DIR:-/etc/agents/emergency}"
+
+# 1. Disable ServiceAccount automount (existing pods keep their tokens until restart).
+kubectl patch sa -n "$NAMESPACE" claude-code \
+  --type='merge' \
+  -p '{"automountServiceAccountToken":false}' 2>/dev/null || \
+  echo "WARN: kubectl patch failed; SA may not exist in $NAMESPACE" >&2
+
+# 2. Delete all pods in the namespace to force token re-mount (which will fail).
+# Background so we can continue with IAM revocation in parallel.
+kubectl delete pods -n "$NAMESPACE" --all --force --grace-period=0 2>/dev/null &
+KUBE_PID=$!
+
+# 3. Attach IAM deny-all policy.
+if [[ -r "$EMERGENCY_DIR/iam-deny-all.json" ]]; then
+  aws iam put-role-policy \
+    --role-name "$AGENT_NAME" \
+    --policy-name "EmergencyDenyAll-${INCIDENT_ID}" \
+    --policy-document "file://$EMERGENCY_DIR/iam-deny-all.json" 2>/dev/null || \
+    echo "WARN: aws iam put-role-policy failed" >&2
+else
+  echo "WARN: $EMERGENCY_DIR/iam-deny-all.json not found; pre-stage this file before depending on this runbook." >&2
+fi
+
+# 4. Revoke OIDC tokens at the IdP. Provider-specific; Okta example below.
+# Set OKTA_API_TOKEN, OKTA_DOMAIN in the operator's break-glass env before
+# invoking. For other IdPs (Auth0, Keycloak, Dex), substitute the equivalent
+# session-clear API call.
+if [[ -n "${OKTA_DOMAIN:-}" && -n "${OKTA_API_TOKEN:-}" ]]; then
+  USER_ID=$(curl -sS "https://${OKTA_DOMAIN}/api/v1/users?q=${AGENT_NAME}" \
+    -H "Authorization: SSWS $OKTA_API_TOKEN" \
+    -H "Accept: application/json" | jq -r '.[0].id // empty')
+  if [[ -n "$USER_ID" ]]; then
+    curl -sS -X DELETE "https://${OKTA_DOMAIN}/api/v1/users/${USER_ID}/sessions" \
+      -H "Authorization: SSWS $OKTA_API_TOKEN" \
+      -H "Accept: application/json" >/dev/null
+  fi
+fi
+
+# 5. Wait for pod deletion to complete before declaring done.
+wait "$KUBE_PID" 2>/dev/null || true
+
+# 6. Log to cluster events and to syslog.
+kubectl create event --namespace "$NAMESPACE" \
+  --type=Warning \
+  --reason=IdentityRevoked \
+  --message="Emergency identity revocation for $AGENT_NAME, incident $INCIDENT_ID" 2>/dev/null || true
+
+logger -t agent-incident -p user.warning \
+  "$(jq -n \
+      --arg event "identity_revoked_server" \
+      --arg agent "$AGENT_NAME" \
+      --arg incident "$INCIDENT_ID" \
+      --arg actor "$(whoami)" \
+      --arg ts "$(date -Iseconds)" \
+      '{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}')"
+
+echo "Server-side identity revoked for $AGENT_NAME (incident $INCIDENT_ID)"

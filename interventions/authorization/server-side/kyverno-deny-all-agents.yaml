@@ -1,0 +1,41 @@
+# ABOUTME: Emergency Kyverno ClusterPolicy denying all operations from agent ServiceAccounts. Excludes break-glass.
+# ABOUTME: Pre-stage at /etc/agents/emergency/. Kyverno must run in Enforce mode (audit-only does not block).
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: emergency-deny-all-agents
+  annotations:
+    incident: "true"
+    policies.kyverno.io/title: Emergency lockdown of all agent ServiceAccounts
+    policies.kyverno.io/severity: critical
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+  - name: deny-everything-from-agent-sa
+    match:
+      any:
+      - resources:
+          kinds: ["*"]
+    exclude:
+      any:
+      # Break-glass identities. Add or remove based on your environment's
+      # incident-response identities. The operator who needs to remediate
+      # MUST be excluded or the lockdown locks them out too.
+      - subjects:
+        - kind: User
+          name: "system:admin"
+        - kind: User
+          name: "break-glass-operator"
+        - kind: ServiceAccount
+          name: "kyverno-admission-controller"
+          namespace: "kyverno"
+    preconditions:
+      any:
+      - key: "{{ request.userInfo.username }}"
+        operator: AnyIn
+        value:
+        - "system:serviceaccount:agent-*"
+    validate:
+      message: "Emergency lockdown: agent operations denied. See incident channel."
+      deny: {}

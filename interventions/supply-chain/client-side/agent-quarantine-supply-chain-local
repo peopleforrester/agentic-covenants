@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# ABOUTME: Local supply-chain quarantine runbook. Allowlist removal, package quarantine, lockfile lock, runtime pin, kill.
+# ABOUTME: Pre-stage last-known-good-runtime-version.txt under /etc/agents/emergency/ before relying on this runbook.
+
+set -euo pipefail
+
+if [[ $# -lt 2 ]]; then
+  echo "Usage: agent-quarantine-supply-chain-local <AGENT_NAME> <SUSPECT_PACKAGE>" >&2
+  echo "  SUSPECT_PACKAGE is the name as it appears in mcp-allowlist.json or installed module dirs." >&2
+  exit 64
+fi
+
+AGENT_NAME="$1"
+SUSPECT="$2"
+INCIDENT_ID="$(uuidgen 2>/dev/null || python3 -c 'import uuid; print(uuid.uuid4())')"
+EMERGENCY_DIR="${EMERGENCY_DIR:-/etc/agents/emergency}"
+ALLOWLIST="/etc/agents/mcp-allowlist.json"
+
+# 1. Remove suspect MCP server from allowlist.
+if [[ -r "$ALLOWLIST" ]]; then
+  TMPFILE="$(mktemp)"
+  jq --arg name "$SUSPECT" 'del(.servers[$name])' "$ALLOWLIST" > "$TMPFILE"
+  mv "$TMPFILE" "$ALLOWLIST"
+  chmod 0644 "$ALLOWLIST"
+fi
+
+# 2. Quarantine downloaded packages by moving them to a restricted location.
+QUARANTINE="/var/quarantine/${INCIDENT_ID}"
+mkdir -p "$QUARANTINE"
+chmod 0700 "$QUARANTINE"
+
+for path in \
+    "/usr/local/lib/node_modules/$SUSPECT" \
+    "/usr/lib/python3/dist-packages/$SUSPECT" \
+    "/usr/local/lib/python3/dist-packages/$SUSPECT" \
+    "/home/agent-runner/.local/share/mcp/$SUSPECT" \
+    "/home/agent-runner/.npm/_cacache/$SUSPECT"; do
+  if [[ -e "$path" ]]; then
+    mv "$path" "$QUARANTINE/" 2>/dev/null || \
+      echo "WARN: could not move $path to quarantine" >&2
+  fi
+done
+
+# 3. Lock lockfiles against further changes.
+for lockfile in \
+    "/etc/agents/$AGENT_NAME/package-lock.json" \
+    "/etc/agents/$AGENT_NAME/requirements.txt" \
+    "/etc/agents/$AGENT_NAME/Pipfile.lock" \
+    "/etc/agents/$AGENT_NAME/poetry.lock" \
+    "/etc/agents/$AGENT_NAME/go.sum" \
+    "/etc/agents/$AGENT_NAME/Cargo.lock"; do
+  [[ -f "$lockfile" ]] && chattr +i "$lockfile" 2>/dev/null || true
+done
+
+# 4. Pin agent runtime to last-known-good.
+if [[ -r "$EMERGENCY_DIR/last-known-good-runtime-version.txt" ]]; then
+  cp "$EMERGENCY_DIR/last-known-good-runtime-version.txt" \
+     "/etc/agents/$AGENT_NAME/runtime-version.txt"
+else
+  echo "WARN: $EMERGENCY_DIR/last-known-good-runtime-version.txt not found; runtime pin skipped" >&2
+fi
+
+# 5. Kill the agent so it picks up the new state on restart.
+pkill -KILL -f "claude.*$AGENT_NAME" 2>/dev/null || true
+
+logger -t agent-incident -p user.warning \
+  "$(jq -n \
+      --arg event "supply_chain_quarantined_local" \
+      --arg agent "$AGENT_NAME" \
+      --arg suspect "$SUSPECT" \
+      --arg incident "$INCIDENT_ID" \
+      --arg quarantine "$QUARANTINE" \
+      --arg actor "$(whoami)" \
+      --arg ts "$(date -Iseconds)" \
+      '{event:$event, agent:$agent, suspect:$suspect, incident:$incident, quarantine:$quarantine, actor:$actor, ts:$ts}')"
+
+echo "Local supply chain quarantined for $AGENT_NAME (suspect: $SUSPECT, quarantine: $QUARANTINE, incident: $INCIDENT_ID)"

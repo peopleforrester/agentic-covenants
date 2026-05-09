@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# ABOUTME: Local identity-revocation runbook. Kills agent processes, deletes credential, forces re-auth.
+# ABOUTME: Pre-authorized at on-call level. Reversible by rotating a fresh credential and re-launching.
+
+set -euo pipefail
+
+if [[ $# -lt 1 ]]; then
+  echo "Usage: agent-revoke-local <AGENT_NAME>" >&2
+  exit 64
+fi
+
+AGENT_NAME="$1"
+TIMESTAMP="$(date -Iseconds)"
+INCIDENT_ID="$(uuidgen 2>/dev/null || python3 -c 'import uuid; print(uuid.uuid4())')"
+
+# 1. Kill all running agent processes (fast).
+pkill -KILL -f "claude.*$AGENT_NAME" 2>/dev/null || true
+sleep 2
+if pgrep -f "claude.*$AGENT_NAME" >/dev/null; then
+  echo "WARN: agent processes still running after pkill -KILL" >&2
+fi
+
+# 2. systemctl stop if running as a service.
+if systemctl list-units --type=service --state=active 2>/dev/null | grep -q "$AGENT_NAME"; then
+  systemctl stop "claude-code-${AGENT_NAME}" 2>/dev/null || true
+fi
+
+# 3. Delete local credential files.
+CRED_PATH="/etc/agents/${AGENT_NAME}"
+if [[ -d "$CRED_PATH" ]]; then
+  shopt -s nullglob
+  rm -f "$CRED_PATH"/*token* "$CRED_PATH"/*key* "$CRED_PATH"/.env
+fi
+
+# 4. Force re-auth on next launch via flag file. The agent launcher should
+# refuse to start if this flag is present and a fresh credential has not been
+# provisioned over it.
+mkdir -p "$CRED_PATH"
+touch "$CRED_PATH/.requires_reauth"
+chmod 0644 "$CRED_PATH/.requires_reauth"
+
+# 5. Log the incident.
+logger -t agent-incident -p user.warning \
+  "$(jq -n \
+      --arg event "identity_revoked_local" \
+      --arg agent "$AGENT_NAME" \
+      --arg incident "$INCIDENT_ID" \
+      --arg actor "$(whoami)" \
+      --arg ts "$TIMESTAMP" \
+      '{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}')"
+
+echo "Local identity revoked for $AGENT_NAME (incident $INCIDENT_ID)"

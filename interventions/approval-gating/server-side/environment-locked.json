@@ -1,0 +1,11 @@
+{
+  "wait_timer": 0,
+  "deployment_branch_policy": null,
+  "reviewers": [
+    {
+      "type": "Team",
+      "id": 0
+    }
+  ],
+  "_comment": "Substitute reviewers[].id with the GitHub team ID of incident-response. Use: gh api orgs/<org>/teams/incident-response --jq .id"
+}

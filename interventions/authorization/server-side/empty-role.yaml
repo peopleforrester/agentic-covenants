@@ -1,0 +1,9 @@
+# ABOUTME: Pre-staged empty Role used to overwrite an agent's namespace-scoped Role during response.
+# ABOUTME: The Role name must match the original (claude-code by convention). Empty rules removes every permission.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: claude-code
+  annotations:
+    incident: "true"
+rules: []

@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# ABOUTME: Server-side approval-gating lockdown runbook. Branch protection lock, workflows disabled, freeze engaged.
+# ABOUTME: Pre-stage branch-protection-locked.json and environment-locked.json. gh CLI must be authenticated as break-glass.
+
+set -euo pipefail
+
+if [[ $# -lt 1 ]]; then
+  echo "Usage: agent-approval-lockdown-server <AGENT_NAME>" >&2
+  echo "  REPO=org/repo agent-approval-lockdown-server <AGENT_NAME>" >&2
+  exit 64
+fi
+
+AGENT_NAME="$1"
+REPO="${REPO:?REPO must be set to the GitHub owner/repo}"
+INCIDENT_ID="$(uuidgen 2>/dev/null || python3 -c 'import uuid; print(uuid.uuid4())')"
+EMERGENCY_DIR="${EMERGENCY_DIR:-/etc/agents/emergency}"
+
+for src in \
+    "$EMERGENCY_DIR/branch-protection-locked.json" \
+    "$EMERGENCY_DIR/environment-locked.json"; do
+  if [[ ! -r "$src" ]]; then
+    echo "REFUSING: pre-staged artifact missing: $src" >&2
+    exit 1
+  fi
+done
+
+# 1. Lock branch protection. Sets enforce_admins=true, lock_branch=true,
+# required_approving_review_count=4, restrictions to incident-response team.
+gh api -X PUT "repos/$REPO/branches/main/protection" \
+  --input "$EMERGENCY_DIR/branch-protection-locked.json" >/dev/null
+
+# 2. Disable every workflow in the repo. This stops new pipeline runs but
+# does NOT cancel in-flight runs; cancel them explicitly below.
+mapfile -t WORKFLOW_IDS < <(
+  gh api "repos/$REPO/actions/workflows" --jq '.workflows[].id'
+)
+for wid in "${WORKFLOW_IDS[@]}"; do
+  gh api -X PUT "repos/$REPO/actions/workflows/$wid/disable" >/dev/null 2>&1 || true
+done
+
+# 3. Cancel in-flight runs.
+mapfile -t RUN_IDS < <(
+  gh api "repos/$REPO/actions/runs?status=in_progress" --jq '.workflow_runs[].id' 2>/dev/null
+)
+for rid in "${RUN_IDS[@]}"; do
+  gh api -X POST "repos/$REPO/actions/runs/$rid/cancel" >/dev/null 2>&1 || true
+done
+
+# 4. Engage deployment freeze.
+gh variable set DEPLOY_FREEZE -b true -R "$REPO" >/dev/null
+
+# 5. Lock all GitHub environments.
+mapfile -t ENV_NAMES < <(
+  gh api "repos/$REPO/environments" --jq '.environments[].name' 2>/dev/null
+)
+for env in "${ENV_NAMES[@]}"; do
+  gh api -X PUT "repos/$REPO/environments/$env" \
+    --input "$EMERGENCY_DIR/environment-locked.json" >/dev/null 2>&1 || true
+done
+
+# 6. Notify on-call.
+if [[ -n "${PAGERDUTY_WEBHOOK:-}" ]]; then
+  curl -sS -X POST "$PAGERDUTY_WEBHOOK" \
+    -H "Content-Type: application/json" \
+    -d "$(jq -n --arg agent "$AGENT_NAME" --arg incident "$INCIDENT_ID" \
+            '{incident:{title:("Agent approval lockdown: " + $agent), urgency:"high", incident_key:$incident}}')" \
+    >/dev/null || true
+fi
+
+logger -t agent-incident -p user.warning \
+  "$(jq -n \
+      --arg event "approval_locked_server" \
+      --arg agent "$AGENT_NAME" \
+      --arg repo "$REPO" \
+      --arg incident "$INCIDENT_ID" \
+      --arg actor "$(whoami)" \
+      --arg ts "$(date -Iseconds)" \
+      '{event:$event, agent:$agent, repo:$repo, incident:$incident, actor:$actor, ts:$ts}')"
+
+echo "Server-side approval gating locked down for $AGENT_NAME on $REPO (incident $INCIDENT_ID)"

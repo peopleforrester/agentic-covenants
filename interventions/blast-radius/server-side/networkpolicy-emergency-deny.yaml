@@ -1,0 +1,14 @@
+# ABOUTME: Emergency default-deny NetworkPolicy applied during blast-radius containment. No allow rules; ingress and egress fully denied.
+# ABOUTME: Pre-stage at /etc/agents/emergency/. CNI-dependent — verify your CNI enforces NetworkPolicy at all (some legacy setups do not).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: emergency-deny-everything
+  annotations:
+    incident: "true"
+spec:
+  podSelector: {}   # all pods in the namespace
+  policyTypes:
+  - Ingress
+  - Egress
+# No ingress or egress rules below = deny everything.

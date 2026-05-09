@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# ABOUTME: Server-side authorization-shrink runbook. Applies Kyverno deny-all, empty Role, IAM deny-all.
+# ABOUTME: Pre-stage kyverno-deny-all-agents.yaml, empty-role.yaml, and iam-deny-all.json under /etc/agents/emergency/ first.
+
+set -euo pipefail
+
+if [[ $# -lt 1 ]]; then
+  echo "Usage: agent-deny-all-server <AGENT_NAME>" >&2
+  exit 64
+fi
+
+AGENT_NAME="$1"
+NAMESPACE="agent-${AGENT_NAME}"
+INCIDENT_ID="$(uuidgen 2>/dev/null || python3 -c 'import uuid; print(uuid.uuid4())')"
+EMERGENCY_DIR="${EMERGENCY_DIR:-/etc/agents/emergency}"
+
+for src in \
+    "$EMERGENCY_DIR/kyverno-deny-all-agents.yaml" \
+    "$EMERGENCY_DIR/empty-role.yaml" \
+    "$EMERGENCY_DIR/iam-deny-all.json"; do
+  if [[ ! -r "$src" ]]; then
+    echo "REFUSING: pre-staged artifact missing: $src" >&2
+    exit 1
+  fi
+done
+
+# 1. Apply emergency Kyverno deny-all ClusterPolicy.
+kubectl apply -f "$EMERGENCY_DIR/kyverno-deny-all-agents.yaml"
+
+# 2. Overwrite the agent's Role with empty rules. The Role's name must match
+# the original (claude-code in agent-* namespaces by convention).
+kubectl apply -n "$NAMESPACE" -f "$EMERGENCY_DIR/empty-role.yaml"
+
+# 3. Attach IAM deny-all policy. Idempotent with identity-revocation runbook.
+aws iam put-role-policy \
+  --role-name "$AGENT_NAME" \
+  --policy-name "EmergencyDenyAll-${INCIDENT_ID}" \
+  --policy-document "file://$EMERGENCY_DIR/iam-deny-all.json" 2>/dev/null || \
+  echo "WARN: aws iam put-role-policy failed (already attached or role missing)" >&2
+
+# 4. Cluster event for forensic timeline.
+kubectl create event --namespace "$NAMESPACE" \
+  --type=Warning \
+  --reason=AuthorizationLocked \
+  --message="Emergency authorization shrink for $AGENT_NAME, incident $INCIDENT_ID" 2>/dev/null || true
+
+logger -t agent-incident -p user.warning \
+  "$(jq -n \
+      --arg event "authorization_locked_server" \
+      --arg agent "$AGENT_NAME" \
+      --arg incident "$INCIDENT_ID" \
+      --arg actor "$(whoami)" \
+      --arg ts "$(date -Iseconds)" \
+      '{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}')"
+
+echo "Server-side authorization locked down for $AGENT_NAME (incident $INCIDENT_ID)"

@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "defaultMode": "deny",
+    "allow": [],
+    "ask": [],
+    "deny": ["*"]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/etc/agents/hooks/pre_tool_use.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

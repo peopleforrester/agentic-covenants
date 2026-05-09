@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# ABOUTME: Local approval-gating lockdown runbook. Deny-all hook, Auto Mode off, OOB required, escalation disabled.
+# ABOUTME: Re-uses the deny-all hook from interventions/authorization/client-side/. Pre-stage that and BREAK_GLASS_TOKEN.
+
+set -euo pipefail
+
+if [[ $# -lt 1 ]]; then
+  echo "Usage: agent-approval-lockdown-local <AGENT_NAME>" >&2
+  exit 64
+fi
+
+AGENT_NAME="$1"
+INCIDENT_ID="$(uuidgen 2>/dev/null || python3 -c 'import uuid; print(uuid.uuid4())')"
+EMERGENCY_DIR="${EMERGENCY_DIR:-/etc/agents/emergency}"
+SETTINGS_PATH="/etc/agents/${AGENT_NAME}/settings.json"
+ESCALATE_URL="${ESCALATE_URL:-https://escalate.example.com}"
+
+if [[ ! -r "$EMERGENCY_DIR/deny-all-hook.sh" ]]; then
+  echo "REFUSING: $EMERGENCY_DIR/deny-all-hook.sh not pre-staged" >&2
+  exit 1
+fi
+
+# 1. Replace approval hook with deny-all (shared with authorization lockdown).
+chattr -i /etc/agents/hooks/pre_tool_use.sh 2>/dev/null || true
+cp "$EMERGENCY_DIR/deny-all-hook.sh" /etc/agents/hooks/pre_tool_use.sh
+chmod 0755 /etc/agents/hooks/pre_tool_use.sh
+chattr +i /etc/agents/hooks/pre_tool_use.sh 2>/dev/null || true
+
+# 2. Disable Auto Mode classifier and force out-of-band on every action.
+if [[ -r "$SETTINGS_PATH" ]]; then
+  TMPFILE="$(mktemp)"
+  jq '.permissions.autoMode = false
+      | .permissions.requireOutOfBand = true
+      | .permissions.judgmentQueryEscalation = false' \
+      "$SETTINGS_PATH" > "$TMPFILE"
+  mv "$TMPFILE" "$SETTINGS_PATH"
+  chmod 0644 "$SETTINGS_PATH"
+fi
+
+# 3. Disable judgment-query escalation channel via the service API.
+if [[ -n "${BREAK_GLASS_TOKEN:-}" ]]; then
+  curl -sS -X POST "$ESCALATE_URL/api/disable" \
+    -H "Authorization: Bearer $BREAK_GLASS_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d "$(jq -n --arg agent "$AGENT_NAME" --arg incident "$INCIDENT_ID" \
+            '{agent:$agent, incident:$incident}')" \
+    >/dev/null || echo "WARN: escalation-channel disable API call failed" >&2
+else
+  echo "WARN: BREAK_GLASS_TOKEN unset; escalation channel not disabled" >&2
+fi
+
+# 4. Kill the agent so the new state applies on next launch.
+pkill -KILL -f "claude.*$AGENT_NAME" 2>/dev/null || true
+
+logger -t agent-incident -p user.warning \
+  "$(jq -n \
+      --arg event "approval_locked_local" \
+      --arg agent "$AGENT_NAME" \
+      --arg incident "$INCIDENT_ID" \
+      --arg actor "$(whoami)" \
+      --arg ts "$(date -Iseconds)" \
+      '{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}')"
+
+echo "Local approval gating locked down for $AGENT_NAME (incident $INCIDENT_ID)"

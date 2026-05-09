@@ -1,0 +1,11 @@
+[
+  {
+    "IpProtocol": "-1",
+    "IpRanges": [
+      {
+        "CidrIp": "0.0.0.0/0",
+        "Description": "Emergency lockdown: incident response. Egress denied."
+      }
+    ]
+  }
+]

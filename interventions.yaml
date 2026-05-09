@@ -1,0 +1,229 @@
+# ABOUTME: Machine-readable source-of-truth for the Agentic Interventions Matrix (Respond framework).
+# ABOUTME: Sibling to matrix.yaml and sentinels.yaml. L1 in-agent cells are deliberately empty for response.
+schema_version: 1
+title: Agentic Interventions Matrix
+question: "How do I stop the bleeding now?"
+companions: [matrix.yaml, sentinels.yaml]
+
+layers:
+  - id: in-agent
+    label: In-agent (empty)
+    strength: none
+    summary: An agent acting badly cannot be reliably told to stop. Empty for response. Listed for completeness.
+  - id: client-side
+    label: Client-side cutoffs
+    strength: fast
+    summary: Operator-machine actions. Milliseconds to seconds. Effective if the agent is contained to one host.
+  - id: server-side
+    label: Server-side cutoffs
+    strength: authoritative
+    summary: Target-system actions. Seconds to minutes. Catches agents and operator hosts that have been compromised.
+
+concerns:
+  - id: identity
+    label: Identity
+    intent: Revoke the credential, kill the session.
+    target_response_seconds: 30
+    notes: Account for token TTL window.
+  - id: authorization
+    label: Authorization
+    intent: Shrink permissions to nothing.
+    target_response_seconds: 10
+  - id: blast-radius
+    label: Blast radius
+    intent: Contain the in-flight damage.
+    target_response_seconds: 5
+    notes: The one you cannot afford to lose.
+  - id: approval-gating
+    label: Approval gating
+    intent: Lock down all approval surfaces.
+    target_response_seconds: 60
+  - id: supply-chain
+    label: Supply chain
+    intent: Quarantine packages, halt distribution.
+    target_response_seconds: 300
+
+principles:
+  - id: prestaging-is-precondition
+    summary: An incident is the wrong time to write the policy. Every emergency artifact in interventions/ must already be in source control before the alert fires.
+  - id: drill-not-inform
+    summary: On-call must have run each runbook in non-prod within the last 90 days. Knowing where the runbook is is not the same as knowing how to run it.
+  - id: separate-respond-from-recover
+    summary: Response stops the agent. Restorations brings the agent back. Conflating them leaves the agent in a broken half-state.
+
+cells:
+
+  # ---- IDENTITY ----
+  - concern: identity
+    layer: in-agent
+    summary: "(no enforcement; the agent that misuses identity will not voluntarily revoke it)"
+    interventions_path: interventions/identity/in-agent/
+    citations:
+      nist_csf_2_0: []
+
+  - concern: identity
+    layer: client-side
+    summary: Kill agent process tree, delete local credential file, force re-authentication on next launch, logout SSO session on the operator host.
+    interventions_path: interventions/identity/client-side/
+    citations:
+      nist_csf_2_0: ["RS.MI-01", "RS.MI-02"]
+      nist_ai_rmf: ["MANAGE 4.1"]
+      owasp_agentic: ["ASI03", "ASI10"]
+      other: ["NIST SP 800-61 Rev. 2"]
+    primary_failure_modes:
+      - daemonized agents survive pkill
+      - env-var credentials persist in already-running processes
+
+  - concern: identity
+    layer: server-side
+    summary: Revoke OIDC token at IdP, disable ServiceAccount, rotate IAM keys, attach deny-all IAM policy, invalidate all active sessions.
+    interventions_path: interventions/identity/server-side/
+    citations:
+      nist_csf_2_0: ["RS.MI-01", "RS.MI-02", "PR.AA-01"]
+      nist_ai_rmf: ["MANAGE 4.1"]
+      owasp_agentic: ["ASI03", "ASI10"]
+      other: ["NIST SP 800-63B Rev. 4", "NIST SP 800-207"]
+    primary_failure_modes:
+      - JWT TTL window remains valid until expiry
+      - existing pods retain mounted tokens until restart
+
+  # ---- AUTHORIZATION ----
+  - concern: authorization
+    layer: in-agent
+    summary: "(no enforcement)"
+    interventions_path: interventions/authorization/in-agent/
+    citations:
+      nist_csf_2_0: []
+
+  - concern: authorization
+    layer: client-side
+    summary: Force-replace local hook config with deny-all, lock with chattr +i, kill running agent.
+    interventions_path: interventions/authorization/client-side/
+    citations:
+      nist_csf_2_0: ["RS.MI-01", "RS.MI-02"]
+      nist_ai_rmf: ["MANAGE 4.1"]
+      owasp_agentic: ["ASI02", "ASI05"]
+    primary_failure_modes:
+      - chattr +i not supported on tmpfs/NFS/FAT
+      - in-flight agent uses old hook until killed
+
+  - concern: authorization
+    layer: server-side
+    summary: Apply emergency Kyverno deny-all, replace agent Role with empty rules, attach IAM deny-all, Git pre-receive reject.
+    interventions_path: interventions/authorization/server-side/
+    citations:
+      nist_csf_2_0: ["RS.MI-01", "RS.MI-02", "PR.AA-05"]
+      nist_ai_rmf: ["MANAGE 4.1"]
+      owasp_agentic: ["ASI02", "ASI03", "ASI05"]
+      other: ["NIST SP 800-207"]
+    primary_failure_modes:
+      - Kyverno in audit-only mode does not block
+      - emergency policy locks out break-glass identity
+
+  # ---- BLAST RADIUS ----
+  - concern: blast-radius
+    layer: in-agent
+    summary: "(no enforcement)"
+    interventions_path: interventions/blast-radius/in-agent/
+    citations:
+      nist_csf_2_0: []
+
+  - concern: blast-radius
+    layer: client-side
+    summary: kill -KILL the agent process tree, tear down sandbox, optionally network-isolate operator host, docker stop or kubectl delete pod.
+    interventions_path: interventions/blast-radius/client-side/
+    citations:
+      nist_csf_2_0: ["RS.MI-01", "RS.MI-02"]
+      nist_ai_rmf: ["MANAGE 4.1"]
+      owasp_agentic: ["ASI05", "ASI08"]
+      other: ["NIST SP 800-160 Vol. 1"]
+    primary_failure_modes:
+      - pkill -f matches partials; wrapper survives
+      - sandbox without --die-with-parent leaves children
+      - network isolation also cuts off remediation channel
+
+  - concern: blast-radius
+    layer: server-side
+    summary: Apply emergency NetworkPolicy default-deny, scale Deployment to zero, force-delete pods, optionally cordon node, block egress at cloud firewall.
+    interventions_path: interventions/blast-radius/server-side/
+    citations:
+      nist_csf_2_0: ["RS.MI-01", "RS.MI-02", "PR.IR-01"]
+      nist_ai_rmf: ["MANAGE 4.1"]
+      owasp_agentic: ["ASI05", "ASI08"]
+      other: ["NIST SP 800-61 Rev. 2", "NISTIR 8596"]
+    primary_failure_modes:
+      - drain without --grace-period=0 honors 5-min terminationGracePeriodSeconds
+      - existing TCP connections survive NetworkPolicy changes (CNI-dependent)
+      - cloud SG modification fails silently if SG is referenced elsewhere
+
+  # ---- APPROVAL GATING ----
+  - concern: approval-gating
+    layer: in-agent
+    summary: "(no enforcement)"
+    interventions_path: interventions/approval-gating/in-agent/
+    citations:
+      nist_csf_2_0: []
+
+  - concern: approval-gating
+    layer: client-side
+    summary: Replace approval hook with deny-all, disable Auto Mode classifier, disable judgment-query escalation channel, force out-of-band on every action.
+    interventions_path: interventions/approval-gating/client-side/
+    citations:
+      nist_csf_2_0: ["RS.MI-01"]
+      nist_ai_rmf: ["MANAGE 4.1"]
+      owasp_agentic: ["ASI09"]
+      other: ["EU AI Act Art. 14 (response dimension)"]
+    primary_failure_modes:
+      - Auto Mode disabled but hook still permissive
+      - JSON5 settings broken by jq rewrite
+
+  - concern: approval-gating
+    layer: server-side
+    summary: Lock branch protection (revoke bypass perms, raise required reviewers), pause CI/CD, engage deployment freeze, lock GitHub environments.
+    interventions_path: interventions/approval-gating/server-side/
+    citations:
+      nist_csf_2_0: ["RS.MI-01", "RS.CO-02", "GV.RR-02"]
+      nist_ai_rmf: ["GOVERN 4.1", "MANAGE 4.1"]
+      owasp_agentic: ["ASI02", "ASI09"]
+      other: ["EU AI Act Art. 14, Art. 26"]
+    primary_failure_modes:
+      - enforce_admins false in locked config
+      - workflow disable does not cancel in-flight runs
+      - locking out incident-response team itself
+
+  # ---- SUPPLY CHAIN ----
+  - concern: supply-chain
+    layer: in-agent
+    summary: "(no enforcement)"
+    interventions_path: interventions/supply-chain/in-agent/
+    citations:
+      nist_csf_2_0: []
+
+  - concern: supply-chain
+    layer: client-side
+    summary: Remove suspect MCP server from allowlist, quarantine downloaded packages to restricted location, lock lockfile, pin runtime to last-known-good, kill agent.
+    interventions_path: interventions/supply-chain/client-side/
+    citations:
+      nist_csf_2_0: ["RS.MI-01", "RS.MI-02"]
+      nist_ai_rmf: ["MANAGE 3.1"]
+      owasp_agentic: ["ASI04", "ASI06"]
+      owasp_mcp: ["MCP04", "MCP09"]
+    primary_failure_modes:
+      - in-memory state retains malicious imports until restart
+      - chattr +i not durable on tmpfs
+      - keychain credentials planted by package survive
+
+  - concern: supply-chain
+    layer: server-side
+    summary: Remove poisoned image from registry, deploy emergency Kyverno deny rule on signature, block compromised registry/MCP domain at network/DNS, force redeploy with last-known-good image SHA pinned.
+    interventions_path: interventions/supply-chain/server-side/
+    citations:
+      nist_csf_2_0: ["RS.MI-01", "RS.MI-02", "ID.RA-09", "GV.SC-07"]
+      nist_ai_rmf: ["MANAGE 3.1"]
+      owasp_agentic: ["ASI04"]
+      other: ["NIST SP 800-218A", "SLSA framework"]
+    primary_failure_modes:
+      - cached images on nodes keep running after registry deletion
+      - cosign deny by tag instead of digest
+      - DNS block at one level but not corporate resolver
+      - last-known-good SHA itself contaminated

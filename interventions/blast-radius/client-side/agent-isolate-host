@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# ABOUTME: Local blast-radius containment runbook. Process-group kill of the agent tree, sandbox teardown, container stop.
+# ABOUTME: Pre-authorized at on-call. Highest-urgency runbook in the matrix; speed target 5 seconds.
+
+set -euo pipefail
+
+if [[ $# -lt 1 ]]; then
+  echo "Usage: agent-isolate-host <AGENT_NAME>" >&2
+  exit 64
+fi
+
+AGENT_NAME="$1"
+INCIDENT_ID="$(uuidgen 2>/dev/null || python3 -c 'import uuid; print(uuid.uuid4())')"
+NETWORK_ISOLATE="${NETWORK_ISOLATE:-0}"   # set to 1 for last-resort host-side network cut
+
+# 1. Kill the agent process tree by process group. -f matches the full
+# command line so wrapped invocations are caught.
+mapfile -t AGENT_PIDS < <(pgrep -f "claude.*$AGENT_NAME" 2>/dev/null || true)
+for pid in "${AGENT_PIDS[@]}"; do
+  PGID="$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')"
+  if [[ -n "$PGID" ]]; then
+    kill -KILL -- "-$PGID" 2>/dev/null || true
+  fi
+done
+sleep 1
+
+# 2. Tear down sandbox. bubblewrap should exit when its parent dies if
+# --die-with-parent was set; if it survives, kill explicitly.
+pkill -KILL -f "bwrap.*$AGENT_NAME" 2>/dev/null || true
+
+# 3. Containerized agents (Docker).
+if command -v docker >/dev/null 2>&1; then
+  mapfile -t DOCKER_IDS < <(docker ps --filter "label=agent=$AGENT_NAME" -q 2>/dev/null || true)
+  if [[ ${#DOCKER_IDS[@]} -gt 0 ]]; then
+    docker stop -t 0 "${DOCKER_IDS[@]}" 2>/dev/null || true
+  fi
+fi
+
+# 4. Containerized agents (Kubernetes).
+if command -v kubectl >/dev/null 2>&1; then
+  kubectl delete pods -n "agent-$AGENT_NAME" --all --force --grace-period=0 2>/dev/null &
+fi
+
+# 5. Last-resort host network isolation. Only fire if NETWORK_ISOLATE=1.
+# This also cuts off the operator's ability to ship more interventions.
+# Only use if you have an out-of-band channel (phone, separate device).
+if [[ "$NETWORK_ISOLATE" == "1" ]]; then
+  echo "WARN: severing host network at operator request" >&2
+  if command -v nmcli >/dev/null 2>&1; then
+    ACTIVE=$(nmcli -t -f NAME connection show --active 2>/dev/null | head -1)
+    [[ -n "$ACTIVE" ]] && nmcli connection down "$ACTIVE" 2>/dev/null || true
+  fi
+fi
+
+wait
+
+logger -t agent-incident -p user.warning \
+  "$(jq -n \
+      --arg event "blast_radius_contained_local" \
+      --arg agent "$AGENT_NAME" \
+      --arg incident "$INCIDENT_ID" \
+      --arg actor "$(whoami)" \
+      --arg ts "$(date -Iseconds)" \
+      '{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}')"
+
+echo "Local blast radius contained for $AGENT_NAME (incident $INCIDENT_ID)"

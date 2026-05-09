@@ -1,0 +1,19 @@
+# ABOUTME: Pre-staged CiliumNetworkPolicy denying egress to known-suspect FQDNs. Edit before applying or pre-populate at incident start.
+# ABOUTME: Requires Cilium with enable-l7-proxy: true. The toFQDNs list is the deny mechanism — DNS resolution to these names returns NXDOMAIN.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: emergency-deny-suspect-fqdns
+  namespace: kube-system
+  annotations:
+    incident: "true"
+spec:
+  endpointSelector: {}
+  egressDeny:
+  - toFQDNs:
+    # Substitute these entries with the known-malicious FQDNs from the
+    # incident. The runbook expects the file to be edited (or the list to
+    # be maintained as a known-bad inventory) before apply.
+    - matchName: "suspect-mcp.example.com"
+    - matchName: "evil-registry.example.com"
+    - matchPattern: "*.attacker-tld.example"

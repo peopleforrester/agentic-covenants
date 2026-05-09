@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# ABOUTME: Server-side supply-chain quarantine runbook. crane delete, Kyverno deny on digest, Cilium FQDN deny, force redeploy.
+# ABOUTME: Pre-stage cilium-deny-suspect-fqdns.yaml and last-known-good-image-sha.txt under /etc/agents/emergency/.
+
+set -euo pipefail
+
+if [[ $# -lt 2 ]]; then
+  echo "Usage: agent-quarantine-supply-chain-server <AGENT_NAME> <SUSPECT_IMAGE>" >&2
+  echo "  SUSPECT_IMAGE format: registry/org/name@sha256:DIGEST" >&2
+  exit 64
+fi
+
+AGENT_NAME="$1"
+SUSPECT_IMAGE="$2"
+NAMESPACE="agent-${AGENT_NAME}"
+INCIDENT_ID="$(uuidgen 2>/dev/null || python3 -c 'import uuid; print(uuid.uuid4())')"
+EMERGENCY_DIR="${EMERGENCY_DIR:-/etc/agents/emergency}"
+
+if [[ ! -r "$EMERGENCY_DIR/last-known-good-image-sha.txt" ]]; then
+  echo "REFUSING: $EMERGENCY_DIR/last-known-good-image-sha.txt not pre-staged" >&2
+  exit 1
+fi
+
+# Extract digest portion of the suspect image. Used for the Kyverno deny rule
+# so an attacker re-tagging the same digest does not bypass.
+DIGEST="${SUSPECT_IMAGE##*@}"
+if [[ "$DIGEST" == "$SUSPECT_IMAGE" || ! "$DIGEST" =~ ^sha256:[0-9a-f]+$ ]]; then
+  echo "REFUSING: SUSPECT_IMAGE must be a digest reference (registry/name@sha256:...)" >&2
+  exit 64
+fi
+
+# 1. Remove poisoned image from registry. May fail if registry permissions
+# do not allow delete; warn rather than abort so the rest of the runbook runs.
+if command -v crane >/dev/null 2>&1; then
+  crane delete "$SUSPECT_IMAGE" 2>/dev/null || \
+    echo "WARN: image deletion failed; manual registry intervention may be needed" >&2
+else
+  echo "WARN: crane not installed; skipping registry deletion" >&2
+fi
+
+# 2. Apply emergency Kyverno deny rule on the suspect digest.
+SAFE_INCIDENT="${INCIDENT_ID//-/}"
+kubectl apply -f - <<EOF
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: emergency-deny-image-${SAFE_INCIDENT:0:16}
+  annotations:
+    incident: "true"
+    policies.kyverno.io/severity: critical
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+  - name: deny-suspect-digest
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+    validate:
+      message: "Image quarantined under incident ${INCIDENT_ID}"
+      pattern:
+        spec:
+          containers:
+          - image: "!*${DIGEST}*"
+EOF
+
+# 3. Block egress to compromised MCP domain. The pre-staged CNP must list the
+# domain. For dynamic blocking, edit the pre-staged file before applying.
+if [[ -r "$EMERGENCY_DIR/cilium-deny-suspect-fqdns.yaml" ]]; then
+  kubectl apply -f "$EMERGENCY_DIR/cilium-deny-suspect-fqdns.yaml" 2>/dev/null || \
+    echo "WARN: Cilium policy apply failed (Cilium may not be the CNI here)" >&2
+fi
+
+# 4. Force redeploy workloads with last-known-good image SHA pinned.
+LAST_GOOD_SHA="$(tr -d '[:space:]' < "$EMERGENCY_DIR/last-known-good-image-sha.txt")"
+LAST_GOOD_IMAGE="${SUSPECT_IMAGE%%@*}@$LAST_GOOD_SHA"
+
+kubectl set image -n "$NAMESPACE" \
+  deployment/claude-code \
+  "claude=$LAST_GOOD_IMAGE" 2>/dev/null || \
+  echo "WARN: deployment image update failed (deployment may be named differently)" >&2
+
+kubectl rollout restart -n "$NAMESPACE" deployment/claude-code 2>/dev/null || true
+
+logger -t agent-incident -p user.warning \
+  "$(jq -n \
+      --arg event "supply_chain_quarantined_server" \
+      --arg agent "$AGENT_NAME" \
+      --arg suspect "$SUSPECT_IMAGE" \
+      --arg digest "$DIGEST" \
+      --arg incident "$INCIDENT_ID" \
+      --arg actor "$(whoami)" \
+      --arg ts "$(date -Iseconds)" \
+      '{event:$event, agent:$agent, suspect:$suspect, digest:$digest, incident:$incident, actor:$actor, ts:$ts}')"
+
+echo "Server-side supply chain quarantined for $AGENT_NAME (suspect: $SUSPECT_IMAGE, incident: $INCIDENT_ID)"

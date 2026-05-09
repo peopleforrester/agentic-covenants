@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# ABOUTME: Local authorization-shrink runbook. Replaces hook + settings with deny-all, sets chattr +i, kills agent.
+# ABOUTME: Pre-stage deny-all-hook.sh and settings-deny-all.json under /etc/agents/emergency/ before depending on this runbook.
+
+set -euo pipefail
+
+if [[ $# -lt 1 ]]; then
+  echo "Usage: agent-deny-all-local <AGENT_NAME>" >&2
+  exit 64
+fi
+
+AGENT_NAME="$1"
+INCIDENT_ID="$(uuidgen 2>/dev/null || python3 -c 'import uuid; print(uuid.uuid4())')"
+EMERGENCY_DIR="${EMERGENCY_DIR:-/etc/agents/emergency}"
+
+# Sanity-check pre-staged artifacts. Refuse if missing rather than silently
+# leaving a half-applied state.
+for src in "$EMERGENCY_DIR/deny-all-hook.sh" "$EMERGENCY_DIR/settings-deny-all.json"; do
+  if [[ ! -r "$src" ]]; then
+    echo "REFUSING: pre-staged artifact missing: $src" >&2
+    echo "Pre-stage emergency artifacts before relying on this runbook." >&2
+    exit 1
+  fi
+done
+
+# 1. If hook file currently has the immutable bit set (from a prior incident),
+# clear it before overwriting.
+chattr -i /etc/agents/hooks/pre_tool_use.sh 2>/dev/null || true
+
+# 2. Replace hook config with deny-all template.
+cp "$EMERGENCY_DIR/deny-all-hook.sh" /etc/agents/hooks/pre_tool_use.sh
+chmod 0755 /etc/agents/hooks/pre_tool_use.sh
+chown root:root /etc/agents/hooks/pre_tool_use.sh
+
+# 3. Make the hook config immutable so the agent (and any compromised
+# process running as the agent's user) cannot edit it back.
+if ! chattr +i /etc/agents/hooks/pre_tool_use.sh 2>/dev/null; then
+  echo "WARN: chattr not supported on this filesystem; immutability skipped" >&2
+fi
+
+# 4. Replace settings.json with the deny-all version.
+cp "$EMERGENCY_DIR/settings-deny-all.json" "/etc/agents/$AGENT_NAME/settings.json"
+chmod 0644 "/etc/agents/$AGENT_NAME/settings.json"
+
+# 5. Kill any in-flight agent so the new state applies on next launch.
+pkill -KILL -f "claude.*$AGENT_NAME" 2>/dev/null || true
+
+logger -t agent-incident -p user.warning \
+  "$(jq -n \
+      --arg event "authorization_locked_local" \
+      --arg agent "$AGENT_NAME" \
+      --arg incident "$INCIDENT_ID" \
+      --arg actor "$(whoami)" \
+      --arg ts "$(date -Iseconds)" \
+      '{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}')"
+
+echo "Local authorization locked down for $AGENT_NAME (incident $INCIDENT_ID)"
