@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# ABOUTME: Server-side approval-gating rebuild. Restore branch protection, re-enable workflows, audit bypasses, unfreeze on flag.
+# ABOUTME: Refuses to apply branch protection without enforce_admins: true. --unfreeze must be explicit.
+
+set -euo pipefail
+
+UNFREEZE="0"
+ARGS=()
+for arg in "$@"; do
+  case "$arg" in
+    --unfreeze) UNFREEZE="1" ;;
+    *)          ARGS+=("$arg") ;;
+  esac
+done
+set -- "${ARGS[@]}"
+
+if [[ $# -lt 2 ]]; then
+  echo "Usage: agent-restore-approval-server <AGENT_NAME> <INCIDENT_ID> [--unfreeze]" >&2
+  echo "  REPO=org/repo agent-restore-approval-server claude-code-prod $(uuidgen) --unfreeze" >&2
+  exit 64
+fi
+
+AGENT_NAME="$1"
+INCIDENT_ID="$2"
+REPO="${REPO:?REPO must be set to GitHub owner/repo}"
+PROTECTION_FILE="${PROTECTION_FILE:-./controls/approval-gating/server-side/branch-protection-expected.json}"
+
+if [[ ! -r "$PROTECTION_FILE" ]]; then
+  echo "REFUSING: $PROTECTION_FILE not found" >&2
+  exit 1
+fi
+
+# 1. Verify the source-of-truth has enforce_admins: true before restoring.
+ENFORCE_ADMINS="$(jq -r '.enforce_admins // false' "$PROTECTION_FILE")"
+if [[ "$ENFORCE_ADMINS" != "true" ]]; then
+  echo "REFUSING: $PROTECTION_FILE has enforce_admins=$ENFORCE_ADMINS." >&2
+  echo "enforce_admins=true is the load-bearing flag for branch protection. Fix source before restore." >&2
+  exit 1
+fi
+
+# 2. Restore branch protection from source.
+gh api -X PUT "repos/$REPO/branches/main/protection" \
+  --input "$PROTECTION_FILE" >/dev/null
+
+# 3. Re-enable every workflow that was disabled during Interventions.
+mapfile -t WORKFLOW_IDS < <(
+  gh api "repos/$REPO/actions/workflows" --jq '.workflows[].id'
+)
+for wid in "${WORKFLOW_IDS[@]}"; do
+  gh api -X PUT "repos/$REPO/actions/workflows/$wid/enable" >/dev/null 2>&1 || true
+done
+
+# 4. Audit bypass events from the incident window. Output to stderr; the
+# operator must review before considering recovery complete.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -x "$SCRIPT_DIR/audit-bypass-events.sh" ]]; then
+  echo
+  echo "Bypass-event audit (review each entry before unfreezing):"
+  "$SCRIPT_DIR/audit-bypass-events.sh" "$REPO" "$INCIDENT_ID" || true
+fi
+
+# 5. Unfreeze deployments only when --unfreeze is explicitly passed.
+if [[ "$UNFREEZE" == "1" ]]; then
+  gh variable set DEPLOY_FREEZE -b false -R "$REPO" >/dev/null
+  echo "DEPLOY_FREEZE set to false."
+else
+  echo
+  echo "DEPLOY_FREEZE not changed. Re-run with --unfreeze when ready."
+fi
+
+logger -t agent-recovery -p user.notice \
+  "$(jq -n \
+      --arg event "approval_restored_server" \
+      --arg agent "$AGENT_NAME" \
+      --arg repo "$REPO" \
+      --arg incident "$INCIDENT_ID" \
+      --arg unfreeze "$UNFREEZE" \
+      --arg actor "$(whoami)" \
+      --arg ts "$(date -Iseconds)" \
+      '{event:$event, agent:$agent, repo:$repo, incident:$incident, unfreeze:$unfreeze, actor:$actor, ts:$ts}')"
+
+echo "Server-side approval gating restored for $AGENT_NAME on $REPO"

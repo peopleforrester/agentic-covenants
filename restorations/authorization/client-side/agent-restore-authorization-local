@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# ABOUTME: Local authorization-rebuild runbook. Clears immutability, restores hook from VCS, reapplies ACLs, reinstalls pre-commit.
+# ABOUTME: Run from the repo root; the script reads controls/authorization/client-side/ as the source of truth.
+
+set -euo pipefail
+
+if [[ $# -lt 2 ]]; then
+  echo "Usage: agent-restore-authorization-local <AGENT_NAME> <INCIDENT_ID>" >&2
+  exit 64
+fi
+
+AGENT_NAME="$1"
+INCIDENT_ID="$2"
+SOURCE_DIR="${SOURCE_DIR:-$(pwd)/controls/authorization/client-side}"
+
+if [[ ! -d "$SOURCE_DIR" ]]; then
+  echo "REFUSING: source-of-truth dir not found: $SOURCE_DIR" >&2
+  echo "Run from a repo checkout that contains controls/authorization/client-side/." >&2
+  exit 1
+fi
+
+# 1. Clear the immutable bit set during Interventions.
+chattr -i /etc/agents/hooks/pre_tool_use.sh 2>/dev/null || true
+
+# 2. Restore the hook config from source.
+cp "$SOURCE_DIR/pre_tool_use.sh" /etc/agents/hooks/pre_tool_use.sh
+chmod 0755 /etc/agents/hooks/pre_tool_use.sh
+chown root:root /etc/agents/hooks/pre_tool_use.sh
+
+# 3. Restore agent settings from source.
+if [[ -r "$SOURCE_DIR/settings.json" ]]; then
+  cp "$SOURCE_DIR/settings.json" "/etc/agents/$AGENT_NAME/settings.json"
+  chmod 0644 "/etc/agents/$AGENT_NAME/settings.json"
+fi
+
+# 4. Re-install pre-commit if a config exists at the repo root.
+if [[ -r .pre-commit-config.yaml ]] && command -v pre-commit >/dev/null 2>&1; then
+  pre-commit install >/dev/null 2>&1 || true
+fi
+
+# 5. Verify Claude Code is on the patched line (May 2026 precedence patch
+# requires v2.1.40 or later; verify via --version).
+if command -v claude >/dev/null 2>&1; then
+  CLAUDE_VERSION="$(claude --version 2>/dev/null | head -1)"
+  echo "Claude Code: $CLAUDE_VERSION"
+  echo "Required: 2.1.40 or later (May 2026 PreToolUse precedence patch)."
+fi
+
+logger -t agent-recovery -p user.notice \
+  "$(jq -n \
+      --arg event "authorization_restored_local" \
+      --arg agent "$AGENT_NAME" \
+      --arg incident "$INCIDENT_ID" \
+      --arg actor "$(whoami)" \
+      --arg ts "$(date -Iseconds)" \
+      '{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}')"
+
+echo "Local authorization restored for $AGENT_NAME"

@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# ABOUTME: Local identity-rebuild runbook. Re-issues credential from IdP, places under strict ACLs, verifies deny-on-self.
+# ABOUTME: Run from a known-clean operator host. AGENT_TOKEN must already be issued (by the IdP API or a separate script).
+
+set -euo pipefail
+
+if [[ $# -lt 2 ]]; then
+  echo "Usage: agent-restore-identity-local <AGENT_NAME> <INCIDENT_ID>" >&2
+  echo "  AGENT_TOKEN must be set in the environment (issue via IdP API first)." >&2
+  exit 64
+fi
+
+AGENT_NAME="$1"
+INCIDENT_ID="$2"
+AGENT_USER="${AGENT_USER:-agent-runner}"
+OPERATOR_GROUP="${OPERATOR_GROUP:-operators}"
+CRED_PATH="/etc/agents/${AGENT_NAME}"
+
+if [[ -z "${AGENT_TOKEN:-}" ]]; then
+  echo "AGENT_TOKEN must be set in the environment (issue via IdP API first)." >&2
+  exit 1
+fi
+
+# 1. Place credential in operator-owned config.
+mkdir -p "$CRED_PATH"
+chown "root:${OPERATOR_GROUP}" "$CRED_PATH"
+chmod 0750 "$CRED_PATH"
+
+umask 0177
+printf '%s\n' "$AGENT_TOKEN" > "$CRED_PATH/token"
+chown "root:${OPERATOR_GROUP}" "$CRED_PATH/token"
+chmod 0640 "$CRED_PATH/token"
+
+# 2. Reapply deny-on-self ACL so the agent's own user cannot read the
+# credential at rest (only the systemd unit reads it as root at launch).
+if command -v setfacl >/dev/null 2>&1; then
+  setfacl -m "u:${AGENT_USER}:---" "$CRED_PATH/token"
+else
+  echo "WARN: setfacl not available; agent user may be able to read its credential at rest" >&2
+fi
+
+# 3. Remove the requires_reauth flag from Interventions so the agent can launch.
+rm -f "$CRED_PATH/.requires_reauth"
+
+# 4. Verify ACLs and permissions survived.
+EXPECTED_PERMS="640"
+ACTUAL_PERMS=$(stat -c "%a" "$CRED_PATH/token")
+if [[ "$ACTUAL_PERMS" != "$EXPECTED_PERMS" ]]; then
+  echo "WARN: credential permissions are $ACTUAL_PERMS, expected $EXPECTED_PERMS" >&2
+fi
+
+if command -v getfacl >/dev/null 2>&1; then
+  if ! getfacl "$CRED_PATH/token" 2>/dev/null | grep -q "user:${AGENT_USER}:---"; then
+    echo "WARN: deny-on-self ACL for ${AGENT_USER} is missing on $CRED_PATH/token" >&2
+  fi
+fi
+
+# 5. Log the recovery.
+logger -t agent-recovery -p user.notice \
+  "$(jq -n \
+      --arg event "identity_restored_local" \
+      --arg agent "$AGENT_NAME" \
+      --arg incident "$INCIDENT_ID" \
+      --arg fingerprint "$(printf '%s' "$AGENT_TOKEN" | sha256sum | cut -d' ' -f1 | head -c 16)" \
+      --arg actor "$(whoami)" \
+      --arg ts "$(date -Iseconds)" \
+      '{event:$event, agent:$agent, incident:$incident, cred_fingerprint:$fingerprint, actor:$actor, ts:$ts}')"
+
+unset AGENT_TOKEN
+echo "Local identity restored for $AGENT_NAME (incident $INCIDENT_ID)"

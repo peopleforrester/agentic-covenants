@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# ABOUTME: Local approval-gating rebuild. Restores tiered hook + tier-config from VCS, re-enables Auto Mode, re-enables escalation.
+# ABOUTME: Run from repo root; reads controls/approval-gating/client-side/ as source of truth.
+
+set -euo pipefail
+
+if [[ $# -lt 2 ]]; then
+  echo "Usage: agent-restore-approval-local <AGENT_NAME> <INCIDENT_ID>" >&2
+  exit 64
+fi
+
+AGENT_NAME="$1"
+INCIDENT_ID="$2"
+SOURCE_DIR="${SOURCE_DIR:-$(pwd)/controls/approval-gating/client-side}"
+SETTINGS_PATH="/etc/agents/${AGENT_NAME}/settings.json"
+ESCALATE_URL="${ESCALATE_URL:-https://escalate.example.com}"
+
+# 1. Restore tiered hook from source.
+chattr -i /etc/agents/hooks/pre_tool_use.sh 2>/dev/null || true
+if [[ -r "$SOURCE_DIR/pre_tool_use_tiered.sh" ]]; then
+  cp "$SOURCE_DIR/pre_tool_use_tiered.sh" /etc/agents/hooks/pre_tool_use.sh
+  chmod 0755 /etc/agents/hooks/pre_tool_use.sh
+fi
+
+# 2. Restore tier config.
+if [[ -r "$SOURCE_DIR/tier-config.yaml" ]]; then
+  install -m 0644 "$SOURCE_DIR/tier-config.yaml" /etc/agents/tier-config.yaml
+fi
+
+# 3. Re-enable Auto Mode and judgment-query escalation in settings.json.
+if [[ -r "$SETTINGS_PATH" ]]; then
+  TMPFILE="$(mktemp)"
+  jq '.permissions.autoMode = true
+      | .permissions.requireOutOfBand = false
+      | .permissions.judgmentQueryEscalation = true' \
+      "$SETTINGS_PATH" > "$TMPFILE"
+  mv "$TMPFILE" "$SETTINGS_PATH"
+  chmod 0644 "$SETTINGS_PATH"
+fi
+
+# 4. Re-enable judgment-query escalation channel.
+if [[ -n "${BREAK_GLASS_TOKEN:-}" ]]; then
+  curl -sS -X POST "$ESCALATE_URL/api/enable" \
+    -H "Authorization: Bearer $BREAK_GLASS_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d "$(jq -n --arg agent "$AGENT_NAME" --arg incident "$INCIDENT_ID" \
+            '{agent:$agent, incident:$incident}')" \
+    >/dev/null || echo "WARN: escalation-channel enable API call failed" >&2
+fi
+
+logger -t agent-recovery -p user.notice \
+  "$(jq -n \
+      --arg event "approval_restored_local" \
+      --arg agent "$AGENT_NAME" \
+      --arg incident "$INCIDENT_ID" \
+      --arg actor "$(whoami)" \
+      --arg ts "$(date -Iseconds)" \
+      '{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}')"
+
+echo "Local approval gating restored for $AGENT_NAME"

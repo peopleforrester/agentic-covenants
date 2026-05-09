@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# ABOUTME: Server-side supply-chain rebuild. Removes emergency denies, optionally rotates signing key, rebuilds + re-signs images, regen SBOMs, force-roll.
+# ABOUTME: --rotate-signing-key triggers cosign key rotation; required when the original signing key may have been exposed.
+
+set -euo pipefail
+
+ROTATE_KEY="0"
+ARGS=()
+for arg in "$@"; do
+  case "$arg" in
+    --rotate-signing-key) ROTATE_KEY="1" ;;
+    *)                    ARGS+=("$arg") ;;
+  esac
+done
+set -- "${ARGS[@]}"
+
+if [[ $# -lt 2 ]]; then
+  echo "Usage: agent-restore-supply-chain-server <AGENT_NAME> <INCIDENT_ID> [--rotate-signing-key]" >&2
+  exit 64
+fi
+
+AGENT_NAME="$1"
+INCIDENT_ID="$2"
+NAMESPACE="agent-${AGENT_NAME}"
+
+# 1. Remove emergency Kyverno deny ClusterPolicies (image-deny variants and
+# emergency-deny-all-agents from the auth row if it lingered).
+mapfile -t EMERGENCY < <(
+  kubectl get clusterpolicies -o name 2>/dev/null \
+    | grep -E "emergency-deny-(image-|all-agents)"
+)
+for cp in "${EMERGENCY[@]}"; do
+  kubectl delete "$cp" 2>/dev/null || true
+done
+
+# 2. Remove the emergency Cilium FQDN deny CNP.
+kubectl delete cnp -n kube-system emergency-deny-suspect-fqdns 2>/dev/null || true
+
+# 3. Optionally rotate the cosign signing key. Required if the key was on a
+# host that may have been compromised. Implementation depends on key store.
+if [[ "$ROTATE_KEY" == "1" ]]; then
+  if ! command -v cosign >/dev/null 2>&1; then
+    echo "REFUSING: cosign not installed; cannot rotate signing key" >&2
+    exit 1
+  fi
+  echo "Rotating cosign signing key. Old signatures must be marked untrusted in Kyverno verifyImages policies."
+  # The actual key generation depends on whether you use KMS, file-based, or HSM-backed cosign.
+  # cosign generate-key-pair k8s://cosign-system/cosign-key  (Kubernetes)
+  # cosign generate-key-pair awskms:///alias/cosign-signer    (AWS KMS)
+  # cosign generate-key-pair                                  (file-based, NOT recommended)
+  echo "Run the appropriate cosign generate-key-pair command for your key store, then update Kyverno verifyImages policy with the new public key."
+fi
+
+# 4. Trigger CI rebuild + re-sign of agent images. Implementation
+# environment-specific; this runbook expects a canonical "rebuild" workflow
+# you can dispatch.
+if command -v gh >/dev/null 2>&1; then
+  gh workflow run build-and-sign.yml -f agent="$AGENT_NAME" 2>/dev/null || \
+    echo "WARN: failed to dispatch build-and-sign workflow" >&2
+fi
+
+# 5. Force redeploy with new SHA pins. The deployment manifest in source
+# controls the digest; reapplying picks up the new SHA after CI publishes.
+if [[ -d ./manifests/agent ]]; then
+  kubectl apply -n "$NAMESPACE" -f "./manifests/agent/${AGENT_NAME}-deployment.yaml" 2>/dev/null || true
+  kubectl rollout restart deployment -n "$NAMESPACE" 2>/dev/null || true
+fi
+
+logger -t agent-recovery -p user.notice \
+  "$(jq -n \
+      --arg event "supply_chain_restored_server" \
+      --arg agent "$AGENT_NAME" \
+      --arg incident "$INCIDENT_ID" \
+      --arg rotate "$ROTATE_KEY" \
+      --arg actor "$(whoami)" \
+      --arg ts "$(date -Iseconds)" \
+      '{event:$event, agent:$agent, incident:$incident, rotate_signing_key:$rotate, actor:$actor, ts:$ts}')"
+
+echo "Server-side supply-chain restore complete for $AGENT_NAME"
+echo "Recovery is finished. Update Covenants per the lessons learned in this incident."

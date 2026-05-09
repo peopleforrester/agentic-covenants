@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# ABOUTME: Local blast-radius rebuild runbook. Reinstall agent runtime with signature check, restore bubblewrap launcher and Seatbelt profile.
+# ABOUTME: Operator host reimage is out of scope; this runs after reimage if you chose to reimage.
+
+set -euo pipefail
+
+if [[ $# -lt 2 ]]; then
+  echo "Usage: agent-restore-host-local <AGENT_NAME> <INCIDENT_ID>" >&2
+  exit 64
+fi
+
+AGENT_NAME="$1"
+INCIDENT_ID="$2"
+SOURCE_DIR="${SOURCE_DIR:-$(pwd)/controls/blast-radius/client-side}"
+RUNTIME_URL="${RUNTIME_URL:-}"
+RUNTIME_SIG_URL="${RUNTIME_SIG_URL:-}"
+
+# 1. Reinstall agent runtime from a verified source. Skips if URLs not set
+# (operator may install via package manager instead).
+if [[ -n "$RUNTIME_URL" && -n "$RUNTIME_SIG_URL" ]]; then
+  TMP_DIR="$(mktemp -d)"
+  curl -sSL -o "$TMP_DIR/claude" "$RUNTIME_URL"
+  curl -sSL -o "$TMP_DIR/claude.sig" "$RUNTIME_SIG_URL"
+
+  if command -v cosign >/dev/null 2>&1; then
+    if cosign verify-blob \
+         --signature "$TMP_DIR/claude.sig" \
+         --certificate-identity-regexp ".*" \
+         "$TMP_DIR/claude" >/dev/null 2>&1; then
+      install -m 0755 "$TMP_DIR/claude" /usr/local/bin/claude
+    else
+      echo "REFUSING: cosign signature verification failed for $RUNTIME_URL" >&2
+      rm -rf "$TMP_DIR"
+      exit 1
+    fi
+  else
+    echo "WARN: cosign not installed; runtime installed without signature verification" >&2
+    install -m 0755 "$TMP_DIR/claude" /usr/local/bin/claude
+  fi
+
+  rm -rf "$TMP_DIR"
+fi
+
+# 2. Restore bubblewrap launcher from source.
+if [[ -r "$SOURCE_DIR/agent-bwrap" ]]; then
+  install -m 0755 "$SOURCE_DIR/agent-bwrap" /usr/local/bin/agent-bwrap
+fi
+
+# 3. Restore Seatbelt profile (macOS) and seccomp profile (Linux) from source.
+if [[ -r "$SOURCE_DIR/claude.sb" ]]; then
+  install -m 0644 "$SOURCE_DIR/claude.sb" /etc/agents/claude.sb
+fi
+if [[ -r "$SOURCE_DIR/seccomp-claude.json" ]]; then
+  install -m 0644 "$SOURCE_DIR/seccomp-claude.json" /etc/agents/seccomp-claude.json
+fi
+
+logger -t agent-recovery -p user.notice \
+  "$(jq -n \
+      --arg event "blast_radius_restored_local" \
+      --arg agent "$AGENT_NAME" \
+      --arg incident "$INCIDENT_ID" \
+      --arg actor "$(whoami)" \
+      --arg ts "$(date -Iseconds)" \
+      '{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}')"
+
+echo "Local blast-radius restore complete for $AGENT_NAME"
+echo "Re-derive seccomp allowlist against rebuilt workload (strace -c) before declaring recovery complete."

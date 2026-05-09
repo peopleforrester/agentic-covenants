@@ -1,0 +1,227 @@
+# ABOUTME: Machine-readable source-of-truth for the Agentic Restorations Matrix (Recover framework).
+# ABOUTME: Sibling to matrix.yaml, sentinels.yaml, interventions.yaml. L1 in-agent cells empty for recovery.
+schema_version: 1
+title: Agentic Restorations Matrix
+question: "How do I get back to a known-good state and not repeat this?"
+companions: [matrix.yaml, sentinels.yaml, interventions.yaml]
+
+layers:
+  - id: in-agent
+    label: In-agent (empty)
+    strength: none
+    summary: The agent is the patient, not the surgeon. Empty for recovery.
+  - id: client-side
+    label: Client-side rebuild
+    strength: low-blast-radius
+    summary: Operator-machine actions. Minutes. Reversible.
+  - id: server-side
+    label: Server-side restore
+    strength: high-blast-radius
+    summary: Target-system actions. Minutes to hours. The only way to recover from cluster-level compromise.
+
+concerns:
+  - id: identity
+    label: Identity
+    intent: Rotate credentials, re-issue per-agent identities, regenerate trust relationships.
+    order: 1
+  - id: authorization
+    label: Authorization
+    intent: Rebuild RBAC and IAM from declarative source. Audit for drift introduced during the incident.
+    order: 2
+  - id: blast-radius
+    label: Blast radius
+    intent: Restore data, redeploy infrastructure, rebuild from clean state.
+    order: 3
+  - id: approval-gating
+    label: Approval gating
+    intent: Re-enable branch protection, audit bypass events, harden gates that were exploited.
+    order: 4
+  - id: supply-chain
+    label: Supply chain
+    intent: Re-pin dependencies, regenerate SBOMs, re-verify signatures, rebuild from clean source.
+    order: 5
+
+principles:
+  - id: identity-first-supply-chain-last
+    summary: Recovery order is fixed identity > authorization > blast-radius > approval-gating > supply-chain. Each cell assumes the prior cells have completed.
+  - id: pick-pre-incident-backup
+    summary: Always pick a backup from before the earliest indicator of compromise from Sentinels, not the most recent backup.
+  - id: forensic-preservation-first
+    summary: If the incident may be investigated externally, snapshot memory and disk before destructive recovery actions. Restoring destroys evidence.
+  - id: recovery-feeds-prevention
+    summary: Every successful recovery produces a follow-up action list for Covenants. If recovery does not feed back into prevention, the same class of attack will work again.
+
+cells:
+
+  # ---- IDENTITY ----
+  - concern: identity
+    layer: in-agent
+    summary: "(no enforcement)"
+    restorations_path: restorations/identity/in-agent/
+    citations:
+      nist_csf_2_0: []
+
+  - concern: identity
+    layer: client-side
+    summary: Regenerate credential file with strict ACLs, rotate OIDC client secret, re-authenticate operator host to SSO, verify ACLs survived.
+    restorations_path: restorations/identity/client-side/
+    citations:
+      nist_csf_2_0: ["RC.RP-01", "RC.IM-01"]
+      nist_ai_rmf: ["MANAGE 4.1"]
+      owasp_agentic: ["ASI03", "ASI10"]
+      other: ["NIST SP 800-61 Rev. 2", "NIST SP 800-63B Rev. 4"]
+    primary_failure_modes:
+      - new credential issued with default long TTL
+      - requires_reauth flag not removed
+      - ACLs reset to defaults during recovery
+
+  - concern: identity
+    layer: server-side
+    summary: Disable old ServiceAccount, recreate from declarative source, rotate IAM keys, re-establish OIDC trust policy, re-issue SPIFFE identity, verify no inherited permissions.
+    restorations_path: restorations/identity/server-side/
+    citations:
+      nist_csf_2_0: ["RC.RP-01", "RC.IM-01", "PR.AA-01"]
+      nist_ai_rmf: ["MANAGE 4.1"]
+      owasp_agentic: ["ASI03", "ASI10"]
+      other: ["NIST SP 800-207", "NIST NCCoE Concept Paper on AI Agent Identity"]
+    primary_failure_modes:
+      - SA YAML in source has drifted; cluster has no SA after delete-and-recreate
+      - trust policy drift not checked
+      - EmergencyDenyAll not removed
+      - old IAM access keys not deleted
+
+  # ---- AUTHORIZATION ----
+  - concern: authorization
+    layer: in-agent
+    summary: "(no enforcement)"
+    restorations_path: restorations/authorization/in-agent/
+    citations:
+      nist_csf_2_0: []
+
+  - concern: authorization
+    layer: client-side
+    summary: Restore local hook config from VCS, verify file ownership and ACLs, reinstall pre-commit hooks, verify Claude Code is on the patched version.
+    restorations_path: restorations/authorization/client-side/
+    citations:
+      nist_csf_2_0: ["RC.RP-01", "RC.IM-01"]
+      nist_ai_rmf: ["MANAGE 4.1"]
+      owasp_agentic: ["ASI02", "ASI05"]
+    primary_failure_modes:
+      - chattr +i remained from intervention; restore fails to overwrite
+      - hook ownership returned to agent's user instead of operator
+
+  - concern: authorization
+    layer: server-side
+    summary: Reapply RBAC, Kyverno, IAM from declarative source; audit for drift between cluster state and source.
+    restorations_path: restorations/authorization/server-side/
+    citations:
+      nist_csf_2_0: ["RC.RP-01", "RC.IM-01", "PR.AA-05"]
+      nist_ai_rmf: ["MANAGE 4.1"]
+      owasp_agentic: ["ASI02", "ASI03", "ASI05"]
+      other: ["NIST SP 800-207", "CIS Kubernetes Benchmark"]
+    primary_failure_modes:
+      - declarative source itself was compromised during incident
+      - reapply does not delete drift; only adds/updates declared resources
+      - emergency-deny ClusterPolicy not removed
+
+  # ---- BLAST RADIUS ----
+  - concern: blast-radius
+    layer: in-agent
+    summary: "(no enforcement)"
+    restorations_path: restorations/blast-radius/in-agent/
+    citations:
+      nist_csf_2_0: []
+
+  - concern: blast-radius
+    layer: client-side
+    summary: Rebuild operator host from known-good image if untrusted, reinstall agent runtime with signature verification, re-derive sandbox profiles.
+    restorations_path: restorations/blast-radius/client-side/
+    citations:
+      nist_csf_2_0: ["RC.RP-01"]
+      nist_ai_rmf: ["MANAGE 4.1"]
+      owasp_agentic: ["ASI05", "ASI08"]
+      other: ["NIST SP 800-160 Vol. 1"]
+    primary_failure_modes:
+      - host firmware/BIOS-level compromise survives reimage
+      - sandbox profile derived against compromised workload (still has malicious syscalls allowed)
+
+  - concern: blast-radius
+    layer: server-side
+    summary: Restore data from immutable backups verified pre-incident, redeploy IaC, reapply NetworkPolicy and ResourceQuota.
+    restorations_path: restorations/blast-radius/server-side/
+    citations:
+      nist_csf_2_0: ["RC.RP-01", "RC.IM-01", "PR.IR-01", "PR.DS-11"]
+      nist_ai_rmf: ["MANAGE 4.1"]
+      owasp_agentic: ["ASI05", "ASI08"]
+      other: ["NIST SP 800-34 Rev. 1", "NISTIR 8596"]
+    primary_failure_modes:
+      - backup taken after contamination point
+      - backups stored in same account as production
+      - emergency NetworkPolicy not removed
+
+  # ---- APPROVAL GATING ----
+  - concern: approval-gating
+    layer: in-agent
+    summary: "(no enforcement)"
+    restorations_path: restorations/approval-gating/in-agent/
+    citations:
+      nist_csf_2_0: []
+
+  - concern: approval-gating
+    layer: client-side
+    summary: Restore PreToolUse config from VCS, reapply tier definitions, re-enable Auto Mode, re-establish out-of-band channel.
+    restorations_path: restorations/approval-gating/client-side/
+    citations:
+      nist_csf_2_0: ["RC.RP-01"]
+      nist_ai_rmf: ["MANAGE 4.1"]
+      owasp_agentic: ["ASI09"]
+      other: ["EU AI Act Art. 14 (recovery dimension)"]
+
+  - concern: approval-gating
+    layer: server-side
+    summary: Re-enable branch protection (enforce_admins true), re-add CODEOWNERS, audit bypass events from incident, unfreeze deployments only after rest of recovery is verified.
+    restorations_path: restorations/approval-gating/server-side/
+    citations:
+      nist_csf_2_0: ["RC.RP-01", "RC.IM-01", "GV.RR-02"]
+      nist_ai_rmf: ["GOVERN 4.1", "MANAGE 4.1"]
+      owasp_agentic: ["ASI02", "ASI09"]
+      other: ["EU AI Act Art. 14, Art. 26"]
+    primary_failure_modes:
+      - protection config not version-controlled; restored from incomplete copy
+      - bypass events during incident not reviewed for malicious commits
+      - DEPLOY_FREEZE unfrozen before recovery complete
+
+  # ---- SUPPLY CHAIN ----
+  - concern: supply-chain
+    layer: in-agent
+    summary: "(no enforcement)"
+    restorations_path: restorations/supply-chain/in-agent/
+    citations:
+      nist_csf_2_0: []
+
+  - concern: supply-chain
+    layer: client-side
+    summary: Reinstall agent runtime with signature verification, re-pin MCP hashes from clean source, regenerate lockfiles from declared deps.
+    restorations_path: restorations/supply-chain/client-side/
+    citations:
+      nist_csf_2_0: ["RC.RP-01"]
+      nist_ai_rmf: ["MANAGE 3.1"]
+      owasp_agentic: ["ASI04", "ASI06"]
+      owasp_mcp: ["MCP04", "MCP09"]
+    primary_failure_modes:
+      - re-pin to "current" pins to a poisoned current
+      - lockfile regenerated against possibly-tainted manifest
+
+  - concern: supply-chain
+    layer: server-side
+    summary: Rebuild and re-sign images, regenerate SBOMs, rotate signing key if exposed, force redeploy with new SHA pins.
+    restorations_path: restorations/supply-chain/server-side/
+    citations:
+      nist_csf_2_0: ["RC.RP-01", "RC.IM-01", "ID.RA-09", "GV.SC-07"]
+      nist_ai_rmf: ["MAP 4.1", "MANAGE 3.1"]
+      owasp_agentic: ["ASI04"]
+      other: ["NIST SP 800-218 Rev. 1", "NIST SP 800-218A", "SLSA framework"]
+    primary_failure_modes:
+      - signing key rebuild without rotation when key was exposed
+      - SBOM diff not used; regeneration alone does not surface what changed
+      - registry-cached compromised images survive

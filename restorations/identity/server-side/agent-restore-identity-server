@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# ABOUTME: Server-side identity-rebuild runbook. Recreates SA from source, drops emergency deny, rotates keys, restores trust policy.
+# ABOUTME: Requires manifests/rbac/<agent>-serviceaccount.yaml and manifests/iam/<agent>-trust-policy.json in source.
+
+set -euo pipefail
+
+if [[ $# -lt 2 ]]; then
+  echo "Usage: agent-restore-identity-server <AGENT_NAME> <INCIDENT_ID>" >&2
+  exit 64
+fi
+
+AGENT_NAME="$1"
+INCIDENT_ID="$2"
+NAMESPACE="agent-${AGENT_NAME}"
+MANIFESTS_DIR="${MANIFESTS_DIR:-./manifests}"
+
+# 1. Delete the old (compromised) ServiceAccount.
+kubectl delete sa -n "$NAMESPACE" claude-code 2>/dev/null || true
+
+# 2. Recreate from declarative source.
+SA_FILE="$MANIFESTS_DIR/rbac/${AGENT_NAME}-serviceaccount.yaml"
+if [[ ! -r "$SA_FILE" ]]; then
+  echo "REFUSING: $SA_FILE not found in source" >&2
+  echo "Cluster will have no ServiceAccount in $NAMESPACE until this is fixed." >&2
+  exit 1
+fi
+kubectl apply -f "$SA_FILE"
+
+# 3. Remove the emergency IAM deny-all policies.
+mapfile -t POLICIES < <(
+  aws iam list-role-policies --role-name "$AGENT_NAME" \
+    --query 'PolicyNames[?starts_with(@, `EmergencyDenyAll`)]' \
+    --output text 2>/dev/null | tr '\t' '\n'
+)
+for p in "${POLICIES[@]}"; do
+  [[ -z "$p" ]] && continue
+  aws iam delete-role-policy --role-name "$AGENT_NAME" --policy-name "$p" 2>/dev/null || true
+done
+
+# 4. Rotate IAM access keys if the role has any persistent keys (OIDC
+# federation prefers keyless; this branch is for legacy setups).
+if mapfile -t KEYS < <(
+    aws iam list-access-keys --user-name "$AGENT_NAME" \
+      --query 'AccessKeyMetadata[].AccessKeyId' --output text 2>/dev/null | tr '\t' '\n'
+  ) && [[ ${#KEYS[@]} -gt 0 ]]; then
+  for key in "${KEYS[@]}"; do
+    [[ -z "$key" ]] && continue
+    aws iam delete-access-key --user-name "$AGENT_NAME" --access-key-id "$key" 2>/dev/null || true
+  done
+  aws iam create-access-key --user-name "$AGENT_NAME" >/dev/null 2>&1 || true
+fi
+
+# 5. Detect trust-policy drift and restore from source if drifted.
+TRUST_FILE="$MANIFESTS_DIR/iam/${AGENT_NAME}-trust-policy.json"
+if [[ -r "$TRUST_FILE" ]]; then
+  EXPECTED="$(jq -S . "$TRUST_FILE")"
+  ACTUAL="$(aws iam get-role --role-name "$AGENT_NAME" \
+              --query 'AssumeRolePolicyDocument' --output json 2>/dev/null | jq -S .)"
+  if [[ "$EXPECTED" != "$ACTUAL" ]]; then
+    echo "Trust-policy drift detected; restoring from source" >&2
+    aws iam update-assume-role-policy \
+      --role-name "$AGENT_NAME" \
+      --policy-document "file://$TRUST_FILE"
+  fi
+fi
+
+# 6. Re-issue SPIFFE identity if SPIRE is in use.
+if command -v spire-server >/dev/null 2>&1; then
+  spire-server entry create \
+    -spiffeID "spiffe://${TRUST_DOMAIN:-example.com}/agent/${AGENT_NAME}" \
+    -parentID "spiffe://${TRUST_DOMAIN:-example.com}/k8s_workload/${NAMESPACE}" \
+    -selector "k8s:ns:${NAMESPACE}" \
+    -selector "k8s:sa:claude-code" \
+    -ttl 900 2>/dev/null || true
+fi
+
+# 7. Verify a freshly-issued token reflects the new SA, not a stale binding.
+NEW_TOKEN="$(kubectl create token claude-code -n "$NAMESPACE" --duration=900s 2>/dev/null || true)"
+if [[ -n "$NEW_TOKEN" ]]; then
+  CLAIM="$(printf '%s' "$NEW_TOKEN" | cut -d. -f2 \
+            | base64 -d 2>/dev/null \
+            | jq -r '."kubernetes.io".serviceaccount.uid // empty')"
+  if [[ -z "$CLAIM" ]]; then
+    echo "WARN: new token does not carry expected claims" >&2
+  fi
+fi
+
+logger -t agent-recovery -p user.notice \
+  "$(jq -n \
+      --arg event "identity_restored_server" \
+      --arg agent "$AGENT_NAME" \
+      --arg incident "$INCIDENT_ID" \
+      --arg actor "$(whoami)" \
+      --arg ts "$(date -Iseconds)" \
+      '{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}')"
+
+echo "Server-side identity restored for $AGENT_NAME"

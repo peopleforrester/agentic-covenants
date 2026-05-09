@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# ABOUTME: Server-side authorization-rebuild runbook. Removes emergency-deny, reapplies RBAC + Kyverno + IAM from declarative source.
+# ABOUTME: Source-of-truth manifests must be intact (signed commits, signed tags, off-cluster mirror); script does not check repo integrity.
+
+set -euo pipefail
+
+if [[ $# -lt 2 ]]; then
+  echo "Usage: agent-restore-authorization-server <AGENT_NAME> <INCIDENT_ID>" >&2
+  exit 64
+fi
+
+AGENT_NAME="$1"
+INCIDENT_ID="$2"
+NAMESPACE="agent-${AGENT_NAME}"
+MANIFESTS_DIR="${MANIFESTS_DIR:-./manifests}"
+
+# 1. Remove emergency Kyverno deny-all ClusterPolicies (there may be multiple,
+# each tagged with an incident ID).
+mapfile -t EMERGENCY_POLICIES < <(
+  kubectl get clusterpolicies -o name 2>/dev/null \
+    | grep -E "emergency-deny-(all|agents|image-)"
+)
+for cp in "${EMERGENCY_POLICIES[@]}"; do
+  kubectl delete "$cp" 2>/dev/null || true
+done
+
+# 2. Reapply the agent's Role and RoleBinding from declarative source.
+ROLE_FILE="$MANIFESTS_DIR/rbac/${AGENT_NAME}-role.yaml"
+BINDING_FILE="$MANIFESTS_DIR/rbac/${AGENT_NAME}-rolebinding.yaml"
+for f in "$ROLE_FILE" "$BINDING_FILE"; do
+  if [[ -r "$f" ]]; then
+    kubectl apply -f "$f"
+  else
+    echo "WARN: $f not found in source; skipping" >&2
+  fi
+done
+
+# 3. Reapply the operational Kyverno policies.
+if [[ -d "$MANIFESTS_DIR/kyverno" ]]; then
+  kubectl apply -f "$MANIFESTS_DIR/kyverno/" 2>/dev/null || true
+fi
+
+# 4. Remove any lingering EmergencyDenyAll IAM policies on the agent role.
+mapfile -t IAM_POLICIES < <(
+  aws iam list-role-policies --role-name "$AGENT_NAME" \
+    --query 'PolicyNames[?starts_with(@, `EmergencyDenyAll`)]' \
+    --output text 2>/dev/null | tr '\t' '\n'
+)
+for p in "${IAM_POLICIES[@]}"; do
+  [[ -z "$p" ]] && continue
+  aws iam delete-role-policy --role-name "$AGENT_NAME" --policy-name "$p" 2>/dev/null || true
+done
+
+# 5. Audit drift between cluster state and source.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -x "$SCRIPT_DIR/drift-audit.sh" ]]; then
+  echo "Drift audit:"
+  "$SCRIPT_DIR/drift-audit.sh" "$NAMESPACE" || true
+fi
+
+logger -t agent-recovery -p user.notice \
+  "$(jq -n \
+      --arg event "authorization_restored_server" \
+      --arg agent "$AGENT_NAME" \
+      --arg incident "$INCIDENT_ID" \
+      --arg actor "$(whoami)" \
+      --arg ts "$(date -Iseconds)" \
+      '{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}')"
+
+echo "Server-side authorization restored for $AGENT_NAME"
+echo "Review drift-audit output before declaring recovery complete."

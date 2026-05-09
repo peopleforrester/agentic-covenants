@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# ABOUTME: Server-side blast-radius rebuild runbook. Removes emergency NetworkPolicy, reapplies operational policies, restores data from pre-incident backup.
+# ABOUTME: Caller MUST pass a backup snapshot ID dated BEFORE the earliest indicator of compromise. Refuses without it.
+
+set -euo pipefail
+
+if [[ $# -lt 3 ]]; then
+  echo "Usage: agent-restore-blast-radius-server <AGENT_NAME> <INCIDENT_ID> <BACKUP_SNAPSHOT_ID>" >&2
+  echo "  BACKUP_SNAPSHOT_ID must be a snapshot dated BEFORE the earliest IoC from Sentinels." >&2
+  exit 64
+fi
+
+AGENT_NAME="$1"
+INCIDENT_ID="$2"
+BACKUP_SNAPSHOT="$3"
+NAMESPACE="agent-${AGENT_NAME}"
+SOURCE_DIR="${SOURCE_DIR:-$(pwd)/controls/blast-radius/server-side}"
+INFRASTRUCTURE_DIR="${INFRASTRUCTURE_DIR:-$(pwd)/infrastructure}"
+
+# 1. Remove the emergency NetworkPolicy from Interventions.
+kubectl delete networkpolicy -n "$NAMESPACE" emergency-deny-everything 2>/dev/null || true
+
+# 2. Reapply operational NetworkPolicies from source.
+if [[ -r "$SOURCE_DIR/networkpolicy-default-deny.yaml" ]]; then
+  kubectl apply -n "$NAMESPACE" -f "$SOURCE_DIR/networkpolicy-default-deny.yaml"
+fi
+if [[ -r "$SOURCE_DIR/networkpolicy-allowlist.yaml" ]]; then
+  kubectl apply -n "$NAMESPACE" -f "$SOURCE_DIR/networkpolicy-allowlist.yaml"
+fi
+
+# 3. Reapply ResourceQuota and LimitRange.
+if [[ -r "$SOURCE_DIR/resourcequota.yaml" ]]; then
+  kubectl apply -n "$NAMESPACE" -f "$SOURCE_DIR/resourcequota.yaml"
+fi
+if [[ -r "$SOURCE_DIR/limitrange.yaml" ]]; then
+  kubectl apply -n "$NAMESPACE" -f "$SOURCE_DIR/limitrange.yaml"
+fi
+
+# 4. terraform plan + apply against fresh state. Operator must review the
+# plan output before this script proceeds to apply.
+if [[ -d "$INFRASTRUCTURE_DIR" ]] && command -v terraform >/dev/null 2>&1; then
+  ( cd "$INFRASTRUCTURE_DIR" && terraform init -backend-config=backend.hcl ) >/dev/null
+  ( cd "$INFRASTRUCTURE_DIR" && terraform plan -out=/tmp/restoration.tfplan -no-color )
+
+  echo
+  read -r -p "Review the terraform plan above. Apply now? (type 'apply' to proceed): " CONFIRM
+  if [[ "$CONFIRM" == "apply" ]]; then
+    ( cd "$INFRASTRUCTURE_DIR" && terraform apply /tmp/restoration.tfplan )
+  else
+    echo "Skipping terraform apply; recovery is not complete until apply is run."
+  fi
+fi
+
+# 5. Restore data from the named pre-incident backup snapshot.
+# This step is data-store-specific. Stub here invokes a restore-from-snapshot
+# helper that the operator must provide for the relevant data store
+# (RDS, Postgres backup, S3 versioned object copy, etc.).
+if [[ -x "/usr/local/bin/restore-from-snapshot" ]]; then
+  /usr/local/bin/restore-from-snapshot "$BACKUP_SNAPSHOT" "$AGENT_NAME"
+else
+  echo "WARN: /usr/local/bin/restore-from-snapshot not present; data restore must be performed manually" >&2
+  echo "Backup snapshot to restore from: $BACKUP_SNAPSHOT"
+fi
+
+logger -t agent-recovery -p user.notice \
+  "$(jq -n \
+      --arg event "blast_radius_restored_server" \
+      --arg agent "$AGENT_NAME" \
+      --arg incident "$INCIDENT_ID" \
+      --arg snapshot "$BACKUP_SNAPSHOT" \
+      --arg actor "$(whoami)" \
+      --arg ts "$(date -Iseconds)" \
+      '{event:$event, agent:$agent, incident:$incident, snapshot:$snapshot, actor:$actor, ts:$ts}')"
+
+echo "Server-side blast-radius restore complete for $AGENT_NAME (snapshot $BACKUP_SNAPSHOT)"
