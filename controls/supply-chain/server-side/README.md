@@ -58,4 +58,4 @@ gh pr create
 
 ## Citation
 
-NIST CSF 2.0 PR.PS-02, PR.PS-05 (unauthorized software prevented), PR.IR-01, GV.SC-07, ID.SC-04 (supplier integrity), ID.RA-09 (vulnerability disclosure processes). NIST AI RMF MAP 4.1, MANAGE 3.1. OWASP LLM03, LLM04. OWASP ASI04. NIST SP 800-218 PS.3 (archive and protect each software release). NIST SP 800-161 Rev. 1 (supply chain risk management). SLSA framework. CISA/NSA/FBI AI Data Security CSI (May 2025). OWASP MCP04, MCP09.
+NIST CSF 2.0 PR.PS-02, PR.PS-05 (unauthorized software prevented), PR.IR-01, GV.SC-07 (risks from suppliers identified, recorded, prioritized, assessed, responded to, monitored), ID.RA-09 (authenticity and integrity of hardware and software assessed prior to acquisition and use). NIST AI RMF MAP 4.1, MANAGE 3.1. OWASP LLM03, LLM04. OWASP ASI04. NIST SP 800-218 PS.3 (archive and protect each software release). NIST SP 800-161 Rev. 1 (supply chain risk management). SLSA framework. CISA/NSA/FBI AI Data Security CSI (May 2025). CISA/ASD ACSC "Principles for Secure Integration of AI in OT" (Dec 2025). OWASP MCP04, MCP09.

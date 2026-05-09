@@ -58,4 +58,4 @@ cosign verify-blob \
 
 ## Citation
 
-NIST CSF 2.0 PR.PS-02, PR.PS-01, ID.SC-04 (supplier integrity verified). NIST AI RMF MAP 4.1, MANAGE 3.1 (third-party risk treatment). OWASP LLM03 (Supply Chain), LLM04 (Data and Model Poisoning). OWASP ASI04 (Agentic Supply Chain Vulnerabilities), ASI06 (Memory & Context Poisoning). NIST SP 800-218 v1.1 PS.2. NIST SP 800-218A (Generative AI Profile of SSDF). OWASP MCP01, MCP03, MCP04.
+NIST CSF 2.0 PR.PS-02, PR.PS-01, GV.SC-07 (risks from suppliers identified, recorded, prioritized, assessed). NIST AI RMF MAP 4.1, MANAGE 3.1 (third-party risk treatment). OWASP LLM03 (Supply Chain), LLM04 (Data and Model Poisoning). OWASP ASI04 (Agentic Supply Chain Vulnerabilities), ASI06 (Memory & Context Poisoning). NIST SP 800-218 v1.1 PS.2. NIST SP 800-218 Rev. 1 draft (Dec 17, 2025). NIST SP 800-218A (Generative AI Profile of SSDF). OWASP MCP01, MCP03, MCP04.

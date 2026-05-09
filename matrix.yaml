@@ -39,7 +39,7 @@ cells:
   # ---- IDENTITY ----
   - concern: identity
     layer: in-agent
-    summary: System prompt declares "you are an automation agent named X." Advisory only.
+    summary: System prompt declares "you are an automation agent named X." Identity is carried, not established. Identity claims made in a system prompt have no cryptographic weight; the agent cannot prove its own identity to the target. Advisory only.
     controls_path: controls/identity/in-agent/
     citations:
       nist_csf_2_0: ["(advisory)"]
@@ -127,7 +127,7 @@ cells:
   # ---- BLAST RADIUS ----
   - concern: blast-radius
     layer: in-agent
-    summary: Model declines destructive operations. Verified failure mode in Kiro, Replit, DataTalks.Club incidents.
+    summary: "No enforcement at this layer; advisory only. Model declines destructive operations — verified failure mode in Kiro, Replit, DataTalks.Club, and Amazon Q (CVE-2025-8217) incidents. Prevention lives in client-side and server-side."
     controls_path: controls/blast-radius/in-agent/
     citations:
       nist_csf_2_0: ["(advisory)"]
@@ -170,7 +170,7 @@ cells:
   # ---- APPROVAL GATING ----
   - concern: approval-gating
     layer: in-agent
-    summary: Model says "are you sure?" Silently bypassable.
+    summary: 'Model says "are you sure?" Silently bypassable. Anthropic Auto Mode (March 26, 2026): 93% approval rate on permission prompts is the empirical ceiling for human-in-the-loop on top of in-agent gates. Treat any approval prompt that fires often as already broken.'
     controls_path: controls/approval-gating/in-agent/
     citations:
       nist_csf_2_0: ["(advisory)"]
@@ -200,7 +200,7 @@ cells:
     summary: Branch protection + PR review, CODEOWNERS, multi-party prod approval, plan-and-apply split, deployment freezes.
     controls_path: controls/approval-gating/server-side/
     citations:
-      nist_csf_2_0: ["PR.AA-05", "PR.PS-01", "GV.RR-04"]
+      nist_csf_2_0: ["PR.AA-05", "PR.PS-01", "GV.RR-02", "GV.SC-04"]
       nist_ai_rmf: ["GOVERN 4.1", "MANAGE 4.1"]
       owasp_llm: ["LLM06"]
       owasp_agentic: ["ASI02", "ASI03"]
@@ -213,7 +213,7 @@ cells:
   # ---- SUPPLY CHAIN ----
   - concern: supply-chain
     layer: in-agent
-    summary: Model warns about unvetted packages or unfamiliar MCP servers. Unreliable.
+    summary: No enforcement at this layer; advisory only. Model warns about unvetted packages or unfamiliar MCP servers, frequently wrong about provenance. Prevention lives in client-side and server-side.
     controls_path: controls/supply-chain/in-agent/
     citations:
       nist_csf_2_0: ["(advisory)"]
@@ -228,7 +228,7 @@ cells:
     summary: MCP server allowlist with hash pinning, Sigstore verification, lockfile pinning, pre-commit deps scan.
     controls_path: controls/supply-chain/client-side/
     citations:
-      nist_csf_2_0: ["PR.PS-01", "PR.PS-02", "ID.SC-04"]
+      nist_csf_2_0: ["PR.PS-01", "PR.PS-02", "GV.SC-07"]
       nist_ai_rmf: ["MAP 4.1", "MANAGE 3.1"]
       owasp_llm: ["LLM03", "LLM04"]
       owasp_agentic: ["ASI04", "ASI06"]
@@ -242,7 +242,7 @@ cells:
     summary: OCI signature verification (cosign), SBOM admission, egress NetworkPolicy, OPA attestation policy, MCP domain allowlist at network layer.
     controls_path: controls/supply-chain/server-side/
     citations:
-      nist_csf_2_0: ["PR.PS-02", "PR.PS-05", "PR.IR-01", "ID.SC-04", "ID.RA-09"]
+      nist_csf_2_0: ["PR.PS-02", "PR.PS-05", "PR.IR-01", "GV.SC-07", "ID.RA-09"]
       nist_ai_rmf: ["MAP 4.1", "MANAGE 3.1"]
       owasp_llm: ["LLM03", "LLM04"]
       owasp_agentic: ["ASI04"]

@@ -2,7 +2,7 @@
 
 **Control.** Model declines destructive operations.
 
-**Strength.** Verified failure mode. Documented incidents in Kiro, Replit, and DataTalks.Club where the model proceeded with destructive operations despite training to refuse. Treat as nudge.
+**Strength.** **No enforcement at this layer; advisory only.** Verified failure mode. Documented incidents in Kiro, Replit, DataTalks.Club, and Amazon Q (CVE-2025-8217) where the model proceeded with destructive operations despite training to refuse. The actual prevention lives in [`../client-side/`](../client-side/) (sandbox, seccomp, dry-run defaults) and [`../server-side/`](../server-side/) (gated IaC pipeline, ResourceQuota, NetworkPolicy, immutable backups).
 
 ## Tooling
 

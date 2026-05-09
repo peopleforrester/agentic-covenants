@@ -2,7 +2,7 @@
 
 **Control.** Model warns about unvetted packages or unfamiliar MCP servers.
 
-**Strength.** Unreliable. Frequently wrong about provenance. Listed for completeness; the real defenses are at client-side and server-side.
+**Strength.** **No enforcement at this layer; advisory only.** Unreliable. Frequently wrong about provenance — Khati et al. measured ~24% of hallucinated imports in code generation point to nonexistent packages. The actual prevention lives in [`../client-side/`](../client-side/) (MCP allowlist with hash pinning, tool-description hashing for rug-pull defense, Sigstore signature verification) and [`../server-side/`](../server-side/) (cosign verification, SBOM admission, FQDN egress allowlist, SLSA build provenance gates).
 
 ## Tooling
 

@@ -2,7 +2,7 @@
 
 **Control.** Model says "are you sure?" before destructive ops.
 
-**Strength.** Silently bypassable. The model can be talked out of asking with novel framing or persistence. Listed for completeness; do not rely on it.
+**Strength.** Silently bypassable. The model can be talked out of asking with novel framing or persistence. **Anthropic Auto Mode (March 26, 2026) measured a 93% approval rate on permission prompts — the empirical ceiling for human-in-the-loop on top of in-agent gates.** Treat any approval prompt that fires often as already broken; the cure is not "ask better" but "ask less, and only on genuinely novel decisions" (judgment-query escalation).
 
 ## Tooling
 
