@@ -112,7 +112,7 @@ cells:
   # ---- BLAST RADIUS ----
   - concern: blast-radius
     layer: in-agent
-    summary: Forensic only; sandbox events do not surface in-agent.
+    summary: Reasoning trace and tool-call log capture for forensics, plus a lethal-trifecta detector at the wrapper layer that flags when private data, untrusted content, and external communication appear in the same context window. The detector is the only L1 control with real-time detection value, and it runs outside the agent.
     sentinels_path: sentinels/blast-radius/in-agent/
     citations:
       nist_csf_2_0: ["DE.CM-09"]
