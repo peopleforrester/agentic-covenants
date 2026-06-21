@@ -33,3 +33,9 @@ dist/
 build/
 site/
 *.tar.gz
+
+# Local Claude Code session history (do not push)
+.claude-history/
+
+# Imported context archive from claude.ai migration — local Claude Code context only, never publish (public repo).
+claude-ai-context/
