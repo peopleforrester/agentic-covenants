@@ -39,3 +39,7 @@ site/
 
 # Imported context archive from claude.ai migration — local Claude Code context only, never publish (public repo).
 claude-ai-context/
+
+# Harvested session transcripts (landed here by the session-harvest tooling; not part of this repo).
+transcripts/
+_INBOX.md
