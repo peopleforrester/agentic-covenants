@@ -1,4 +1,4 @@
-# ABOUTME: Kyverno ClusterPolicy requiring an SPDX SBOM attestation on every Pod image. Requires Kyverno 1.13+.
+# ABOUTME: Kyverno ClusterPolicy requiring an SPDX SBOM attestation on every Pod image. Requires Kyverno 1.18+.
 # ABOUTME: The condition asserts a syft-generated SBOM; tune for your build tool. Without an SBOM, admission is rejected.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy

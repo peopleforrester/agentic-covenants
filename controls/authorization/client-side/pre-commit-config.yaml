@@ -2,12 +2,12 @@
 # ABOUTME: Drop at repo root as .pre-commit-config.yaml and run `pre-commit install`. Backstopped by server-side pre-receive.
 repos:
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.22.1
+    rev: v8.30.1
     hooks:
       - id: gitleaks
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: detect-private-key
       - id: check-added-large-files

@@ -6,7 +6,7 @@
 
 ## Tooling
 
-- Kyverno 1.13+ Reports controller.
+- Kyverno 1.18+ Reports controller.
 - OPA Gatekeeper with decision logging configured.
 - AWS IAM Access Analyzer enabled per region.
 - A SIEM with field-level filtering.

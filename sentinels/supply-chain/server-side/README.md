@@ -6,7 +6,7 @@
 
 ## Tooling
 
-- Kyverno 1.13+.
+- Kyverno 1.18+.
 - syft for SBOM generation.
 - Cilium with Hubble and L7 proxy enabled.
 

@@ -7,7 +7,7 @@
 ## Tooling
 
 - Kubernetes RBAC (built-in).
-- Kyverno 1.13+ (older releases use a different `attestors` block shape) or OPA Gatekeeper.
+- Kyverno 1.18+ (older releases use a different `attestors` block shape) or OPA Gatekeeper.
 - AWS IAM, GCP IAM, or Azure RBAC.
 - Server-side Git pre-receive hooks (every Git server in your org, not just origin).
 

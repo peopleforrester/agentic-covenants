@@ -1,5 +1,5 @@
 # ABOUTME: Kyverno ClusterPolicy denying ClusterRoleBindings, wildcard verbs, and prod-namespace bindings on agent SAs.
-# ABOUTME: Requires Kyverno 1.13+ for the policy syntax used here. validationFailureAction must be Enforce, not Audit.
+# ABOUTME: Requires Kyverno 1.18+ for the policy syntax used here. validationFailureAction must be Enforce, not Audit.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:

@@ -2,24 +2,26 @@
 # ABOUTME: pre-commit is bypassable with --no-verify; the server-side lockfile-integrity job is the real backstop.
 repos:
   - repo: https://github.com/pypa/pip-audit
-    rev: v2.7.3
+    rev: v2.10.1
     hooks:
       - id: pip-audit
         args: ["--strict"]
         files: '^(requirements.*\.txt|pyproject\.toml|Pipfile\.lock|poetry\.lock)$'
 
+  # Trivy was compromised twice in 2026 (malicious v0.69.4, March 2026) — its own
+  # release pipeline is part of YOUR supply chain. Pin the rev, and in CI verify
+  # the binary by digest/signature rather than trusting the tag. See BYPASSES.md.
   - repo: https://github.com/aquasecurity/trivy
-    rev: v0.51.0
+    rev: v0.71.1
     hooks:
       - id: trivy-fs
         args: ["--severity", "HIGH,CRITICAL", "--exit-code", "1"]
 
   - repo: https://github.com/python-poetry/poetry
-    rev: 1.8.3
+    rev: 2.4.1
     hooks:
       - id: poetry-check
-      - id: poetry-lock
-        args: ["--check"]   # fails if pyproject.toml and poetry.lock are out of sync
+        args: ["--lock"]   # poetry 2.x: `poetry check --lock` replaces the removed `poetry lock --check`
 
   - repo: local
     hooks:

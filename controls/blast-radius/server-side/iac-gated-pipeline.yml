@@ -19,14 +19,14 @@ jobs:
     name: terraform plan (read-only)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::123456789012:role/terraform-plan-readonly
           aws-region: us-east-1
       - uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.9.0
+          terraform_version: 1.15.6
       - name: terraform fmt
         working-directory: infrastructure
         run: terraform fmt -check -recursive
@@ -40,7 +40,7 @@ jobs:
         working-directory: infrastructure
         run: terraform plan -out=tfplan -no-color
       - name: archive plan
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: tfplan
           path: infrastructure/tfplan
@@ -61,18 +61,18 @@ jobs:
           echo "::error::Deployment freeze is active. Apply blocked."
           exit 1
 
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v6
         with:
           name: tfplan
           path: infrastructure
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::123456789012:role/terraform-apply-prod
           aws-region: us-east-1
       - uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.9.0
+          terraform_version: 1.15.6
       - name: terraform init
         working-directory: infrastructure
         run: terraform init -backend-config=backend.hcl

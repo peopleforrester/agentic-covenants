@@ -58,7 +58,7 @@ spec:
           restartPolicy: OnFailure
           containers:
           - name: differ
-            # Pin by digest. Resolve current digest with: crane digest anchore/syft:v1.20.0
+            # Pin by digest. Resolve current digest with: crane digest anchore/syft:v1.45.1
             image: anchore/syft@sha256:REPLACE_WITH_DIGEST_FROM_CRANE
             envFrom:
             - secretRef:

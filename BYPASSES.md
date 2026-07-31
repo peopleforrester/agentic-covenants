@@ -292,6 +292,13 @@ These are documented incidents and disclosures from 2025 and 2026 that defeated 
 - **What it did**: RCE via Claude Code project files; `settings.json` execution without prompt prior to patch.
 - **Lesson**: Warning dialogs are the last line of defense, not the first. Sandbox project loading by default.
 
+### Trivy scanner supply-chain compromise (March 2026)
+
+- **Disclosed**: StepSecurity and Aqua Security, March 19, 2026 (a second incident after an earlier 2026 compromise).
+- **Layer affected**: Supply chain — and pointedly, the **supply-chain *tooling* itself**.
+- **What it did**: A malicious `trivy v0.69.4` release was published, and the `aquasecurity/setup-trivy` and `aquasecurity/trivy-action` GitHub Actions were compromised. Teams that ran "the scanner" in CI to *defend* their supply chain pulled a backdoored scanner. Safe versions at disclosure: `trivy v0.69.3`, `trivy-action v0.35.0`, `setup-trivy v0.2.6`.
+- **Lesson**: Your security scanner is part of your supply chain. The control that verifies everything else must itself be verified. **Pin scanners by digest and verify their signatures — do not float a tag**, even (especially) for the tools whose whole job is supply-chain integrity. This repo recommends Trivy, pip-audit, gitleaks, syft, and cosign; every one of them is itself a dependency that can be poisoned. The L3-C5 admission policies ([`controls/supply-chain/server-side/`](./controls/supply-chain/server-side/)) and the SBOM-diff sentinel ([`sentinels/supply-chain/server-side/sbom-diff-cronjob.yaml`](./sentinels/supply-chain/server-side/sbom-diff-cronjob.yaml)) apply to the security toolchain too, not just the application image.
+
 ---
 
 ## What this list is for

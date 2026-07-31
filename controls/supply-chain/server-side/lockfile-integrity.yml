@@ -24,10 +24,10 @@ jobs:
     if: hashFiles('package-lock.json') != ''
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
       - name: Verify package-lock.json matches package.json
         # npm ci --dry-run fails if the lockfile and manifest are out of sync.
         run: npm ci --dry-run
@@ -39,13 +39,13 @@ jobs:
     if: hashFiles('requirements.in') != ''
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: '3.13'
       - name: Verify requirements.txt is the compiled output of requirements.in
         run: |
-          pip install pip-tools==7.4.1
+          pip install pip-tools==7.5.3
           pip-compile --no-header --no-emit-index-url \
             --output-file=/tmp/requirements.lock requirements.in
           if ! diff -q requirements.txt /tmp/requirements.lock >/dev/null 2>&1; then
@@ -57,18 +57,18 @@ jobs:
 
       - name: Run pip-audit
         run: |
-          pip install pip-audit==2.7.3
+          pip install pip-audit==2.10.1
           pip-audit --requirement requirements.txt --strict
 
   poetry:
     if: hashFiles('poetry.lock') != ''
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
-      - run: pip install poetry==1.8.3
+          python-version: '3.13'
+      - run: pip install poetry==2.4.1
       - name: Verify poetry.lock is in sync with pyproject.toml
         run: poetry check --lock
 
@@ -76,8 +76,8 @@ jobs:
     if: hashFiles('go.mod') != ''
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
         with:
           go-version: 'stable'
       - name: Verify go.sum matches go.mod
@@ -89,7 +89,7 @@ jobs:
     if: hashFiles('Cargo.lock') != ''
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
       - name: cargo audit
         run: |

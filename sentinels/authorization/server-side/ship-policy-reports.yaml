@@ -56,7 +56,7 @@ spec:
           restartPolicy: OnFailure
           containers:
           - name: shipper
-            # Pin by digest. Resolve current digest with: crane digest bitnami/kubectl:1.31.0
+            # Pin by digest. Resolve current digest with: crane digest bitnami/kubectl:1.34
             image: bitnami/kubectl@sha256:REPLACE_WITH_DIGEST_FROM_CRANE
             envFrom:
             - secretRef:

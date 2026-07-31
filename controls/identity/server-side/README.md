@@ -6,7 +6,7 @@
 
 ## Tooling
 
-- Kubernetes 1.28+ (for `expirationSeconds` on projected ServiceAccount tokens, restricted Pod Security Standards).
+- Kubernetes 1.34+ (for `expirationSeconds` on projected ServiceAccount tokens, restricted Pod Security Standards).
 - AWS IAM Roles for Service Accounts (IRSA), GCP Workload Identity, or Azure Workload Identity.
 - SPIFFE/SPIRE if you have multiple clusters or off-cluster components that need a single identity story.
 - An OIDC IdP (Okta, Auth0, Keycloak, Dex).

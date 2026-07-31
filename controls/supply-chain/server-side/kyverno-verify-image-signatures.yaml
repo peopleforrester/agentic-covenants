@@ -1,4 +1,4 @@
-# ABOUTME: Kyverno ClusterPolicy verifying cosign keyless signatures + SPDX SBOM attestation. Requires Kyverno 1.13+.
+# ABOUTME: Kyverno ClusterPolicy verifying cosign keyless signatures + SPDX SBOM attestation. Requires Kyverno 1.18+.
 # ABOUTME: Substitute example-org for your GitHub org. The keyless subject regex pins signatures to your org's workflow runs only.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy

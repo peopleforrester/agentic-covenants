@@ -10,7 +10,7 @@
 
 - `kubectl` with permission to apply ClusterPolicies and Roles in agent namespaces.
 - AWS CLI with permission to attach IAM policies.
-- Kyverno 1.13+ in `Enforce` mode (audit-only does not block).
+- Kyverno 1.18+ in `Enforce` mode (audit-only does not block).
 
 ## Files in this directory
 
