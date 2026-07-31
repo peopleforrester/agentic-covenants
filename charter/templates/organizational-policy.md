@@ -101,7 +101,7 @@ Council reviews:
 
 | Model | Vendor | Approved version range | Approved by | Approved date | Next review |
 |---|---|---|---|---|---|
-| claude-opus-4-7 | Anthropic | latest | Council | YYYY-MM-DD | YYYY-MM-DD |
+| claude-opus-4-8 | Anthropic | latest | Council | YYYY-MM-DD | YYYY-MM-DD |
 | claude-sonnet-4-6 | Anthropic | latest | Council | YYYY-MM-DD | YYYY-MM-DD |
 
 ## 7. Vendor risk assessment

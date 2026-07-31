@@ -10,7 +10,7 @@ The `dependencies:` block of [`../../templates/agent-charter.yaml`](../../templa
 
 ```yaml
 dependencies:
-  foundation_model: claude-opus-4-7
+  foundation_model: claude-opus-4-8
   foundation_model_pinned_at: 2026-04-15
   mcp_server_hashes:
     filesystem: sha256:REPLACE_WITH_ACTUAL_SHA256

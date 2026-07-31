@@ -299,6 +299,26 @@ These are documented incidents and disclosures from 2025 and 2026 that defeated 
 - **What it did**: A malicious `trivy v0.69.4` release was published, and the `aquasecurity/setup-trivy` and `aquasecurity/trivy-action` GitHub Actions were compromised. Teams that ran "the scanner" in CI to *defend* their supply chain pulled a backdoored scanner. Safe versions at disclosure: `trivy v0.69.3`, `trivy-action v0.35.0`, `setup-trivy v0.2.6`.
 - **Lesson**: Your security scanner is part of your supply chain. The control that verifies everything else must itself be verified. **Pin scanners by digest and verify their signatures — do not float a tag**, even (especially) for the tools whose whole job is supply-chain integrity. This repo recommends Trivy, pip-audit, gitleaks, syft, and cosign; every one of them is itself a dependency that can be poisoned. The L3-C5 admission policies ([`controls/supply-chain/server-side/`](./controls/supply-chain/server-side/)) and the SBOM-diff sentinel ([`sentinels/supply-chain/server-side/sbom-diff-cronjob.yaml`](./sentinels/supply-chain/server-side/sbom-diff-cronjob.yaml)) apply to the security toolchain too, not just the application image.
 
+### Kubernetes MCP server read-only bypass (CVE-2026-46519)
+
+- **Disclosed**: NeuralTrust, 2026.
+- **Layer affected**: Authorization — and it is the cleanest proof of the matrix's central thesis.
+- **What it did**: A Kubernetes MCP server enforced its "read-only mode" **only at the tool-discovery layer** (it hid the mutating tools from the listing). Clients simply invoked `delete` operations directly, bypassing the filter, because the restriction lived in agent-facing config rather than on the target.
+- **Lesson**: Agent-declared scope is not authorization. **RBAC on the ServiceAccount is the real boundary**, exactly as the Authorization server-side cell ([`controls/authorization/server-side/`](./controls/authorization/server-side/)) insists. Anything enforced at the in-agent or tool-description layer (Charter scope, an MCP server's own "read-only" flag) is advisory until the target system denies the verb. This is the L3 covenant in one CVE.
+
+### MCP unauthenticated RCE (CVE-2026-5058, CVE-2026-5059)
+
+- **Layer affected**: Supply chain and blast radius.
+- **What it did**: Two CVSS 9.8 vulnerabilities allowing unauthenticated remote code execution against MCP installations (unvalidated user-supplied strings reaching system calls; improper allowed-command handling). Part of a wave: 30+ MCP CVEs were filed in January–February 2026 alone, and independent scans place the share of public MCP servers carrying exploitable flaws somewhere between 30% and 82%.
+- **Lesson**: The MCP ecosystem is an attack surface, not a convenience layer. Treat every MCP server as untrusted remote code: allowlist by hash ([`controls/supply-chain/client-side/mcp-allowlist.json`](./controls/supply-chain/client-side/mcp-allowlist.json)), fence egress to approved MCP domains at the network layer ([`controls/supply-chain/server-side/cilium-mcp-fqdn-egress.yaml`](./controls/supply-chain/server-side/cilium-mcp-fqdn-egress.yaml)), and never run an MCP server with more privilege than the covenant allows.
+
+### MCP `2026-07-28` protocol revision (new surface, and a stronger identity floor)
+
+- **Status**: Release candidate locked 2026-05-21; final targeted 2026-07-28. The largest protocol change since launch.
+- **Layer affected**: Identity (strengthened) and supply chain (new surface).
+- **What changed**: The protocol goes **stateless** — the `initialize` handshake, protocol-level sessions, and the `Mcp-Session-Id` header are removed; each request now carries its protocol version, client identity, and client capabilities in `_meta`, and cross-call state moves to explicit server-minted handles passed as ordinary tool arguments. Authorization is hardened toward OAuth 2.0 / OpenID Connect: `iss` validation (RFC 9207), issuer-bound credentials, and Dynamic Client Registration deprecated in favor of Client ID Metadata Documents. HTTP+SSE transport is deprecated in favor of Streamable HTTP.
+- **Why it matters here**: The OAuth 2.0 / OIDC hardening and issuer-bound credentials *raise the floor* under the Identity covenant ([`controls/identity/`](./controls/identity/)) — server-established identity is now the protocol's own direction of travel, matching the NIST NCCoE agent-identity concept paper. But statelessness relocates trust: identity and capabilities now ride in `_meta` on every request (validate them; do not trust client-asserted `_meta`), and the JSON Schema 2020-12 support means **clients must not auto-dereference external `$ref` URIs** and must bound schema depth. Token passthrough remains forbidden and the host still enforces the trust boundary — the covenant does not move to the protocol, it composes with it.
+
 ---
 
 ## What this list is for

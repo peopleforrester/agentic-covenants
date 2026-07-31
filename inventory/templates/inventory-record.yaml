@@ -37,7 +37,7 @@ authorization_runtime:
   effective_scope_last_audited: 2026-05-01
 
 dependencies_runtime:
-  foundation_model: claude-opus-4-7
+  foundation_model: claude-opus-4-8
   mcp_servers:
     - name: filesystem
       hash: sha256:REPLACE_WITH_ACTUAL_SHA256

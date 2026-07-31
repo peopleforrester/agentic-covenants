@@ -8,6 +8,7 @@
 
 - Kubernetes RBAC (built-in).
 - Kyverno 1.18+ (older releases use a different `attestors` block shape) or OPA Gatekeeper.
+- **Kubernetes-native admission (no controller to install): ValidatingAdmissionPolicy (GA since 1.30) and MutatingAdmissionPolicy (GA and default-on in 1.36 "Haru", April 2026).** These are in-tree CEL admission policies with no webhook, which removes the "admission webhook fail-open" bypass listed below. Prefer VAP for the deny-wildcard-verbs / deny-ClusterRoleBinding rules where you want zero external dependencies; reach for Kyverno/OPA when you need `verifyImages`, generate rules, or cross-cluster policy libraries. The two compose.
 - AWS IAM, GCP IAM, or Azure RBAC.
 - Server-side Git pre-receive hooks (every Git server in your org, not just origin).
 

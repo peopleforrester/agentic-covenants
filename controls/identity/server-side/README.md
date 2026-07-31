@@ -6,10 +6,12 @@
 
 ## Tooling
 
-- Kubernetes 1.34+ (for `expirationSeconds` on projected ServiceAccount tokens, restricted Pod Security Standards).
+- Kubernetes 1.34+ (for `expirationSeconds` on projected ServiceAccount tokens, restricted Pod Security Standards). Current stable is 1.36 "Haru" (April 2026); 1.33 reached end-of-life June 28, 2026.
 - AWS IAM Roles for Service Accounts (IRSA), GCP Workload Identity, or Azure Workload Identity.
 - SPIFFE/SPIRE if you have multiple clusters or off-cluster components that need a single identity story.
 - An OIDC IdP (Okta, Auth0, Keycloak, Dex).
+
+> **Direction of travel (mid-2026):** the MCP `2026-07-28` protocol revision hardens authorization toward OAuth 2.0 / OpenID Connect with `iss` validation (RFC 9207) and issuer-bound credentials, and the NIST NCCoE agent-identity concept paper (Feb 5, 2026) proposes exactly this stack (OAuth 2.0 + SPIFFE/SPIRE + MCP). The covenant here — identity established by an external IdP, carried by the agent, never asserted by it — is now the ecosystem's own direction, not a contrarian stance. See [`../../../BYPASSES.md`](../../../BYPASSES.md) for the protocol-transition caveats.
 
 ## Files in this directory
 

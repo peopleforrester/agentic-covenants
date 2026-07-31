@@ -86,7 +86,7 @@ This domain is authorized to operate agents at:
 
 | Model | Version | Approved by | Approved date |
 |---|---|---|---|
-| claude-opus-4-7 | latest | [Name] | YYYY-MM-DD |
+| claude-opus-4-8 | latest | [Name] | YYYY-MM-DD |
 
 ## 9. Retirement criteria for the domain itself
 
