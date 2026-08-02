@@ -1,6 +1,7 @@
 {
+  "_comment": "Emergency lockdown. dontAsk auto-denies everything that would prompt; the empty allow list leaves nothing pre-approved; deny [*] blocks every tool outright in every mode. Deny rules and the PreToolUse hook below both still apply even if someone re-enters a looser mode, which is the point.",
   "permissions": {
-    "defaultMode": "deny",
+    "defaultMode": "dontAsk",
     "allow": [],
     "ask": [],
     "deny": ["*"]

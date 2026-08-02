@@ -1,6 +1,7 @@
 {
+  "_comment": "defaultMode dontAsk auto-denies anything that would otherwise prompt: only the allow rules below, built-in read-only Bash, and calls a PreToolUse hook approves will run. Valid modes are default (aka manual), acceptEdits, plan, auto, dontAsk, bypassPermissions. There is no deny mode; the deny LIST below is what blocks specific tools.",
   "permissions": {
-    "defaultMode": "deny",
+    "defaultMode": "dontAsk",
     "allow": [
       "Read",
       "Glob",
