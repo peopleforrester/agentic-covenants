@@ -1,0 +1,79 @@
+# ABOUTME: Kyverno verifyImages for enclaves with no public transparency log — static public key instead of keyless/Rekor.
+# ABOUTME: Replaces controls/supply-chain/server-side/kyverno-verify-image-signatures.yaml, which assumes public Fulcio/Rekor.
+#
+# The connected version of this policy uses keyless signing: a GitHub OIDC identity,
+# Fulcio for the short-lived cert, and Rekor as the public transparency log. None of
+# those are reachable from an IL4/IL5 enclave.
+#
+# Two supported air-gapped paths:
+#   (a) Self-hosted Sigstore — run Fulcio + Rekor inside the enclave and keep the
+#       keyless flow, pointing rekor.url at the internal instance. Higher operational
+#       burden, preserves transparency-log properties.
+#   (b) Static key verification — this file. Sign in the enclave build pipeline with a
+#       key held in an enclave HSM/KMS, distribute the PUBLIC key as a ConfigMap, and
+#       verify against it. Simpler, but you lose the transparency log, so key custody
+#       and rotation become the control you must document to the AO.
+#
+# Satisfies (crosswalk): SR-3, SR-4, SR-11 (supply chain provenance and component
+# authenticity), CM-14 (signed components), SI-7 (software integrity).
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: enclave-cosign-pubkey
+  namespace: kyverno
+data:
+  # Public half of the enclave signing key. The PRIVATE key lives in the enclave
+  # HSM/KMS and is never in the cluster. Rotate on the same cadence as any other
+  # code-signing key, and treat exposure as requiring re-signing of every image.
+  cosign.pub: |
+    -----BEGIN PUBLIC KEY-----
+    REPLACE_WITH_ENCLAVE_COSIGN_PUBLIC_KEY
+    -----END PUBLIC KEY-----
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-image-signatures-airgapped
+  annotations:
+    policies.kyverno.io/title: Verify cosign signatures against the enclave key (no Rekor)
+    policies.kyverno.io/category: Agentic Covenants / Supply Chain (air-gapped)
+    policies.kyverno.io/severity: critical
+spec:
+  validationFailureAction: Enforce
+  background: false
+  webhookTimeoutSeconds: 30
+  failurePolicy: Fail
+  rules:
+  - name: verify-static-key-signature
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+          namespaces:
+          - "agent-*"
+    verifyImages:
+    # Only the enclave registry. Anything else is denied by enclave-registry-policy.yaml
+    # before this rule is reached; listed here so the policy is self-contained.
+    - imageReferences:
+      - "registry.enclave.mil/*"
+      attestors:
+      - entries:
+        - keys:
+            # Static public key, read from the ConfigMap above.
+            secret:
+              name: enclave-cosign-pubkey
+              namespace: kyverno
+            # No rekor block: there is no public transparency log in the enclave.
+            # If you stood up an in-enclave Rekor, add:
+            #   rekor:
+            #     url: https://rekor.enclave.mil
+            #     pubkey: <in-enclave rekor public key>
+            # and prefer that path — it restores the tamper-evidence property.
+            rekor:
+              ignoreTlog: true
+      # Mutate the digest so the admitted Pod is pinned to what was verified,
+      # not to a tag that could move afterward.
+      mutateDigest: true
+      verifyDigest: true
+      required: true

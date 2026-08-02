@@ -1,0 +1,92 @@
+# ABOUTME: Restricts agent workloads to the enclave registry only, with explicit denies on public registries.
+# ABOUTME: Written as in-tree ValidatingAdmissionPolicy (no controller to mirror) plus a Kyverno equivalent.
+#
+# In an air-gapped enclave a public-registry pull should fail at the network layer
+# anyway. This policy exists so it fails at ADMISSION with a legible message instead
+# of as an ImagePullBackOff twenty minutes into an incident, and so the denial is
+# audited.
+#
+# The ValidatingAdmissionPolicy path is preferred in an enclave: it is in-tree
+# (GA since Kubernetes 1.30), so there is no Helm chart to mirror and no webhook
+# that can fail open under load.
+#
+# Satisfies (crosswalk): CM-7 (least functionality), SR-3/SR-4 (supply chain
+# provenance), SI-7 (software integrity), SC-7 (boundary protection, in support).
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: enclave-registry-only
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - apiGroups:   [""]
+      apiVersions: ["v1"]
+      operations:  ["CREATE", "UPDATE"]
+      resources:   ["pods"]
+  validations:
+  # Every container image must come from the enclave registry and be digest-pinned.
+  - expression: >
+      object.spec.containers.all(c,
+        c.image.startsWith('registry.enclave.mil/') && c.image.contains('@sha256:'))
+    message: "Images must come from registry.enclave.mil and be pinned by digest (@sha256:...)."
+    reason: Forbidden
+  # Same rule for initContainers, which are a common bypass when only containers is checked.
+  - expression: >
+      !has(object.spec.initContainers) || object.spec.initContainers.all(c,
+        c.image.startsWith('registry.enclave.mil/') && c.image.contains('@sha256:'))
+    message: "initContainer images must come from registry.enclave.mil and be digest-pinned."
+    reason: Forbidden
+  # And ephemeral containers, which is how a debug session smuggles in a public image.
+  - expression: >
+      !has(object.spec.ephemeralContainers) || object.spec.ephemeralContainers.all(c,
+        c.image.startsWith('registry.enclave.mil/') && c.image.contains('@sha256:'))
+    message: "ephemeralContainer images must come from registry.enclave.mil and be digest-pinned."
+    reason: Forbidden
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: enclave-registry-only-binding
+spec:
+  policyName: enclave-registry-only
+  validationActions: [Deny, Audit]
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        agentic-covenants.io/role: agent
+---
+# Kyverno equivalent, for enclaves already running Kyverno and preferring one policy
+# engine. Functionally the same constraint; pick one, do not run both and get two
+# different denial messages for the same cause.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: enclave-registry-only-kyverno
+  annotations:
+    policies.kyverno.io/title: Agent images from the enclave registry only
+    policies.kyverno.io/category: Agentic Covenants / Supply Chain (air-gapped)
+    policies.kyverno.io/severity: critical
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+  - name: deny-non-enclave-registries
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+          namespaces: ["agent-*"]
+    validate:
+      message: >-
+        Agent workloads may only run images from registry.enclave.mil, pinned by digest.
+        Public registries are not reachable and not permitted.
+      pattern:
+        spec:
+          =(initContainers):
+          - image: "registry.enclave.mil/*"
+          =(ephemeralContainers):
+          - image: "registry.enclave.mil/*"
+          containers:
+          - image: "registry.enclave.mil/*"

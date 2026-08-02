@@ -112,3 +112,11 @@ A reviewer who finds an additional citation mapping is welcome to contribute it;
 ## Status
 
 This repo is the practitioner layer beneath OWASP (which catalogs the threats), NIST (which governs and structures), CSA MAESTRO (which models the attack surface), ISO/IEC 42001 (which provides the management system), the EU AI Act (which sets the regulatory floor), and lab-side capability frameworks (which govern what models are released). **None of those tells a platform engineer what to commit on Monday morning. This does.**
+
+## For US federal and DoD readers
+
+The five concerns line up almost one-to-one with the five risk categories named in **"Careful Adoption of Agentic AI Services"** (CISA, NSA, ACSC, Canadian Centre for Cyber Security, NZ NCSC, UK NCSC — April 30, 2026), the first multi-nation joint guidance on agentic AI.
+
+[`CITATIONS.md`](./CITATIONS.md#us-dod--federal-crosswalk) carries a **US DoD / federal crosswalk**: NIST SP 800-53 Rev. 5 control families per concern, DoD Zero Trust pillars, RMF / cATO / CSRMC, DoD Responsible AI principles, ICAM NPE constraints, and Cloud SRG Impact Levels. [`examples/dod-air-gapped/`](./examples/dod-air-gapped/) is an IL4–IL5 variant with every public dependency (Sigstore, public registries, commercial IdP) replaced by an in-enclave equivalent, plus the ICAM PE-to-NPE binding.
+
+The framing that matters: **ICAM tells you who the agent is and what it may reach. Zero Trust conditional access tells you whether this request is permitted right now. Neither tells you what an authenticated, authorized agent is permitted to *do* once it is inside.** RMF to cATO already moved assurance out of periodic review and into the infrastructure; CSRMC made that the default. This framework applies the same relocation to agent behavior. As of July 2026 there is still no official US government policy specifically on agentic AI (CRS IF13151), so these are crosswalks a program can defend to an AO, not compliance claims.

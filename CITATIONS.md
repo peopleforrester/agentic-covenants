@@ -23,9 +23,28 @@ This file is the line of defense against "you just made this up" reviewer attack
 - **NIST SP 800-161 Rev. 1** (Cybersecurity Supply Chain Risk Management Practices, May 2022).
 - **NIST SP 800-34 Rev. 1** (Contingency Planning Guide, May 2010).
 - **CISA / NSA / FBI / international partners, "AI Data Security" Cybersecurity Information Sheet** (May 22, 2025).
+- **CISA / NSA / ACSC / Canadian Centre for Cyber Security / NZ NCSC / UK NCSC, "Careful Adoption of Agentic AI Services"** (April 30, 2026). **The first multi-nation joint guidance dedicated to agentic AI**, and the closest thing to authoritative doctrine this framework maps to. Thirty pages covering the full adoption lifecycle. Its five named risk categories map almost one-to-one onto this matrix's five concerns — see [Five Eyes crosswalk](#five-eyes-risk-categories-mapped-to-the-five-concerns) below.
 - **CISA / Australian Signals Directorate ACSC, "Principles for the Secure Integration of AI in Operational Technology"** (December 3, 2025).
 - **CISA, "Deploying AI Systems Securely"** (joint guidance, April 2024).
 - **EO 14179 and the AI Action Plan** (January and July 2025). EO 14110 (October 30, 2023) was **rescinded January 23, 2025**; the operative executive document is now the AI Action Plan, which drives ongoing NIST work.
+
+### US Department of Defense and federal control frameworks
+
+The rest of this file speaks the language of NIST CSF 2.0, OWASP, and ISO. A US federal or DoD program office does not authorize systems against those. It authorizes against **NIST SP 800-53 control families**, the **DoD Zero Trust capability activities**, and an **RMF/cATO** (now CSRMC) authorization process. This section is the translation layer.
+
+- **NIST SP 800-53 Rev. 5** (Rev. 5.2.0 finalized August 2025 per EO 14306). 1,196 controls across 20 families. Baselines: Low ~77, Moderate ~323, High ~421 controls, then tailored. Rev. 5 is **outcome-based rather than prescriptive**, which is precisely what lets an admission policy or a PreToolUse hook satisfy a control: any technology that demonstrably achieves the outcome can be the implementation. Families this matrix touches most: **AC** (Access Control), **AU** (Audit and Accountability), **CA** (Assessment, Authorization, and Monitoring), **CM** (Configuration Management), **CP** (Contingency Planning), **IA** (Identification and Authentication), **IR** (Incident Response), **RA** (Risk Assessment), **SA** (System and Services Acquisition), **SC** (System and Communications Protection), **SI** (System and Information Integrity), **SR** (Supply Chain Risk Management), **PM** (Program Management).
+- **DoD Risk Management Framework** (DoDI 8510.01; NIST SP 800-37 Rev. 2). Seven steps: Prepare, Categorize, Select, Implement, Assess, Authorize, Monitor. **CNSSI 1253** supplies the DoD-specific baselines and National Security System overlays on top of 800-53.
+- **Continuous Authorization to Operate (cATO)** (DoD CIO cATO Evaluation Criteria). Three pillars: **Continuous Monitoring (ConMon)**, **Active Cyber Defense (ACD)**, **Secure Software Supply Chain (SSSC)**. cATO is this framework's structural precedent: it moved assurance out of a periodic review layer and into the infrastructure, continuously. The Agentic Covenants argument is the same move applied to agent behavior rather than system configuration.
+- **Cybersecurity Risk Management Construct (CSRMC)** (announced September 24, 2025). DoD's replacement for RMF as the primary cybersecurity framework for its own systems. Five phases (Design, Build, Test, Onboard, Operations) and ten principles including **Automation**, **Continuous Monitoring and ATO**, **DevSecOps**, and **Cyber Survivability**. CSRMC is DoD formally accepting at the framework level that static, checklist-driven compliance cannot keep pace — which makes an infrastructure-enforced behavioral framework an extension of accepted doctrine rather than a novel claim. (CSRMC governs DoD's own systems; **CMMC** remains the regime for defense contractors handling FCI/CUI.)
+- **DoD Zero Trust Strategy** (DoD CIO, October 2022) and **DoD Zero Trust Reference Architecture v2.0** (DISA/NSA, September 2022). Seven pillars: **User, Devices, Network/Environment, Application & Workload, Data, Visibility & Analytics, Automation & Orchestration**. **152 capability activities**: 91 at Target Level (mandated end of FY2027) and 61 more at Advanced Level (FY2032). A **Zero Trust Strategy 2.0** adding OT, weapon-systems, and defense-critical-infrastructure guidance was expected around March 2026. **DTM 25-003** ("Implementing the DoD Zero Trust Strategy," July 2025) establishes the ZT Portfolio Management Office and the conditional-access-depends-on-enterprise-ICAM requirement.
+- **Department of the Air Force Zero Trust Strategy v1.0** (DAF CIO, July 2024) and the **DAF Enterprise ICAM Roadmap**. DAF targets **Intermediate maturity by end of FY2028**, one year beyond the DoD Target mandate. The ICAM roadmap explicitly calls out an **ICAM solution for Non-Person Entities (NPEs)** as a deliverable.
+- **DoD ICAM** (DoD ICAM Strategy; DoD Enterprise ICAM Reference Design; DoDI 8520.03; NIST SP 800-63 for IAL/AAL). Four domains: Identity Management, Credential Management, Access Management, Governance. **Non-Person Entities (NPEs)** — devices, service accounts, applications, RPA workers, and now AI agents — must each be **under the control of an authorized Person Entity (PE)** who can create, modify, or destroy the NPE account. Live deadlines: automated access workflows available to system owners by **June 2026**; all access requests through automated workflows by **September 2026** (retiring the DD Form 2875 SAAR); financial systems on automated ICAM provisioning by **end of FY2026**.
+- **DoD Responsible AI (RAI)** (DoD AI Ethical Principles, February 2020; RAI Strategy and Implementation Pathway, June 2022, updated October 2024). Five principles: **Responsible, Equitable, Traceable, Reliable, Governable**. **"Governable"** is the principle this framework operationalizes: systems must have the ability to detect and avoid unintended consequences, and the ability to disengage or deactivate systems that demonstrate unintended behavior. The **Warfighter Trust** tenet requires traceable feedback on system status and clear operator procedures to activate and deactivate system functions — which is, in this matrix's terms, Sentinels plus Interventions.
+- **DoD Cloud Computing SRG Impact Levels** (DISA). **IL2** (non-CUI, FedRAMP Moderate), **IL4** (CUI, FedRAMP Moderate + DoD overlay), **IL5** (CUI + unclassified NSS, FedRAMP High + DoD overlay), **IL6** (SECRET, DISA-authorized separately). FedRAMP authorization is **not** automatic DoD authorization. The Impact Level determines which cells in this matrix can use public infrastructure at all — see [`examples/dod-air-gapped/`](./examples/dod-air-gapped/).
+- **DISA STIGs** (~500 Security Technical Implementation Guides). Prescriptive configuration standards; open STIG findings become POA&M items. Relevant to the Blast radius client-side and server-side cells, where a STIG for the container platform or OS is the DoD-specific expression of the same hardening.
+- **DoDI 5400.19** (Public Affairs Use of Artificial Intelligence). Narrow scope, but a live example of DoD issuing AI-use policy by function.
+
+**Standing caveat for federal readers:** as of July 2026, the Congressional Research Service reports there is **no official US government guidance or policy specifically on agentic AI** (CRS IF13151, updated July 6, 2026). The Five Eyes joint guidance is advisory, not directive. The mappings below are therefore *crosswalks a program can defend to an AO*, not compliance claims. Nothing here substitutes for your AO's determination.
 
 ### International and standards-body frameworks
 
@@ -102,6 +121,53 @@ This file is the line of defense against "you just made this up" reviewer attack
 | In-agent | (no enforcement; advisory only) | (no mapping) | MAP 4.1 | LLM03 (related risk) | ASI04 (mitigation principle) | — | — |
 | Client-side | MCP server allowlist with manifest hash pinning, **tool-description hashing**, Sigstore verification, lockfile pinning, pre-commit dependency scan, skill or extension allowlist | PR.PS-02; PR.PS-01; **GV.SC-07** (risks from suppliers, products, services, and other third parties identified, recorded, prioritized, assessed, responded to, monitored) | MAP 4.1; MANAGE 3.1 | LLM03; LLM04 | ASI04; ASI06 | EU AI Act Art. 15; ISO/IEC 42001 §A.10 | NIST SP 800-218 v1.1 PS.2; **NIST SP 800-218 Rev. 1 draft (Dec 17, 2025)**; NIST SP 800-218A; OWASP MCP01, MCP03, MCP04 |
 | Server-side | OCI signature verification (cosign), SBOM admission, egress NetworkPolicy, OPA attestation policy, MCP domain allowlist at network layer, SLSA build-provenance attestation gates | PR.PS-02; PR.PS-05; PR.IR-01; **GV.SC-07**; ID.RA-09 (authenticity and integrity of hardware and software assessed prior to acquisition and use) | MAP 4.1; MANAGE 3.1 | LLM03; LLM04 | ASI04 | EU AI Act Art. 15; ISO/IEC 42001 §A.10 | NIST SP 800-218 v1.1 PS.3; NIST SP 800-161 Rev. 1; SLSA framework; **CISA/NSA/FBI "AI Data Security" CSI (May 2025)**; **CISA/ASD ACSC "Principles for Secure Integration of AI in OT" (Dec 2025)**; OWASP MCP04, MCP09 |
+
+## US DoD / federal crosswalk
+
+For program offices, ISSMs, ISSOs, and AOs. Same fifteen cells, expressed in 800-53 families, DoD Zero Trust pillars, and the RAI principles. **These are defensible crosswalks, not compliance claims** — your AO makes the determination.
+
+### Five Eyes risk categories mapped to the five concerns
+
+The joint guidance ("Careful Adoption of Agentic AI Services," April 30, 2026) names five risk categories. They map almost one-to-one onto this matrix's five concerns, which is the strongest external validation the framework has:
+
+| Five Eyes risk category | This matrix's concern | Where it is enforced |
+|---|---|---|
+| Privilege escalation | Identity + Authorization | [`controls/identity/`](./controls/identity/), [`controls/authorization/`](./controls/authorization/) |
+| Design and configuration flaws | Authorization | [`controls/authorization/server-side/`](./controls/authorization/server-side/) |
+| Behavioral misalignment | Blast radius + Approval gating | [`controls/blast-radius/`](./controls/blast-radius/), [`controls/approval-gating/`](./controls/approval-gating/) |
+| Structural cascading failures | Blast radius | [`controls/blast-radius/server-side/`](./controls/blast-radius/server-side/) |
+| Accountability opacity | Charter + Inventory (+ Sentinels) | [`charter/`](./charter/), [`inventory/`](./inventory/), [`sentinels/`](./sentinels/) |
+
+The joint guidance's core posture — adopt incrementally starting with low-risk tasks; treat governance, human oversight, monitoring, and explicit accountability as requirements rather than options — is the same argument this framework makes with artifacts attached.
+
+### Per-concern DoD control crosswalk
+
+| Concern | NIST SP 800-53 Rev. 5 families | DoD Zero Trust pillar | RMF / cATO / CSRMC | DoD RAI |
+|---|---|---|---|---|
+| **Identity** | AC-2 (account management), IA-2, IA-5 (authenticator management), IA-8, IA-9 (service identification and authentication) | **User** (and Devices for NPE device identity) | RMF Implement/Assess; cATO ConMon | Traceable |
+| **Authorization** | AC-3 (access enforcement), AC-6 (least privilege), AC-6(9) (log use of privileged functions), CM-7 (least functionality), AC-24 (access control decisions) | **User**, **Application & Workload** | RMF Select/Implement; CSRMC Critical Controls | Governable, Responsible |
+| **Blast radius** | SC-7 (boundary protection), SC-39 (process isolation), SI-4 (system monitoring), CP-9/CP-10 (backup, recovery), SC-5 (denial-of-service protection) | **Network/Environment**, **Application & Workload**, **Data** | cATO ACD; CSRMC Cyber Survivability | Reliable, Governable |
+| **Approval gating** | AC-3(2) (dual authorization), CM-3 (configuration change control), CM-5 (access restrictions for change), PM-10 (authorization process) | **Automation & Orchestration**, **User** | RMF Authorize; cATO ConMon | Governable, Responsible |
+| **Supply chain** | **SR** family (SR-3, SR-4 provenance, SR-5, SR-11 component authenticity), SA-11, SA-12, CM-14 (signed components), SI-7 (software/firmware integrity) | **Application & Workload**, **Data** | cATO SSSC; CSRMC DevSecOps | Reliable, Traceable |
+
+### How the matrices map to DoD constructs
+
+| This framework | DoD equivalent it extends |
+|---|---|
+| Charter (Govern) | RMF Prepare/Categorize; the ATO package and AO risk acceptance; RAI governance |
+| Inventory (Identify) | ICAM NPE registry; the PE-to-NPE control relationship; system boundary definition |
+| Covenants (Protect) | ZT capability activities; 800-53 control implementation; STIG hardening |
+| Sentinels (Detect) | cATO **Continuous Monitoring (ConMon)**; ZT **Visibility & Analytics** |
+| Interventions (Respond) | cATO **Active Cyber Defense (ACD)**; ZT **Automation & Orchestration**; IR family |
+| Restorations (Recover) | CP family (contingency planning); RMF Monitor feeding re-authorization |
+
+### The gap this framework fills, in DoD terms
+
+ICAM answers *who the agent is* and *what it may reach*. Zero Trust conditional access answers *whether this access request is permitted right now*. Neither answers **what an authenticated, authorized agent is permitted to do once it is inside** — an agent can hold a valid NPE credential, be correctly authorized for a data store, and still exfiltrate within scope, delegate beyond its intent, or take an irreversible action no one approved.
+
+The DoD ZT reference architecture states the end state as all PEs and NPEs holding validated, verified digital identities tracked at the enterprise level. That is necessary and not sufficient for agents. Extending "never trust, always verify" from the **access layer** into the **action layer** is the open problem, and it is what the fifteen cells of the Covenants matrix enforce.
+
+The precedent for the move already exists in DoD doctrine: RMF to cATO relocated assurance from a periodic review layer into the infrastructure, continuously. CSRMC then made that the framework-level default. Agentic Covenants applies the identical relocation to agent behavior.
 
 ## Citation legend and notes
 
