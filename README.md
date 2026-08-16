@@ -76,6 +76,7 @@ Full essay: **[`MATRIX.md`](./MATRIX.md)** · Bypass surface for every control: 
 
 | If you are… | Go to |
 |---|---|
+| **Not sure where you stand** | [`examples/claude-code-laptop/assess.sh`](./examples/claude-code-laptop/assess.sh), read-only, reports a maturity level with evidence in about a second |
 | **A platform engineer with agents in production** | [`checklists/`](./checklists/), five audit sheets, print and walk, about an hour per agent |
 | **Standing up your first agent** | [`MATRIX.md`](./MATRIX.md), then [`controls/`](./controls/), copy a cell, run its verification block |
 | **A security lead sizing the problem** | [`BYPASSES.md`](./BYPASSES.md), every control and how it is defeated, plus the 2026 incident corpus |

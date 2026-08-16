@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+# ABOUTME: Cross-platform sandbox-at-launch wrapper for an agent on a workstation.
+# ABOUTME: Applies the constraint before the process starts so children inherit it.
+set -euo pipefail
+
+# The requirement this satisfies is Level 3 in MATURITY.md: a sandbox applied at
+# launch and inherited by child processes. A sandbox the agent can spawn a
+# subshell outside of is decorative, so the mechanism here is one the kernel
+# enforces on the whole process tree rather than a per-command check.
+#
+# Usage:
+#   ./launch-agent [workspace-dir] [-- agent args...]
+#
+# Environment:
+#   AGENT_CMD               command to run inside the sandbox (default: claude)
+#   AGENT_SECRETS_DIR       directory kept OUT of the sandbox mount set
+#   AGENT_EGRESS_ALLOWLIST  comma-separated hosts, recorded for the egress proxy
+
+WORKSPACE="${1:-$PWD}"
+[ $# -gt 0 ] && shift || true
+[ "${1:-}" = "--" ] && shift || true
+
+AGENT_CMD="${AGENT_CMD:-claude}"
+SECRETS_DIR="${AGENT_SECRETS_DIR:-$HOME/.ssh}"
+
+if [ ! -d "$WORKSPACE" ]; then
+    echo "launch-agent: workspace does not exist: $WORKSPACE" >&2
+    exit 64
+fi
+WORKSPACE="$(cd "$WORKSPACE" && pwd)"
+
+# Refuse to run unsandboxed. Falling back to an unconstrained launch would make
+# this wrapper worse than useless: the assessment would see a wrapper present
+# and the operator would believe a control was in place.
+case "$(uname -s)" in
+
+Linux)
+    command -v bwrap >/dev/null 2>&1 || {
+        echo "launch-agent: bubblewrap not installed. Install it (apt install bubblewrap) or run without this wrapper knowing you are unsandboxed." >&2
+        exit 69
+    }
+
+    SECCOMP_FILE="${SECCOMP_FILE:-$HOME/.claude/seccomp-agent.json}"
+    BWRAP_FLAGS=(
+        --ro-bind /usr /usr
+        --ro-bind /etc /etc
+        --symlink usr/lib /lib
+        --symlink usr/lib64 /lib64
+        --symlink usr/bin /bin
+        --symlink usr/sbin /sbin
+        --tmpfs /tmp
+        --tmpfs /var/tmp
+        --bind "$WORKSPACE" "$WORKSPACE"
+        --chdir "$WORKSPACE"
+        --proc /proc
+        --dev /dev
+        --unshare-uts
+        --unshare-ipc
+        --unshare-pid
+        --new-session
+        --die-with-parent
+        --cap-drop ALL
+    )
+
+    # Agent config is needed read-write (session state), secrets are not bound
+    # at all. Anything absent from the mount set is unreadable from inside,
+    # which is the Level 3 "filesystem view is a mount set" requirement.
+    [ -d "$HOME/.claude" ] && BWRAP_FLAGS+=(--bind "$HOME/.claude" "$HOME/.claude")
+    [ -d "$SECRETS_DIR" ] && echo "launch-agent: excluding $SECRETS_DIR from the sandbox mount set" >&2
+
+    exec bwrap "${BWRAP_FLAGS[@]}" -- "$AGENT_CMD" "$@"
+    ;;
+
+Darwin)
+    command -v sandbox-exec >/dev/null 2>&1 || {
+        echo "launch-agent: sandbox-exec not available." >&2
+        exit 69
+    }
+
+    PROFILE="${SANDBOX_PROFILE:-$HOME/.claude/agent.sb}"
+    if [ ! -f "$PROFILE" ]; then
+        echo "launch-agent: no sandbox profile at $PROFILE" >&2
+        echo "  Copy one: cp ../../controls/blast-radius/client-side/claude.sb \"$PROFILE\"" >&2
+        exit 66
+    fi
+
+    exec sandbox-exec -f "$PROFILE" \
+        -D WORKSPACE="$WORKSPACE" \
+        -D HOME="$HOME" \
+        "$AGENT_CMD" "$@"
+    ;;
+
+*)
+    echo "launch-agent: no sandbox mechanism known for $(uname -s)." >&2
+    echo "  Refusing to launch unsandboxed. See MATURITY.md, Level 3." >&2
+    exit 69
+    ;;
+esac

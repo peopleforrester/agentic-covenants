@@ -1,0 +1,79 @@
+{
+  "_comment": "Workstation permission posture. Composed from controls/authorization/client-side/settings.json with operator-home paths instead of /etc/agents, since a laptop has no system-managed agent directory. defaultMode dontAsk auto-denies anything not explicitly allowed, asked, or approved by the PreToolUse hook. Valid modes are default (aka manual), acceptEdits, plan, auto, dontAsk, bypassPermissions. There is no deny mode; the deny LIST is what blocks specific tools.",
+  "_setup": "Copy to ~/.claude/settings.json, then install the hooks: cp ../../controls/authorization/client-side/pre_tool_use.sh ~/.claude/hooks/ && chmod +x ~/.claude/hooks/pre_tool_use.sh",
+
+  "permissions": {
+    "defaultMode": "dontAsk",
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep"
+    ],
+    "ask": [
+      "Edit",
+      "Write",
+      "Bash(git:status)",
+      "Bash(git:diff)",
+      "Bash(git:log)",
+      "Bash(git:add:*)",
+      "Bash(git:commit:*)",
+      "Bash(npm:install)",
+      "Bash(pip:install)",
+      "Bash(uv:*)"
+    ],
+    "_comment_deny": "Destructive verbs, plus the workstation-specific Read denials below: credential and SSH material an agent on a laptop can otherwise read. That block is the difference from the cluster profile, where secrets are not in the agent's mount namespace to begin with.",
+    "deny": [
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/credentials)",
+      "Read(~/.config/gh/hosts.yml)",
+      "Read(**/.env)",
+      "Read(**/*.pem)",
+      "Read(**/id_rsa*)",
+      "Read(**/id_ed25519*)",
+
+      "Bash(rm:-rf)",
+      "Bash(rm:-rf:/)",
+      "Bash(terraform:destroy)",
+      "Bash(terraform:apply:-auto-approve)",
+      "Bash(kubectl:delete:*)",
+      "Bash(kubectl:scale:*--replicas=0*)",
+      "Bash(aws:s3:rb)",
+      "Bash(aws:ec2:terminate-instances)",
+      "Bash(aws:rds:delete-db-instance)",
+      "Bash(gh:repo:delete)",
+      "Bash(gh:auth:token)",
+      "Bash(curl:*-X:DELETE*)",
+      "Bash(docker:system:prune)",
+      "Bash(helm:uninstall)",
+      "Bash(git:push:--force)",
+      "Bash(git:reset:--hard)",
+      "Bash(dd:*)",
+      "Bash(mkfs:*)",
+      "Bash(chmod:777:*)",
+      "Bash(sudo:*)"
+    ]
+  },
+
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/pre_tool_use.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/deny-protected-paths.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
