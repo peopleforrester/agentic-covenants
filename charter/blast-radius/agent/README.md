@@ -1,4 +1,4 @@
-# Charter — Blast radius / Agent
+# Charter, Blast radius / Agent
 
 **Structural question.** Does the agent charter declare a specific risk tier, a quantitative damage cap, and the conditions that trigger automatic tier downgrade or retirement?
 

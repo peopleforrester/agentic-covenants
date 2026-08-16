@@ -1,4 +1,4 @@
-# Inventory — Blast radius / Self-declared
+# Inventory, Blast radius / Self-declared
 
 **What this cell records.** What the agent says about its own scope of damage potential.
 

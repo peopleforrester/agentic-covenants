@@ -1,4 +1,4 @@
-# Inventory — Identity / Operator-declared
+# Inventory, Identity / Operator-declared
 
 **What this cell records.** The operator's intent: every agent the org has approved, by name, with owner, charter reference, and creation date.
 

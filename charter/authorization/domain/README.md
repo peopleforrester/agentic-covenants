@@ -1,4 +1,4 @@
-# Charter — Authorization / Domain
+# Charter, Authorization / Domain
 
 **Structural question.** Does the domain charter define the per-class scope (which APIs, data classes, environments, destructive verbs are allowed), inherit org-wide hard prohibitions, and add domain-specific ones?
 

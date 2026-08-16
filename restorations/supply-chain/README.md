@@ -1,4 +1,4 @@
-# Restorations — Supply chain
+# Restorations, Supply chain
 
 **Intent.** Re-pin dependencies, regenerate SBOMs, re-verify signatures, rebuild from clean source.
 

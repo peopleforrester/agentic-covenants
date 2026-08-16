@@ -7,7 +7,7 @@ Auditor: ________________  Owner present: ________________
 
 ---
 
-## L1 — In-agent (advisory only)
+## L1, In-agent (advisory only)
 
 - [ ] Every tool description states what the tool is **not** for, not only what it does
 - [ ] Tool descriptions name the lower-layer enforcement ("cluster RBAC will reject this anyway")
@@ -18,16 +18,16 @@ Auditor: ________________  Owner present: ________________
 
 ---
 
-## L2 — Client-side
+## L2, Client-side
 
 - [ ] `defaultMode` is a **valid** mode. Valid: `default`/`manual`, `acceptEdits`, `plan`, `auto`, `dontAsk`, `bypassPermissions`. **There is no `deny` mode**
 - [ ] Deny-by-default posture: `dontAsk` with an explicit allow list, or equivalent
-- [ ] No `Bash(*)` or `PowerShell(*)` in the allow list — that gates nothing
+- [ ] No `Bash(*)` or `PowerShell(*)` in the allow list, that gates nothing
 - [ ] PreToolUse hook exists and follows **deny → ask → allow** precedence
 - [ ] Agent runtime is on a version where `allow` cannot override `deny` (Claude Code ≥ 2.1.40)
 - [ ] Hook script and config owned by **root/operator**, not the agent's user
 - [ ] Obfuscation patterns covered (base64 decode, `eval $(`, `curl | bash`)
-- [ ] Pre-commit hooks block protected paths — and you know `--no-verify` defeats them
+- [ ] Pre-commit hooks block protected paths, and you know `--no-verify` defeats them
 
 **Verify:**
 ```bash
@@ -44,15 +44,15 @@ claude --version                                                      # confirm 
 
 ---
 
-## L3 — Server-side
+## L3, Server-side
 
 - [ ] Namespace-scoped **Role**, never ClusterRole, for the agent SA
 - [ ] **No wildcard verbs and no wildcard resources**
-- [ ] Subresources enumerated explicitly — denying `pods` does **not** deny `pods/exec`, `pods/portforward`, `pods/attach`
+- [ ] Subresources enumerated explicitly, denying `pods` does **not** deny `pods/exec`, `pods/portforward`, `pods/attach`
 - [ ] Escalation primitives denied: `escalate`, `bind`, `impersonate`
 - [ ] IAM policies scoped to explicit ARNs; `iam:PassRole` and policy-attachment actions denied
 - [ ] Admission policy in **Enforce**, not Audit
-- [ ] Webhook `failurePolicy: Fail` — or use in-tree ValidatingAdmissionPolicy and remove the fail-open path entirely
+- [ ] Webhook `failurePolicy: Fail`, or use in-tree ValidatingAdmissionPolicy and remove the fail-open path entirely
 - [ ] Agent SAs denied from binding into prod namespaces
 - [ ] Server-side Git pre-receive hook backstops `--no-verify`
 
@@ -76,11 +76,11 @@ kubectl get clusterpolicies -o json | jq -r '.items[].spec.validationFailureActi
 
 ## Row verdict
 
-☐ All three present ☐ In-agent only — **audit finding** ☐ Server-side only ☐ Client-side only
+☐ All three present ☐ In-agent only, **audit finding** ☐ Server-side only ☐ Client-side only
 
 **Federal/DoD note.** 800-53 **AC-3, AC-6, AC-6(9), AC-24, CM-7**; DoD ZT **User** + **Application & Workload**; RAI *Governable*. **CVE-2026-46519** is the cautionary case: a Kubernetes MCP server enforced read-only only at the tool-discovery layer and clients called delete directly. Scope declared to the agent is advisory; **RBAC on the ServiceAccount is the boundary.**
 
-**Product note.** Amazon Bedrock AgentCore Policy (GA March 3, 2026, Cedar, default-deny, evaluated at the gateway) is a shipping implementation of this cell. If you use it, this checklist still applies — verify the policies, do not assume the product.
+**Product note.** Amazon Bedrock AgentCore Policy (GA March 3, 2026, Cedar, default-deny, evaluated at the gateway) is a shipping implementation of this cell. If you use it, this checklist still applies, verify the policies, do not assume the product.
 
 **Open items:**
 

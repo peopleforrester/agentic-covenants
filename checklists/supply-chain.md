@@ -10,25 +10,25 @@ ________________________________________________________________________________
 
 ---
 
-## L1 — In-agent
+## L1, In-agent
 
-**No enforcement at this layer.** The model is unreliable about provenance — roughly 24% of hallucinated imports in code generation point at nonexistent packages, which is the same surface slopsquatting attacks target.
+**No enforcement at this layer.** The model is unreliable about provenance, roughly 24% of hallucinated imports in code generation point at nonexistent packages, which is the same surface slopsquatting attacks target.
 
 - [ ] Prompt tells the agent to install only what the lockfile pins
 - [ ] Nobody treats "this package looks fine" from the model as a signal
 
-**Mark:** `[N/A]` — no enforcement at this layer
+**Mark:** `[N/A]`, no enforcement at this layer
 
 ---
 
-## L2 — Client-side
+## L2, Client-side
 
 - [ ] MCP allowlist exists, with **binary sha256 pinned** per server
 - [ ] **Tool-description hash pinned on first approval and re-checked at every handshake** (rug-pull defense: day-7 descriptions can differ from day-1)
 - [ ] Allowlist file owned by operator; the agent's user cannot write it
 - [ ] Unsigned MCP servers rejected at handshake, or the exception is written down
 - [ ] Lockfiles pinned **and** validated server-side (a lockfile the agent can edit is self-attesting)
-- [ ] Skill/extension marketplace installs scanned — publisher trust does **not** transfer to individual artifacts
+- [ ] Skill/extension marketplace installs scanned, publisher trust does **not** transfer to individual artifacts
 - [ ] Security scanners themselves pinned by digest, not floating tags
 
 **Verify:**
@@ -47,10 +47,10 @@ echo x >> /usr/local/bin/mcp-filesystem && mcp-launch filesystem   # must fail: 
 
 ---
 
-## L3 — Server-side
+## L3, Server-side
 
 - [ ] Admission verifies **cosign signatures**; unsigned images rejected
-- [ ] Keyless trust policy pins an **issuer and a subject regex** — `subject: "*"` accepts anyone's signature
+- [ ] Keyless trust policy pins an **issuer and a subject regex**, `subject: "*"` accepts anyone's signature
 - [ ] Images pinned **by digest**, not tag (a tag moves; a digest does not)
 - [ ] Registry allowlist enforced at admission, covering `containers`, `initContainers`, **and** `ephemeralContainers`
 - [ ] SBOM attestation required, and actually checked against vulnerability data (provenance for a malicious package is still a malicious package)
@@ -73,11 +73,11 @@ kubectl exec -n <ns> <pod> -- curl -sS --max-time 3 https://example.com   # must
 
 ## Row verdict
 
-☐ All three present ☐ Client-side only — lockfiles are unenforced ☐ Server-side only ☐ Gaps
+☐ All three present ☐ Client-side only, lockfiles are unenforced ☐ Server-side only ☐ Gaps
 
-**Charter drift check:** do the runtime MCP hashes and image digest match `dependencies` in the charter? ☐ yes ☐ **no — finding**
+**Charter drift check:** do the runtime MCP hashes and image digest match `dependencies` in the charter? ☐ yes ☐ **no, finding**
 
-**Federal/DoD note.** 800-53 **SR-3, SR-4, SR-5, SR-11, SA-11, CM-14, SI-7**; CSF 2.0 **GV.SC-07**, **ID.RA-09**; DoD ZT **Application & Workload**; RAI *Reliable*, *Traceable*. In an enclave, public Sigstore and public registries do not exist — see [`examples/dod-air-gapped/`](../examples/dod-air-gapped/) for the substitutions and what each one satisfies.
+**Federal/DoD note.** 800-53 **SR-3, SR-4, SR-5, SR-11, SA-11, CM-14, SI-7**; CSF 2.0 **GV.SC-07**, **ID.RA-09**; DoD ZT **Application & Workload**; RAI *Reliable*, *Traceable*. In an enclave, public Sigstore and public registries do not exist, see [`examples/dod-air-gapped/`](../examples/dod-air-gapped/) for the substitutions and what each one satisfies.
 
 **Named incidents worth knowing before this audit:** postmark-mcp (first in-the-wild malicious MCP server, ~300 orgs), ClawHavoc (1,184+ malicious marketplace skills), Trivy (the scanner itself), CVE-2026-5058/5059 (unauthenticated MCP RCE, CVSS 9.8).
 

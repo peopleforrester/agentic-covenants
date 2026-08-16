@@ -1,4 +1,4 @@
-# Charter — Identity / Domain
+# Charter, Identity / Domain
 
 **Structural question.** Does each domain that operates agents have a signed domain charter naming who in the domain is permitted to create agents, what the escalation path is, and what audit trail location records charter signatures?
 

@@ -1,4 +1,4 @@
-# Sentinels — Blast radius / Client-side
+# Sentinels, Blast radius / Client-side
 
 **Control.** bpftrace catches unexpected network attempts from the agent process tree. Falco userspace catches unsandboxed children and writes to unexpected paths. bubblewrap stderr captures EPERM (sandbox boundary) events.
 
@@ -11,9 +11,9 @@
 
 ## Files in this directory
 
-- [`network-attempt.bt`](./network-attempt.bt) — bpftrace one-liner that prints `agent_network_attempt` for any `connect()` syscall from a process tree rooted at the agent. Adjust `comm` filter for your runtime's actual process names.
-- [`falco-agent-host.yaml`](./falco-agent-host.yaml) — Falco userspace rules for unsandboxed agent children and writes outside `/workspace`/`/tmp`.
-- [`bubblewrap-with-logging.sh`](./bubblewrap-with-logging.sh) — wrapper that tees bubblewrap stderr to syslog so EPERM events surface in the SIEM.
+- [`network-attempt.bt`](./network-attempt.bt), bpftrace one-liner that prints `agent_network_attempt` for any `connect()` syscall from a process tree rooted at the agent. Adjust `comm` filter for your runtime's actual process names.
+- [`falco-agent-host.yaml`](./falco-agent-host.yaml), Falco userspace rules for unsandboxed agent children and writes outside `/workspace`/`/tmp`.
+- [`bubblewrap-with-logging.sh`](./bubblewrap-with-logging.sh), wrapper that tees bubblewrap stderr to syslog so EPERM events surface in the SIEM.
 
 ## Verification
 

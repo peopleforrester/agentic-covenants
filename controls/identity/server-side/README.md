@@ -11,17 +11,17 @@
 - SPIFFE/SPIRE if you have multiple clusters or off-cluster components that need a single identity story.
 - An OIDC IdP (Okta, Auth0, Keycloak, Dex).
 
-> **Direction of travel (mid-2026):** the MCP `2026-07-28` protocol revision hardens authorization toward OAuth 2.0 / OpenID Connect with `iss` validation (RFC 9207) and issuer-bound credentials, and the NIST NCCoE agent-identity concept paper (Feb 5, 2026) proposes exactly this stack (OAuth 2.0 + SPIFFE/SPIRE + MCP). The covenant here — identity established by an external IdP, carried by the agent, never asserted by it — is now the ecosystem's own direction, not a contrarian stance. See [`../../../BYPASSES.md`](../../../BYPASSES.md) for the protocol-transition caveats.
+> **Direction of travel (mid-2026):** the MCP `2026-07-28` protocol revision hardens authorization toward OAuth 2.0 / OpenID Connect with `iss` validation (RFC 9207) and issuer-bound credentials, and the NIST NCCoE agent-identity concept paper (Feb 5, 2026) proposes exactly this stack (OAuth 2.0 + SPIFFE/SPIRE + MCP). The covenant here, identity established by an external IdP, carried by the agent, never asserted by it, is now the ecosystem's own direction, not a contrarian stance. See [`../../../BYPASSES.md`](../../../BYPASSES.md) for the protocol-transition caveats.
 
 ## Files in this directory
 
-- [`namespace.yaml`](./namespace.yaml) — dedicated namespace per agent with restricted Pod Security Standards.
-- [`serviceaccount.yaml`](./serviceaccount.yaml) — per-agent ServiceAccount with the IRSA annotation linking to the AWS role.
-- [`role-and-binding.yaml`](./role-and-binding.yaml) — namespace-scoped Role and RoleBinding (never ClusterRole). Verbs are explicit; no wildcards.
-- [`pod-with-projected-token.yaml`](./pod-with-projected-token.yaml) — Pod that mounts a projected ServiceAccount token with 15-minute TTL and audience binding.
-- [`aws-iam-trust-policy.json`](./aws-iam-trust-policy.json) — trust policy with strict OIDC subject condition. The `sub` field pins the role to one specific `system:serviceaccount:<ns>:<sa>` pair.
-- [`spire-entry.sh`](./spire-entry.sh) — SPIRE registration command for cross-cluster identity. Optional but recommended if you have agents in more than one cluster.
-- [`verify.sh`](./verify.sh) — confirms dedicated identity per agent, short token TTL, identity-bound role assumption, cross-agent isolation.
+- [`namespace.yaml`](./namespace.yaml), dedicated namespace per agent with restricted Pod Security Standards.
+- [`serviceaccount.yaml`](./serviceaccount.yaml), per-agent ServiceAccount with the IRSA annotation linking to the AWS role.
+- [`role-and-binding.yaml`](./role-and-binding.yaml), namespace-scoped Role and RoleBinding (never ClusterRole). Verbs are explicit; no wildcards.
+- [`pod-with-projected-token.yaml`](./pod-with-projected-token.yaml), Pod that mounts a projected ServiceAccount token with 15-minute TTL and audience binding.
+- [`aws-iam-trust-policy.json`](./aws-iam-trust-policy.json), trust policy with strict OIDC subject condition. The `sub` field pins the role to one specific `system:serviceaccount:<ns>:<sa>` pair.
+- [`spire-entry.sh`](./spire-entry.sh), SPIRE registration command for cross-cluster identity. Optional but recommended if you have agents in more than one cluster.
+- [`verify.sh`](./verify.sh), confirms dedicated identity per agent, short token TTL, identity-bound role assumption, cross-agent isolation.
 
 ## Verification
 
@@ -39,7 +39,7 @@ The script runs four checks against the live cluster:
 
 - ServiceAccount with cluster-wide scope (the 1.21-and-older default behavior).
 - Token TTL set to the default (1 hour) or unbounded.
-- Trust policy with `"sub": "system:serviceaccount:*:*"` — any SA in any namespace can assume the role.
+- Trust policy with `"sub": "system:serviceaccount:*:*"`, any SA in any namespace can assume the role.
 - Storing the token in a regular Secret instead of a projected volume; the Secret persists past Pod lifecycle.
 - Multiple agents sharing one IAM role with broad permissions, defeating per-agent attribution.
 - Forgetting to pin the audience. Without `audience: agent-<name>`, the token is reusable by any service.

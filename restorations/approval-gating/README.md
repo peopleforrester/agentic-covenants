@@ -1,4 +1,4 @@
-# Restorations — Approval gating
+# Restorations, Approval gating
 
 **Intent.** Re-enable branch protection, audit bypass events for forensics, harden gates that were exploited.
 

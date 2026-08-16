@@ -1,4 +1,4 @@
-# Interventions — Identity / Client-side
+# Interventions, Identity / Client-side
 
 **Trigger.** Sentinels alert: identity used outside expected hours, identity used from unexpected source IP, credential fingerprint mismatch.
 
@@ -13,7 +13,7 @@
 
 ## Files in this directory
 
-- [`agent-revoke-local`](./agent-revoke-local) — runbook script. Takes `AGENT_NAME` as the only positional argument. Kills the process tree, optionally `systemctl stop`s, deletes the credential file, sets a re-auth flag, ships an incident event to syslog.
+- [`agent-revoke-local`](./agent-revoke-local), runbook script. Takes `AGENT_NAME` as the only positional argument. Kills the process tree, optionally `systemctl stop`s, deletes the credential file, sets a re-auth flag, ships an incident event to syslog.
 
 ## Verification
 

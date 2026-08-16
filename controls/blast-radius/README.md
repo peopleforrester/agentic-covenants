@@ -14,7 +14,7 @@
 
 Blast radius is the row that turns a near-miss into a contained incident. If identity and authorization were perfect, blast radius would be redundant. They aren't, so it isn't.
 
-The Kiro incident, the Replit incident, the DataTalks.Club incident — every one of them had identity and authorization failures upstream. What made them survivable (or not) was whether blast radius was contained. Where it was, the recovery was a `git revert` and a postmortem. Where it wasn't, it was a database restore, a customer-facing announcement, and a board call.
+The Kiro incident, the Replit incident, the DataTalks.Club incident, every one of them had identity and authorization failures upstream. What made them survivable (or not) was whether blast radius was contained. Where it was, the recovery was a `git revert` and a postmortem. Where it wasn't, it was a database restore, a customer-facing announcement, and a board call.
 
 ## How to walk it
 

@@ -10,7 +10,7 @@ None. The artifact is text in the system prompt and in each tool's `description`
 
 ## Files in this directory
 
-- [`tool-description-template.md`](./tool-description-template.md) — drop-in template for a tool description that names the tool's purpose, lists what it must not be used for, and includes a "if you are about to do X, stop and ask" line.
+- [`tool-description-template.md`](./tool-description-template.md), drop-in template for a tool description that names the tool's purpose, lists what it must not be used for, and includes a "if you are about to do X, stop and ask" line.
 
 ## Verification
 
@@ -24,4 +24,4 @@ You cannot verify this layer the way you verify the others. The "verification" i
 
 ## Citation
 
-Advisory; no direct framework mapping. Thematic: NIST AI RMF MAP 5.1 (likelihood and magnitude of impacts documented). OWASP LLM06 (Excessive Agency) — mitigation principle. OWASP ASI02 (Tool Misuse) — mitigation principle.
+Advisory; no direct framework mapping. Thematic: NIST AI RMF MAP 5.1 (likelihood and magnitude of impacts documented). OWASP LLM06 (Excessive Agency), mitigation principle. OWASP ASI02 (Tool Misuse), mitigation principle.

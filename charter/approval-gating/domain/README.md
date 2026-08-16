@@ -1,4 +1,4 @@
-# Charter — Approval gating / Domain
+# Charter, Approval gating / Domain
 
 **Structural question.** Does the domain charter define which approvers are required for new agent charters at each tier, and the process for charter amendments?
 

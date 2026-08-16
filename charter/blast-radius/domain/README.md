@@ -1,4 +1,4 @@
-# Charter — Blast radius / Domain
+# Charter, Blast radius / Domain
 
 **Structural question.** Does the domain charter declare which risk tiers the domain is authorized to operate, and which failure-mode reviews are required per tier?
 

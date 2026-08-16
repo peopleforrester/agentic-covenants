@@ -1,4 +1,4 @@
-# Sentinels — Authorization / In-agent
+# Sentinels, Authorization / In-agent
 
 **Control.** Tool descriptions logged with each call (forensic).
 

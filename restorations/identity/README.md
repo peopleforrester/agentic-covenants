@@ -1,4 +1,4 @@
-# Restorations — Identity
+# Restorations, Identity
 
 **Intent.** Rotate credentials, re-issue per-agent identities, regenerate trust relationships.
 

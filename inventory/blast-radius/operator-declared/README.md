@@ -1,4 +1,4 @@
-# Inventory — Blast radius / Operator-declared
+# Inventory, Blast radius / Operator-declared
 
 **What this cell records.** The operator's worst-case impact statement and theoretical blast envelope.
 
@@ -6,7 +6,7 @@
 
 - `environments[]`
 - `data_classes[]`
-- `worst_case_impact` — quantitative or scoped statement (e.g., "Q4 revenue forecasting outage up to 4 hours" or "limited to internal CI/CD tooling").
+- `worst_case_impact`, quantitative or scoped statement (e.g., "Q4 revenue forecasting outage up to 4 hours" or "limited to internal CI/CD tooling").
 - `recovery_time_objective_hours`
 - `recovery_point_objective_hours`
 

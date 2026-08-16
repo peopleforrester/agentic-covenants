@@ -1,4 +1,4 @@
-# Restorations — Identity / Client-side
+# Restorations, Identity / Client-side
 
 **Precondition.** Interventions L2-C1 has fired (local credentials deleted, agent process killed). The IdP user/service account corresponding to this agent has been confirmed clean: no recent privilege grants from compromised admin sessions, no MFA factors added during incident window.
 
@@ -11,7 +11,7 @@
 
 ## Files in this directory
 
-- [`agent-restore-identity-local`](./agent-restore-identity-local) — runbook script. Issues fresh credential from IdP, places in operator-owned config with strict ACLs, removes the `requires_reauth` flag, verifies the deny-on-self ACL survived.
+- [`agent-restore-identity-local`](./agent-restore-identity-local), runbook script. Issues fresh credential from IdP, places in operator-owned config with strict ACLs, removes the `requires_reauth` flag, verifies the deny-on-self ACL survived.
 
 ## Verification
 
@@ -30,7 +30,7 @@ sudo -u agent-runner /usr/local/bin/claude --version
 ## Common failure modes
 
 - Issuing the new credential with a long TTL by default. Re-pin to the 15-minute TTL from `controls/identity/server-side/pod-with-projected-token.yaml` to limit exposure.
-- Forgetting to remove the `requires_reauth` flag — the agent never restarts.
+- Forgetting to remove the `requires_reauth` flag, the agent never restarts.
 - ACLs reset to defaults during recovery and not re-applied. The deny-on-self ACL must be reapplied or the agent can read its own credential at rest.
 
 ## Citation

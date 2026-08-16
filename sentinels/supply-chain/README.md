@@ -1,4 +1,4 @@
-# Sentinels — Supply chain
+# Sentinels, Supply chain
 
 **Intent.** Surface every MCP allowlist violation, every lockfile diff, every tool-description hash mismatch (rug-pull), every cosign verification failure, and every egress NetworkPolicy denial to a non-allowlisted MCP domain.
 

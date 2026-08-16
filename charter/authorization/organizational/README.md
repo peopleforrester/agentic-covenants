@@ -1,4 +1,4 @@
-# Charter — Authorization / Organizational
+# Charter, Authorization / Organizational
 
 **Structural question.** Does the org have an AI Risk Appetite Statement that names hard prohibitions every agent must obey, and a change-control process for evolving scope policy?
 

@@ -1,4 +1,4 @@
-# Interventions — Authorization
+# Interventions, Authorization
 
 **Intent.** Shrink permissions to nothing.
 

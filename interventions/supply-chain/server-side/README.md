@@ -1,4 +1,4 @@
-# Interventions — Supply chain / Server-side
+# Interventions, Supply chain / Server-side
 
 **Trigger.** Cosign verification failure, SBOM diff with unauthorized package, image registry pull of unsigned image, FQDN egress denial spike to a suspect MCP domain.
 
@@ -14,9 +14,9 @@
 
 ## Files in this directory
 
-- [`agent-quarantine-supply-chain-server`](./agent-quarantine-supply-chain-server) — runbook script. Removes the poisoned image via `crane delete`, deploys an emergency Kyverno deny rule on the bad digest, applies the pre-staged Cilium FQDN deny policy, force-rolls workloads to the last-known-good image SHA.
-- [`cilium-deny-suspect-fqdns.yaml`](./cilium-deny-suspect-fqdns.yaml) — pre-staged CiliumNetworkPolicy denying egress to a list of suspect FQDNs. Substitute the `matchName` entries during the incident or pre-stage with a known-malicious list. **Pre-stage** at `/etc/agents/emergency/cilium-deny-suspect-fqdns.yaml`.
-- [`last-known-good-image-sha.txt`](./last-known-good-image-sha.txt) — pre-staged digest of the last-known-good agent image. **Audit periodically** (the pre-staged value should not itself be contaminated). **Pre-stage** at `/etc/agents/emergency/last-known-good-image-sha.txt`.
+- [`agent-quarantine-supply-chain-server`](./agent-quarantine-supply-chain-server), runbook script. Removes the poisoned image via `crane delete`, deploys an emergency Kyverno deny rule on the bad digest, applies the pre-staged Cilium FQDN deny policy, force-rolls workloads to the last-known-good image SHA.
+- [`cilium-deny-suspect-fqdns.yaml`](./cilium-deny-suspect-fqdns.yaml), pre-staged CiliumNetworkPolicy denying egress to a list of suspect FQDNs. Substitute the `matchName` entries during the incident or pre-stage with a known-malicious list. **Pre-stage** at `/etc/agents/emergency/cilium-deny-suspect-fqdns.yaml`.
+- [`last-known-good-image-sha.txt`](./last-known-good-image-sha.txt), pre-staged digest of the last-known-good agent image. **Audit periodically** (the pre-staged value should not itself be contaminated). **Pre-stage** at `/etc/agents/emergency/last-known-good-image-sha.txt`.
 
 ## Verification
 
@@ -39,8 +39,8 @@ kubectl get deployment -n agent-claude-code-prod claude-code -o jsonpath='{.spec
 ## Common mistakes
 
 - Image deletion does not affect already-pulled cached images on nodes. The force-rollout step is mandatory.
-- Cosign deny rule by tag instead of digest — attacker pushes a new tag pointing at the same digest.
-- DNS block applied at one level (cluster CNP) but not at corporate DNS — agents on operator hosts still resolve.
+- Cosign deny rule by tag instead of digest, attacker pushes a new tag pointing at the same digest.
+- DNS block applied at one level (cluster CNP) but not at corporate DNS, agents on operator hosts still resolve.
 - Last-known-good SHA file is stale or itself contaminated. Audit the pre-staged value periodically.
 
 ## Citation

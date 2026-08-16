@@ -1,4 +1,4 @@
-# Sentinels — Identity
+# Sentinels, Identity
 
 **Intent.** Identity used outside expected hours, source IP, or by an unexpected principal. Identity reuse across agents. Stale credential reuse within the TTL window.
 

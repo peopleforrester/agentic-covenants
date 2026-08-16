@@ -2,7 +2,7 @@
 
 **Control.** Model says "are you sure?" before destructive ops.
 
-**Strength.** Silently bypassable. The model can be talked out of asking with novel framing or persistence. **Anthropic Auto Mode (March 26, 2026) measured a 93% approval rate on permission prompts — the empirical ceiling for human-in-the-loop on top of in-agent gates.** Treat any approval prompt that fires often as already broken; the cure is not "ask better" but "ask less, and only on genuinely novel decisions" (judgment-query escalation).
+**Strength.** Silently bypassable. The model can be talked out of asking with novel framing or persistence. **Anthropic Auto Mode (March 26, 2026) measured a 93% approval rate on permission prompts, the empirical ceiling for human-in-the-loop on top of in-agent gates.** Treat any approval prompt that fires often as already broken; the cure is not "ask better" but "ask less, and only on genuinely novel decisions" (judgment-query escalation).
 
 ## Tooling
 
@@ -10,7 +10,7 @@ None.
 
 ## Files in this directory
 
-- [`confirmation-prompt-template.md`](./confirmation-prompt-template.md) — language to drop in the system prompt that names the kinds of actions where the agent must confirm with the operator before proceeding. Pair with the refusal template in [`../../blast-radius/in-agent/`](../../blast-radius/in-agent/).
+- [`confirmation-prompt-template.md`](./confirmation-prompt-template.md), language to drop in the system prompt that names the kinds of actions where the agent must confirm with the operator before proceeding. Pair with the refusal template in [`../../blast-radius/in-agent/`](../../blast-radius/in-agent/).
 
 ## Verification
 

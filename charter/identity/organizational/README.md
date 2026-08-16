@@ -1,4 +1,4 @@
-# Charter — Identity / Organizational
+# Charter, Identity / Organizational
 
 **Structural question.** Does the org have a written, signed AI Acceptable Use Policy that names the categories of agents permitted to exist, the body that authorizes new categories, and the named org-wide owner of the agent program?
 
@@ -8,9 +8,9 @@
 
 This cell is satisfied by §1, §2, and §4 of [`../../templates/organizational-policy.md`](../../templates/organizational-policy.md):
 
-- **§1 Purpose and scope** — names what this policy covers.
-- **§2 AI Acceptable Use Policy** — names categories of agents permitted to exist and hard prohibitions.
-- **§4 Roles and authorities** — names the AI Governance Council, the Director of AI Workforce Transformation, and the domain leads.
+- **§1 Purpose and scope**: names what this policy covers.
+- **§2 AI Acceptable Use Policy**: names categories of agents permitted to exist and hard prohibitions.
+- **§4 Roles and authorities**: names the AI Governance Council, the Director of AI Workforce Transformation, and the domain leads.
 
 ## Audit prompts
 

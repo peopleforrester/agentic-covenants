@@ -1,4 +1,4 @@
-# Inventory — Identity / Self-declared
+# Inventory, Identity / Self-declared
 
 **What this cell records.** The agent's own report of its identity, charter binding, and liveness.
 
@@ -14,7 +14,7 @@
 
 ## Reference tooling
 
-- [`agent-register.py`](./agent-register.py) — minimal registration daemon. Sends a `POST /api/v1/agents/register` on startup, then heartbeats every N seconds, then `POST /api/v1/agents/deregister` on shutdown. Refuses to start if `charter_ref` is missing or charter is expired.
+- [`agent-register.py`](./agent-register.py), minimal registration daemon. Sends a `POST /api/v1/agents/register` on startup, then heartbeats every N seconds, then `POST /api/v1/agents/deregister` on shutdown. Refuses to start if `charter_ref` is missing or charter is expired.
 
 ## Cross-layer cross-references
 

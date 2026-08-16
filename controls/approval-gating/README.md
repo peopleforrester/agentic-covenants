@@ -14,7 +14,7 @@
 
 This row is what people mean when they say "human in the loop." Done well, it is the single most operationally useful row in the matrix: it lets you ship agents that touch real systems without ceding judgment.
 
-Done badly, it is the **alert-fatigue** row, and alert fatigue is the failure mode the row exists to fight. The cure is **tiering** — most actions auto-allow, only the dangerous ones interrupt — and **judgment-query escalation** for the small set of decisions that need genuine human input rather than a rubber-stamp click.
+Done badly, it is the **alert-fatigue** row, and alert fatigue is the failure mode the row exists to fight. The cure is **tiering**, most actions auto-allow, only the dangerous ones interrupt, and **judgment-query escalation** for the small set of decisions that need genuine human input rather than a rubber-stamp click.
 
 ## How to walk it
 

@@ -1,4 +1,4 @@
-# Restorations — Identity / Server-side
+# Restorations, Identity / Server-side
 
 **Precondition.** Interventions L3-C1 has fired (ServiceAccount automount disabled, IAM deny-all attached, OIDC sessions revoked). Restorations L2-C1 has completed (new local credentials are in place).
 
@@ -13,7 +13,7 @@
 
 ## Files in this directory
 
-- [`agent-restore-identity-server`](./agent-restore-identity-server) — runbook script. Deletes old SA, recreates from declarative source, removes EmergencyDenyAll IAM policy, rotates IAM access keys (if any), checks OIDC trust-policy drift and restores from declarative source if drifted, re-issues SPIFFE identity.
+- [`agent-restore-identity-server`](./agent-restore-identity-server), runbook script. Deletes old SA, recreates from declarative source, removes EmergencyDenyAll IAM policy, rotates IAM access keys (if any), checks OIDC trust-policy drift and restores from declarative source if drifted, re-issues SPIFFE identity.
 
 ## Verification
 
@@ -38,8 +38,8 @@ kubectl run identity-test --image=alpine --rm -it -n agent-claude-code-prod \
 
 - Deleting the SA but failing to recreate it because the YAML in source has drifted. The cluster has no SA; new pods cannot start.
 - Trust policy drift not checked. The trust policy was the attack surface; restoring without verifying leaves it compromised.
-- Forgetting to remove the EmergencyDenyAll IAM policy — the agent has identity but cannot do anything.
-- Old IAM access keys not deleted — old credentials remain valid alongside new ones.
+- Forgetting to remove the EmergencyDenyAll IAM policy, the agent has identity but cannot do anything.
+- Old IAM access keys not deleted, old credentials remain valid alongside new ones.
 
 ## Citation
 

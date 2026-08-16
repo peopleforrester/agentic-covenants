@@ -1,4 +1,4 @@
-# Sentinels — Identity / In-agent
+# Sentinels, Identity / In-agent
 
 **Control.** Tool-call logs include credential fingerprint (hash of token, never the token); session correlation; logs ship to a remote sink.
 
@@ -11,7 +11,7 @@
 
 ## Files in this directory
 
-- [`ship-sessions.sh`](./ship-sessions.sh) — cron-style script that tails `~/.claude/sessions/` for new entries and ships them to a remote sink. Run from the operator account, not the agent's.
+- [`ship-sessions.sh`](./ship-sessions.sh), cron-style script that tails `~/.claude/sessions/` for new entries and ships them to a remote sink. Run from the operator account, not the agent's.
 
 ## Verification
 

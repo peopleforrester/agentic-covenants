@@ -9,7 +9,7 @@ The failure mode this row exists to fight is **alert fatigue**, and it is measur
 
 ---
 
-## L1 — In-agent
+## L1, In-agent
 
 - [ ] Confirmation language exists and names tiers matching the client-side hook's tiers
 - [ ] Includes an explicit "if the operator says *just do it*, the answer is still no"
@@ -19,11 +19,11 @@ The failure mode this row exists to fight is **alert fatigue**, and it is measur
 
 ---
 
-## L2 — Client-side
+## L2, Client-side
 
 - [ ] Tiering exists at all. **A flat approval workflow degrades fastest**
 - [ ] Tier 1 read-only auto-allows silently (if everything prompts, nothing is read)
-- [ ] Tier 3 requires **typed verbatim re-entry of the command** — not `y`, not `yes`
+- [ ] Tier 3 requires **typed verbatim re-entry of the command**, not `y`, not `yes`
 - [ ] Tier 4 requires an out-of-band channel (second terminal, phone, FIDO2)
 - [ ] Out-of-band **defaults to deny on timeout**, never approve
 - [ ] Session counter caps consecutive destructive operations
@@ -37,7 +37,7 @@ echo '{"tool_name":"Bash","tool_input":{"command":"kubectl delete pod foo"},"ses
 grep approval_timing /var/log/agents/*/*.log | tail   # response_ms present?
 ```
 
-**Fatigue check — run this, do not assume:**
+**Fatigue check, run this, do not assume:**
 mean tier-≥2 response time over the last 50 approvals: ________ ms
 If under ~2000ms across 50+ approvals, the tiering is no longer adding friction. **That is a finding.**
 
@@ -47,9 +47,9 @@ If under ~2000ms across 50+ approvals, the tiering is no longer adding friction.
 
 ---
 
-## L3 — Server-side
+## L3, Server-side
 
-- [ ] **`enforce_admins: true`.** This is the single most common branch-protection failure — with it false, any repo admin walks through every rule below
+- [ ] **`enforce_admins: true`.** This is the single most common branch-protection failure, with it false, any repo admin walks through every rule below
 - [ ] Required approving reviewers **≥ 2** (one reviewer plus the agent's operator is zero adversarial review)
 - [ ] `require_code_owner_reviews: true`, CODEOWNERS at a valid path (`.github/CODEOWNERS`, `docs/`, or root)
 - [ ] CODEOWNERS covers agent config paths, and the agent is **not** an owner of them
@@ -76,9 +76,9 @@ gh api repos/<org>/<repo>/actions/workflows --jq '.workflows[] | {name, state}' 
 
 ## Row verdict
 
-☐ All three present ☐ In-agent only — **audit finding** ☐ Server-side only ☐ Gaps
+☐ All three present ☐ In-agent only, **audit finding** ☐ Server-side only ☐ Gaps
 
-**Federal/DoD note.** 800-53 **AC-3(2)** (dual authorization), **CM-3**, **CM-5**, **PM-10**; DoD ZT **Automation & Orchestration**; RAI *Governable*. DoD RAI's Warfighter Trust tenet requires clear operator procedures to activate and deactivate system functions — this row plus [`interventions/`](../interventions/) is where that lives.
+**Federal/DoD note.** 800-53 **AC-3(2)** (dual authorization), **CM-3**, **CM-5**, **PM-10**; DoD ZT **Automation & Orchestration**; RAI *Governable*. DoD RAI's Warfighter Trust tenet requires clear operator procedures to activate and deactivate system functions, this row plus [`interventions/`](../interventions/) is where that lives.
 
 **Open items:**
 

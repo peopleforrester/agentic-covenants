@@ -9,7 +9,7 @@ Identity is the row everything else anchors to. If it is sloppy, per-agent autho
 
 ---
 
-## L1 — In-agent (advisory only)
+## L1, In-agent (advisory only)
 
 - [ ] System prompt names the agent, the operator, and the authorized scope
 - [ ] Prompt contains no secrets, internal hostnames, or attack-surface detail (assume it is public)
@@ -21,7 +21,7 @@ Identity is the row everything else anchors to. If it is sloppy, per-agent autho
 
 ---
 
-## L2 — Client-side
+## L2, Client-side
 
 - [ ] One credential per agent. **No credential shared across agents**
 - [ ] Credential lives in operator-owned config, not the agent user's home
@@ -42,13 +42,13 @@ md5sum /etc/agents/*/token | awk '{print $1}' | sort | uniq -d   # must print no
 
 ---
 
-## L3 — Server-side
+## L3, Server-side
 
 - [ ] Dedicated ServiceAccount or IAM principal **per agent** (grep for shared SAs)
-- [ ] OIDC federation / workload identity — no long-lived static keys
+- [ ] OIDC federation / workload identity, no long-lived static keys
 - [ ] Projected token TTL **≤ 900s**, not the 1-hour default, not unbounded
 - [ ] Token `audience` pinned to this agent, not a generic `sts` audience
-- [ ] IAM trust policy `sub` pins one exact `system:serviceaccount:<ns>:<sa>` — **no wildcards**
+- [ ] IAM trust policy `sub` pins one exact `system:serviceaccount:<ns>:<sa>`, **no wildcards**
 - [ ] Token in a projected volume, not a long-lived Secret
 - [ ] SPIFFE/SPIRE registered if the agent crosses clusters
 
@@ -67,10 +67,10 @@ aws iam get-role --role-name <agent> --query 'AssumeRolePolicyDocument'   # insp
 
 ## Row verdict
 
-☐ All three present — defense in depth
-☐ In-agent only — **audit finding**
-☐ Server-side only — add client-side to fail fast
-☐ Client-side only — acceptable only if the agent has no cloud/cluster reach
+☐ All three present, defense in depth
+☐ In-agent only, **audit finding**
+☐ Server-side only, add client-side to fail fast
+☐ Client-side only, acceptable only if the agent has no cloud/cluster reach
 
 **Federal/DoD note.** 800-53 **AC-2, IA-2, IA-5, IA-8, IA-9**; DoD ZT **User** pillar. Under DoD ICAM every NPE must be under the control of an authorized **Person Entity** who can create, modify, and destroy the account. The charter's named owner is that PE, and the charter `identifier` is the NPE registry join key. If the owner has departed and no backup accepted handoff, the NPE should not still exist. See [`examples/dod-air-gapped/icam-npe-binding.md`](../examples/dod-air-gapped/icam-npe-binding.md).
 

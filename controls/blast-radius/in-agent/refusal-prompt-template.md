@@ -1,4 +1,4 @@
-# Refusal-prompt template — destructive operations
+# Refusal-prompt template, destructive operations
 
 Append the following block to your agent's system prompt. Pair with the constraints block from [`../../identity/in-agent/system-prompt-template.md`](../../identity/in-agent/system-prompt-template.md).
 

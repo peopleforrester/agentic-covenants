@@ -1,4 +1,4 @@
-# Charter — Supply chain / Organizational
+# Charter, Supply chain / Organizational
 
 **Structural question.** Does the org maintain an allowlist of approved foundation models, an MCP server approval policy, a third-party dependency approval policy, and integrate AI vendor risk into procurement?
 

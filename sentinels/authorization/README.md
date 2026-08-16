@@ -1,4 +1,4 @@
-# Sentinels — Authorization
+# Sentinels, Authorization
 
 **Intent.** Surface every PreToolUse hook decision (allow/ask/deny/error), every RBAC denial, every IAM Access Analyzer finding, every OPA decision log. Catch hook config edits and `--no-verify` bypass attempts at the operator host.
 

@@ -1,4 +1,4 @@
-# Interventions — Blast radius / Server-side
+# Interventions, Blast radius / Server-side
 
 **Trigger.** Falco alert from cluster, NetworkPolicy violation spike, ResourceQuota near-limit emergency, cross-namespace operations from an agent SA.
 
@@ -13,9 +13,9 @@
 
 ## Files in this directory
 
-- [`agent-contain-server`](./agent-contain-server) — runbook script. Applies emergency NetworkPolicy default-deny, scales agent Deployments to zero, force-deletes pods, optionally cordons and drains nodes, and blocks egress at the cloud firewall.
-- [`networkpolicy-emergency-deny.yaml`](./networkpolicy-emergency-deny.yaml) — pre-staged default-deny NetworkPolicy with no allow rules. Applied to the agent namespace. **Pre-stage** at `/etc/agents/emergency/networkpolicy-emergency-deny.yaml`.
-- [`sg-deny-all-egress.json`](./sg-deny-all-egress.json) — pre-staged AWS Security Group egress-rule descriptions used by the runbook to update the agent's SG. **Pre-stage** at `/etc/agents/emergency/sg-deny-all-egress.json`.
+- [`agent-contain-server`](./agent-contain-server), runbook script. Applies emergency NetworkPolicy default-deny, scales agent Deployments to zero, force-deletes pods, optionally cordons and drains nodes, and blocks egress at the cloud firewall.
+- [`networkpolicy-emergency-deny.yaml`](./networkpolicy-emergency-deny.yaml), pre-staged default-deny NetworkPolicy with no allow rules. Applied to the agent namespace. **Pre-stage** at `/etc/agents/emergency/networkpolicy-emergency-deny.yaml`.
+- [`sg-deny-all-egress.json`](./sg-deny-all-egress.json), pre-staged AWS Security Group egress-rule descriptions used by the runbook to update the agent's SG. **Pre-stage** at `/etc/agents/emergency/sg-deny-all-egress.json`.
 
 ## Verification
 
@@ -38,9 +38,9 @@ kubectl get pods -n agent-claude-code-prod
 
 ## Common mistakes
 
-- `kubectl drain` without `--grace-period=0` honors `terminationGracePeriodSeconds: 300` — the pod runs for 5 minutes. Use `--force --grace-period=0`.
+- `kubectl drain` without `--grace-period=0` honors `terminationGracePeriodSeconds: 300`, the pod runs for 5 minutes. Use `--force --grace-period=0`.
 - Existing TCP connections survive NetworkPolicy changes (CNI-dependent). Verify by attempting a fresh connection after applying.
-- Cordoning the wrong node — verify the pods' actual node placement before draining.
+- Cordoning the wrong node, verify the pods' actual node placement before draining.
 - Cloud firewall rule modification fails silently if the security group is referenced by other resources. Verify rule before declaring contained.
 
 ## Citation

@@ -1,4 +1,4 @@
-# Interventions — Blast radius / Client-side
+# Interventions, Blast radius / Client-side
 
 **Trigger.** Falco alert from operator host, network attempt from `--network none` agent, sandbox boundary EPERM spike, unsandboxed-child detection.
 
@@ -14,7 +14,7 @@
 
 ## Files in this directory
 
-- [`agent-isolate-host`](./agent-isolate-host) — runbook script. Process-group kill of the agent tree, kills bubblewrap parents, optionally severs host network, stops Docker/Kubernetes containers labeled with the agent.
+- [`agent-isolate-host`](./agent-isolate-host), runbook script. Process-group kill of the agent tree, kills bubblewrap parents, optionally severs host network, stops Docker/Kubernetes containers labeled with the agent.
 
 ## Verification
 
@@ -37,7 +37,7 @@ docker ps --filter "label=agent=claude-code-prod"
 - `pkill -f` matches partial commands; if the agent is invoked through a wrapper, the wrapper survives. The runbook uses process-group kill (`kill -- -PGID`) to take the whole tree.
 - Sandbox `--die-with-parent` flag was not set at launch. The sandbox does not exit when its parent dies. Verify [Covenants L2-C3 launch flags](../../../controls/blast-radius/client-side/agent-bwrap).
 - Network isolation cuts off the operator's ability to remediate. Use only as last resort, and have an out-of-band channel (phone, separate device) to maintain command.
-- Forgetting the containerized-agent step — operator host is clean but Kubernetes pods keep running.
+- Forgetting the containerized-agent step, operator host is clean but Kubernetes pods keep running.
 
 ## Citation
 

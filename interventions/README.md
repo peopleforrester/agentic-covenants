@@ -17,13 +17,13 @@ The structure mirrors `controls/` and `sentinels/` exactly. The cell named `iden
 
 ## All in-agent cells are empty
 
-The L1 in-agent column is empty for every concern. **An agent acting badly cannot be reliably told to stop acting badly.** The same structural absence that makes the in-agent layer advisory in Covenants makes it useless in Interventions. The in-agent cell directories carry only a README explaining the empty state — there is no runbook, by design.
+The L1 in-agent column is empty for every concern. **An agent acting badly cannot be reliably told to stop acting badly.** The same structural absence that makes the in-agent layer advisory in Covenants makes it useless in Interventions. The in-agent cell directories carry only a README explaining the empty state. There is no runbook, by design.
 
 ## Pre-staging is the precondition
 
 Every runbook in this directory assumes pre-staging:
 
-- **Break-glass identity** with permissions to revoke, disable, and lock — separate from the agent's own identity. Stored in a hardware key or sealed-secret vault. Tested in non-prod within the last 90 days.
+- **Break-glass identity** with permissions to revoke, disable, and lock, separate from the agent's own identity. Stored in a hardware key or sealed-secret vault. Tested in non-prod within the last 90 days.
 - **Pre-staged emergency policy directory** at `/etc/agents/emergency/` (or `emergency/` in source control) containing every artifact each runbook expects: deny-all hook, deny-all Kyverno policy, emergency NetworkPolicy, locked branch-protection JSON, IAM deny-all policy, last-known-good image SHA. Each runbook lists exactly which file it reads.
 - **PagerDuty (or equivalent) wired to Sentinels alerts.**
 - **On-call drilled on the runbooks.** *Drilled, not "informed."*
@@ -56,12 +56,12 @@ Every cell directory has the same six-section README:
 
 For an active misuse incident:
 
-1. Blast radius (L2-C3 + L3-C3) — **5 seconds**
-2. Identity server-side (L3-C1) — 30 seconds
-3. Identity client-side (L2-C1) — 30 seconds
-4. Authorization (L3-C2 + L2-C2) — 1 minute
-5. Approval gating server-side (L3-C4) — 1 minute
-6. Supply chain (L2-C5 + L3-C5) — 5 minutes
+1. Blast radius (L2-C3 + L3-C3), **5 seconds**
+2. Identity server-side (L3-C1), 30 seconds
+3. Identity client-side (L2-C1), 30 seconds
+4. Authorization (L3-C2 + L2-C2), 1 minute
+5. Approval gating server-side (L3-C4), 1 minute
+6. Supply chain (L2-C5 + L3-C5), 5 minutes
 
 For a slow-and-low compromise: reverse the order. Quarantine first, contain last.
 

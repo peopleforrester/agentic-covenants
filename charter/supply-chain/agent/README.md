@@ -1,4 +1,4 @@
-# Charter — Supply chain / Agent
+# Charter, Supply chain / Agent
 
 **Structural question.** Does the agent charter declare specific dependencies (named foundation model, MCP servers with hashes, base image digest, runtime version), and require charter amendment for changes?
 
@@ -31,7 +31,7 @@ dependencies:
 
 - `mcp_server_hashes` is the source-of-truth for [`controls/supply-chain/client-side/mcp-allowlist.json`](../../../controls/supply-chain/client-side/mcp-allowlist.json). Drift between charter and allowlist is a Sentinels finding.
 - `base_image_digest` is the value that should be pinned in [`controls/identity/server-side/pod-with-projected-token.yaml`](../../../controls/identity/server-side/pod-with-projected-token.yaml) and verified by [`controls/supply-chain/server-side/kyverno-verify-image-signatures.yaml`](../../../controls/supply-chain/server-side/kyverno-verify-image-signatures.yaml).
-- `agent_runtime_version: 2.1.40` is the May 2026 PreToolUse precedence patch line — pre-patch versions of Claude Code allow the deny-bypass regression. The charter must reflect the patched version.
+- `agent_runtime_version: 2.1.40` is the May 2026 PreToolUse precedence patch line, pre-patch versions of Claude Code allow the deny-bypass regression. The charter must reflect the patched version.
 
 ## Common failure mode
 

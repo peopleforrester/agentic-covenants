@@ -1,13 +1,13 @@
-# Inventory — Approval gating / Operator-declared
+# Inventory, Approval gating / Operator-declared
 
 **What this cell records.** The operator's review calendar and outstanding-review tracking.
 
 ## Fields
 
-- `last_owner_attestation` — owner re-signed the charter and confirmed the agent is still needed.
+- `last_owner_attestation`, owner re-signed the charter and confirmed the agent is still needed.
 - `next_owner_attestation_due`
-- `pending_approvals[]` — charter amendments awaiting signatures.
-- `overdue_reviews[]` — agents whose `next_review_due` has passed.
+- `pending_approvals[]`, charter amendments awaiting signatures.
+- `overdue_reviews[]`, agents whose `next_review_due` has passed.
 
 ## Operational tie-in
 

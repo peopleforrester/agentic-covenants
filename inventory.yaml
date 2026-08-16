@@ -171,7 +171,7 @@ cells:
   # ---- SUPPLY CHAIN ----
   - concern: supply-chain
     layer: self-declared
-    summary: Agent reports current dependency manifest on registration: foundation model + version, MCP server names + hashes, base image SHA, lockfile fingerprint. Updates on change.
+    summary: "Agent reports current dependency manifest on registration: foundation model + version, MCP server names + hashes, base image SHA, lockfile fingerprint. Updates on change."
     inventory_path: inventory/supply-chain/self-declared/
     citations:
       nist_csf_2_0: ["ID.AM-04", "ID.RA-09"]

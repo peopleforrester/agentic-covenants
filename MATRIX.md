@@ -97,7 +97,7 @@ Old 1 and 3 were one idea said twice. Old 2, 4, and 6 were three mechanisms answ
 
 ## The five concerns are not idiosyncratic
 
-On April 30, 2026, six allied cyber agencies (CISA, NSA, ACSC, Canadian Centre for Cyber Security, NZ NCSC, UK NCSC) published **"Careful Adoption of Agentic AI Services"** — the first multi-nation joint guidance dedicated to agentic AI. It names five risk categories, and they map almost one-to-one onto the five concerns of this matrix:
+On April 30, 2026, six allied cyber agencies (CISA, NSA, ACSC, Canadian Centre for Cyber Security, NZ NCSC, UK NCSC) published **"Careful Adoption of Agentic AI Services"**, the first multi-nation joint guidance dedicated to agentic AI. It names five risk categories, and they map almost one-to-one onto the five concerns of this matrix:
 
 | Five Eyes risk category | Concern in this matrix |
 |---|---|
@@ -107,16 +107,16 @@ On April 30, 2026, six allied cyber agencies (CISA, NSA, ACSC, Canadian Centre f
 | Structural cascading failures | Blast radius |
 | Accountability opacity | Charter + Inventory |
 
-The guidance's posture — adopt incrementally starting with low-risk tasks, and treat governance, human oversight, monitoring, and explicit accountability as requirements rather than options — is this framework's argument with artifacts attached. Full crosswalk, plus the US DoD / federal control mapping (NIST SP 800-53 families, DoD Zero Trust pillars, RMF/cATO/CSRMC, DoD RAI principles), is in [`CITATIONS.md`](./CITATIONS.md#us-dod--federal-crosswalk).
+The guidance's posture, adopt incrementally starting with low-risk tasks, and treat governance, human oversight, monitoring, and explicit accountability as requirements rather than options, is this framework's argument with artifacts attached. Full crosswalk, plus the US DoD / federal control mapping (NIST SP 800-53 families, DoD Zero Trust pillars, RMF/cATO/CSRMC, DoD RAI principles), is in [`CITATIONS.md`](./CITATIONS.md#us-dod--federal-crosswalk).
 
 ## Reading order
 
-1. This document — framework essay.
-2. [`BYPASSES.md`](./BYPASSES.md) — every control, every documented bypass path, including 2026 incidents and disclosed CVEs. Read this before you trust any single layer.
-3. [`CITATIONS.md`](./CITATIONS.md) — every cell mapped to NIST CSF 2.0, NIST AI RMF, OWASP LLM Top 10, OWASP Agentic Top 10, OWASP MCP Top 10, EU AI Act, ISO/IEC 42001, plus zero-trust and supply-chain SPs — **and a US DoD / federal crosswalk** (800-53, DoD ZT, RMF/cATO/CSRMC, RAI).
-4. [`controls/`](./controls/) — pick a cell, copy the artifact.
-5. [`checklists/`](./checklists/) — print and walk.
-6. [`examples/`](./examples/) — end-to-end deployments, including an [air-gapped / DoD IL4-IL5 variant](./examples/dod-air-gapped/).
+1. This document: the framework essay.
+2. [`BYPASSES.md`](./BYPASSES.md), every control, every documented bypass path, including 2026 incidents and disclosed CVEs. Read this before you trust any single layer.
+3. [`CITATIONS.md`](./CITATIONS.md), every cell mapped to NIST CSF 2.0, NIST AI RMF, OWASP LLM Top 10, OWASP Agentic Top 10, OWASP MCP Top 10, EU AI Act, ISO/IEC 42001, plus zero-trust and supply-chain SPs, **and a US DoD / federal crosswalk** (800-53, DoD ZT, RMF/cATO/CSRMC, RAI).
+4. [`controls/`](./controls/), pick a cell, copy the artifact.
+5. [`checklists/`](./checklists/), print and walk.
+6. [`examples/`](./examples/), end-to-end deployments, including an [air-gapped / DoD IL4-IL5 variant](./examples/dod-air-gapped/).
 
 ## Companion: Sentinels (Detect)
 

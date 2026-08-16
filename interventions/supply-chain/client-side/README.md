@@ -1,4 +1,4 @@
-# Interventions — Supply chain / Client-side
+# Interventions, Supply chain / Client-side
 
 **Trigger.** MCP allowlist violation, tool-description hash mismatch, lockfile diff with unsigned package, pre-commit dependency scan finding.
 
@@ -13,7 +13,7 @@
 
 ## Files in this directory
 
-- [`agent-quarantine-supply-chain-local`](./agent-quarantine-supply-chain-local) — runbook script. Removes the suspect server from `mcp-allowlist.json`, moves suspect package files to `/var/quarantine/<incident>/`, sets `chattr +i` on lockfiles, pins runtime to last-known-good, kills the agent so the new state applies.
+- [`agent-quarantine-supply-chain-local`](./agent-quarantine-supply-chain-local), runbook script. Removes the suspect server from `mcp-allowlist.json`, moves suspect package files to `/var/quarantine/<incident>/`, sets `chattr +i` on lockfiles, pins runtime to last-known-good, kills the agent so the new state applies.
 
 ## Verification
 
@@ -32,8 +32,8 @@ lsattr /etc/agents/claude-code-prod/package-lock.json
 
 ## Common mistakes
 
-- Quarantining files but missing in-memory state — Python with already-imported modules keeps the malicious code loaded. The kill step is mandatory.
-- `chattr +i` on a file in tmpfs — does not stick across reboot. Mitigate by ensuring lockfile lives on persistent FS.
+- Quarantining files but missing in-memory state, Python with already-imported modules keeps the malicious code loaded. The kill step is mandatory.
+- `chattr +i` on a file in tmpfs, does not stick across reboot. Mitigate by ensuring lockfile lives on persistent FS.
 - Forgetting that the agent may have credentials cached in OS keychain that the quarantined package planted.
 
 ## Citation

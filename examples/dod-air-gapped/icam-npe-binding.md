@@ -6,13 +6,13 @@ In an enclave you should not maintain those as two disconnected records. This is
 
 ## The PE-to-NPE control relationship
 
-FICAM requires an NPE to be "under the control of an authorized Person Entity (PE) who has the ability to create, modify, or destroy the NPE account." For an AI agent this is not a formality — it is the accountability anchor that the Five Eyes joint guidance calls out as *accountability opacity* when it is missing.
+FICAM requires an NPE to be "under the control of an authorized Person Entity (PE) who has the ability to create, modify, or destroy the NPE account." For an AI agent this is not a formality. It is the accountability anchor that the Five Eyes joint guidance calls out as *accountability opacity* when it is missing.
 
 | ICAM / NPE registry attribute | Agent charter field | Notes |
 |---|---|---|
 | NPE identifier | `agent.identifier` | Must be the same string in both systems. This is the join key. |
 | NPE display name / description | `agent.name`, `agent.description` | |
-| **Controlling PE** | `ownership.owner_name` + `ownership.owner_email` | The named human accountable. Not a group mailbox — FICAM wants a person who can destroy the account. |
+| **Controlling PE** | `ownership.owner_name` + `ownership.owner_email` | The named human accountable. Not a group mailbox. FICAM wants a person who can destroy the account. |
 | Alternate / delegate PE | `ownership.backup_owner_name` | Required, or departure of the owner orphans the NPE. |
 | Sponsoring organization | `ownership.domain` (via the parent domain charter) | |
 | Credential type and lifecycle | `dependencies` + the identity cell in use | DoD PKI certificate preferred over long-lived secrets; short-lived where the CA supports it. |
@@ -26,9 +26,9 @@ FICAM requires an NPE to be "under the control of an authorized Person Entity (P
 
 These charter fields have **no ICAM equivalent**, which is precisely the gap this framework exists to fill. Carry them in the charter and reference the charter from the NPE record:
 
-- `damage_cap` — records-per-session, spend-per-day, forbidden operations. ICAM has no concept of a bounded blast radius for an authenticated entity.
-- `risk_tier` driving *which controls are mandatory* — Tier 1 read-only agents do not need every cell; Tier 4 production agents need all fifteen.
-- `approvals` — multi-party signature for Tier 3+, which is the Approval gating column expressed as governance rather than runtime.
+- `damage_cap`, records-per-session, spend-per-day, forbidden operations. ICAM has no concept of a bounded blast radius for an authenticated entity.
+- `risk_tier` driving *which controls are mandatory*, Tier 1 read-only agents do not need every cell; Tier 4 production agents need all fifteen.
+- `approvals`, multi-party signature for Tier 3+, which is the Approval gating column expressed as governance rather than runtime.
 
 ## Where ICAM says more than the charter does
 

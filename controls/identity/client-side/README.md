@@ -13,9 +13,9 @@
 
 ## Files in this directory
 
-- [`provision-credential.sh`](./provision-credential.sh) — creates a per-agent credential directory, locks down ownership, applies an ACL so the agent's own user cannot read the file at rest. Run as root.
-- [`claude-code-prod.service`](./claude-code-prod.service) — systemd unit that loads the per-agent env file and runs the agent as a dedicated user. Drop in `/etc/systemd/system/`.
-- [`verify.sh`](./verify.sh) — three checks: credential not in process listing, agent cannot read its own credential file at rest, every agent has a unique credential hash.
+- [`provision-credential.sh`](./provision-credential.sh), creates a per-agent credential directory, locks down ownership, applies an ACL so the agent's own user cannot read the file at rest. Run as root.
+- [`claude-code-prod.service`](./claude-code-prod.service), systemd unit that loads the per-agent env file and runs the agent as a dedicated user. Drop in `/etc/systemd/system/`.
+- [`verify.sh`](./verify.sh), three checks: credential not in process listing, agent cannot read its own credential file at rest, every agent has a unique credential hash.
 
 ## Verification
 
@@ -31,7 +31,7 @@ sudo ./verify.sh
 - Putting the token in a `.env` file checked into the repo.
 - Setting the env var in `/etc/profile`, where every process inherits it.
 - Logging the credential into the agent's own log file at startup.
-- Granting the agent's own user write permission on `/etc/agents/` so the agent can rotate its own key — that ability lets the agent change its identity at will.
+- Granting the agent's own user write permission on `/etc/agents/` so the agent can rotate its own key, that ability lets the agent change its identity at will.
 
 ## Citation
 

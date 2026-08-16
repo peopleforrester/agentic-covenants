@@ -1,4 +1,4 @@
-# Domain Charter Template — [Domain Name]
+# Domain Charter Template, [Domain Name]
 
 **Domain.** [e.g. Platform Engineering / DevOps Automation]
 

@@ -1,4 +1,4 @@
-# Restorations — Authorization / Server-side
+# Restorations, Authorization / Server-side
 
 **Precondition.** Interventions L3-C2 has fired (Kyverno deny-all in effect, agent Role empty, IAM deny-all attached). Restorations identity row complete. The declarative source-of-truth has been verified intact (signed commits, signed tags, off-cluster mirror).
 
@@ -13,8 +13,8 @@
 
 ## Files in this directory
 
-- [`agent-restore-authorization-server`](./agent-restore-authorization-server) — runbook script. Removes emergency Kyverno deny ClusterPolicy, reapplies the agent's Role from source, reapplies the operational Kyverno policies, re-removes any EmergencyDenyAll IAM policies, audits cluster drift vs source.
-- [`drift-audit.sh`](./drift-audit.sh) — drift-detection helper. Lists resources in the agent namespace not present in `manifests/`. Anything in cluster but not in source is suspect.
+- [`agent-restore-authorization-server`](./agent-restore-authorization-server), runbook script. Removes emergency Kyverno deny ClusterPolicy, reapplies the agent's Role from source, reapplies the operational Kyverno policies, re-removes any EmergencyDenyAll IAM policies, audits cluster drift vs source.
+- [`drift-audit.sh`](./drift-audit.sh), drift-detection helper. Lists resources in the agent namespace not present in `manifests/`. Anything in cluster but not in source is suspect.
 
 ## Verification
 

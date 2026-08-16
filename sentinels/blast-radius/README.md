@@ -1,4 +1,4 @@
-# Sentinels — Blast radius
+# Sentinels, Blast radius
 
 **Intent.** Surface sandbox boundary events, network attempts on `--network none` agents, NetworkPolicy denials, ResourceQuota near-limit alerts, VPC Flow Log REJECTs.
 

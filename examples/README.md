@@ -14,6 +14,6 @@ The connected examples are largely assembled from artifacts already in [`control
 ## How to use an example
 
 1. Read the example's README end to end before copying anything. Each one documents assumptions that, if false in your environment, change which artifacts apply.
-2. Copy artifacts into your own repo. **Every placeholder is intentional** — `REPLACE_WITH_DIGEST_FROM_CRANE`, `123456789012`, `registry.enclave.mil`. Substitute them deliberately; do not leave them.
+2. Copy artifacts into your own repo. **Every placeholder is intentional**, `REPLACE_WITH_DIGEST_FROM_CRANE`, `123456789012`, `registry.enclave.mil`. Substitute them deliberately; do not leave them.
 3. Run the example's verification steps. An unverified control is a documented control, which is not the same thing.
 4. Record what you skipped and why. Skipped cells belong in your threat model, not in a gap nobody wrote down.

@@ -6,17 +6,17 @@
 
 ## Tooling
 
-- Claude Code v2.1.40 or later (the May 2026 PreToolUse precedence patch — pre-patch versions allow `allow` to override `deny`).
+- Claude Code v2.1.40 or later (the May 2026 PreToolUse precedence patch, pre-patch versions allow `allow` to override `deny`).
 - `pre-commit` framework on the operator's machine.
 - `jq` for the hook script.
 - A server-side Git pre-receive hook to backstop `--no-verify`. Lives in [`../server-side/`](../server-side/).
 
 ## Files in this directory
 
-- [`settings.json`](./settings.json) — Claude Code project settings with `permissions` `defaultMode: deny`, an explicit `allow` list (read-only ops), an `ask` list (mutation ops), a `deny` list (destructive ops). Drop in your project at `.claude/settings.json` (operator-owned, agent runs as a different user).
-- [`pre_tool_use.sh`](./pre_tool_use.sh) — PreToolUse hook that receives JSON on stdin per the Claude Code hook spec. Hard-deny patterns (`rm -rf /`, `terraform destroy`, fork bombs) and obfuscation patterns (base64 decode, eval). Deploy to `/etc/agents/hooks/` with mode 0755 and owner root.
-- [`pre-commit-config.yaml`](./pre-commit-config.yaml) — pre-commit framework config that runs gitleaks plus a deny-protected-paths hook. Drop at the repo root as `.pre-commit-config.yaml` and run `pre-commit install`.
-- [`deny-protected-paths.sh`](./deny-protected-paths.sh) — pre-commit hook that fails when the diff touches `infrastructure/prod/`, `.github/workflows/`, or `secrets/`. Operator commits to those paths; agent commits do not.
+- [`settings.json`](./settings.json), Claude Code project settings with `permissions` `defaultMode: deny`, an explicit `allow` list (read-only ops), an `ask` list (mutation ops), a `deny` list (destructive ops). Drop in your project at `.claude/settings.json` (operator-owned, agent runs as a different user).
+- [`pre_tool_use.sh`](./pre_tool_use.sh), PreToolUse hook that receives JSON on stdin per the Claude Code hook spec. Hard-deny patterns (`rm -rf /`, `terraform destroy`, fork bombs) and obfuscation patterns (base64 decode, eval). Deploy to `/etc/agents/hooks/` with mode 0755 and owner root.
+- [`pre-commit-config.yaml`](./pre-commit-config.yaml), pre-commit framework config that runs gitleaks plus a deny-protected-paths hook. Drop at the repo root as `.pre-commit-config.yaml` and run `pre-commit install`.
+- [`deny-protected-paths.sh`](./deny-protected-paths.sh), pre-commit hook that fails when the diff touches `infrastructure/prod/`, `.github/workflows/`, or `secrets/`. Operator commits to those paths; agent commits do not.
 
 ## Verification
 

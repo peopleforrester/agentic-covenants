@@ -1,13 +1,13 @@
-# Inventory — Authorization / Operator-declared
+# Inventory, Authorization / Operator-declared
 
 **What this cell records.** The operator's intent for what each agent is authorized to do, linked back to source manifests.
 
 ## Fields
 
-- `rbac_role_ref` — name of the source-of-truth Role committed under `manifests/rbac/`.
+- `rbac_role_ref`, name of the source-of-truth Role committed under `manifests/rbac/`.
 - `iam_policy_arns[]`
-- `mcp_servers_allowlist_ref` — file path to the canonical `mcp-allowlist.json`.
-- `last_audited_at` — when the operator last verified runtime matches intent.
+- `mcp_servers_allowlist_ref`, file path to the canonical `mcp-allowlist.json`.
+- `last_audited_at`, when the operator last verified runtime matches intent.
 
 ## Cross-layer
 

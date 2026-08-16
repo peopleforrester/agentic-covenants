@@ -7,7 +7,7 @@
 | Layer | Cell | What you actually deploy |
 |---|---|---|
 | In-agent | [`in-agent/`](./in-agent/) | A non-trivial system prompt that names the agent. Advisory only. |
-| Client-side | [`client-side/`](./client-side/) | Per-agent credentials in operator-owned config, filesystem ACLs, systemd unit binding the credential to the agent's process — never a shared shell rc. |
+| Client-side | [`client-side/`](./client-side/) | Per-agent credentials in operator-owned config, filesystem ACLs, systemd unit binding the credential to the agent's process, never a shared shell rc. |
 | Server-side | [`server-side/`](./server-side/) | Dedicated ServiceAccount per agent, OIDC federation, projected ServiceAccount token with 15-minute TTL, IAM trust policy with strict subject condition, optional SPIFFE/SPIRE for cross-cluster identity. |
 
 ## Why it matters

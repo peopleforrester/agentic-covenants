@@ -1,4 +1,4 @@
-# Restorations — Approval gating / Server-side
+# Restorations, Approval gating / Server-side
 
 **Precondition.** Interventions L3-C4 has fired (branch protection locked, workflows disabled, DEPLOY_FREEZE engaged, environments locked). Restorations identity, authorization, and blast-radius rows complete.
 
@@ -11,8 +11,8 @@
 
 ## Files in this directory
 
-- [`agent-restore-approval-server`](./agent-restore-approval-server) — runbook script. Restores branch protection from source (verifies `enforce_admins: true`), re-enables every workflow, audits bypass events from the incident window, unfreezes deployments **only when explicitly authorized** via the `--unfreeze` flag.
-- [`audit-bypass-events.sh`](./audit-bypass-events.sh) — helper that lists every push to a protected branch during the incident window with `forced: true` or admin-bypass markers. Output must be reviewed manually before declaring approval-gating recovered.
+- [`agent-restore-approval-server`](./agent-restore-approval-server), runbook script. Restores branch protection from source (verifies `enforce_admins: true`), re-enables every workflow, audits bypass events from the incident window, unfreezes deployments **only when explicitly authorized** via the `--unfreeze` flag.
+- [`audit-bypass-events.sh`](./audit-bypass-events.sh), helper that lists every push to a protected branch during the incident window with `forced: true` or admin-bypass markers. Output must be reviewed manually before declaring approval-gating recovered.
 
 ## Verification
 

@@ -1,4 +1,4 @@
-# Inventory — Blast radius / Discovered
+# Inventory, Blast radius / Discovered
 
 **What this cell records.** Threat-modeled and behaviorally-observed actual blast surface, regardless of declared envelope.
 

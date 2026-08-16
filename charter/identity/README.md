@@ -1,4 +1,4 @@
-# Charter — Identity
+# Charter, Identity
 
 **Question.** Who can authorize an agent's creation? Who is the named human owner accountable for the agent's actions?
 

@@ -14,10 +14,10 @@ One walkable checklist per concern. Print it, sit with the agent's owner, and wa
 
 For each of the three layers, mark one:
 
-- **`[x]` Present and tested** — the control exists and you ran the verification command in this session. Not "we configured that once."
-- **`[~]` Present, untested** — it exists, nobody has verified it recently. **This is where a hostile reviewer will catch you.**
-- **`[ ]` Absent** — not implemented.
-- **`[N/A]` Deliberately skipped** — with a reason written down. A skipped cell in a threat model is a decision. A skipped cell nobody recorded is a gap.
+- **`[x]` Present and tested**: the control exists and you ran the verification command in this session. Not "we configured that once."
+- **`[~]` Present, untested**: it exists, nobody has verified it recently. **This is where a hostile reviewer will catch you.**
+- **`[ ]` Absent**: not implemented.
+- **`[N/A]` Deliberately skipped**: with a reason written down. A skipped cell in a threat model is a decision. A skipped cell nobody recorded is a gap.
 
 Then read the row:
 
@@ -39,6 +39,6 @@ These checklists cover the **Covenants (Protect)** matrix. Detection, response, 
 Two facts to establish up front, because they change what "good" looks like:
 
 - **Risk tier** (1 read-only, 2 scoped writes, 3 destructive, 4 production-critical), from the agent's charter. A Tier 1 agent does not need every cell populated. A Tier 4 agent needs all fifteen.
-- **Reach** — operator laptop only, or cloud/cluster? Client-side-only postures are defensible for the former and not the latter.
+- **Reach**: operator laptop only, or cloud/cluster? Client-side-only postures are defensible for the former and not the latter.
 
 If the agent has no charter, stop and write one first ([`charter/templates/agent-charter.yaml`](../charter/templates/agent-charter.yaml)). You cannot audit scope against an intent nobody recorded.

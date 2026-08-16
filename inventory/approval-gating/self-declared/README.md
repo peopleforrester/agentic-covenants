@@ -1,4 +1,4 @@
-# Inventory — Approval gating / Self-declared
+# Inventory, Approval gating / Self-declared
 
 **What this cell records.** The agent's report of its charter freshness and its refusal to operate beyond the review window.
 

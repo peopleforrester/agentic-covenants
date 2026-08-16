@@ -1,4 +1,4 @@
-# Sentinels — Authorization / Server-side
+# Sentinels, Authorization / Server-side
 
 **Control.** RBAC denial events from Kubernetes audit. IAM Access Analyzer findings reporting unused permissions. Kyverno PolicyReports surface admission failures. OPA decision logs centralized.
 
@@ -13,10 +13,10 @@
 
 ## Files in this directory
 
-- [`ship-policy-reports.yaml`](./ship-policy-reports.yaml) — CronJob that reads Kyverno PolicyReports across all namespaces every 5 minutes, filters for `summary.fail > 0`, and ships each failure to the SIEM as a structured event.
-- [`opa-decision-log-config.yaml`](./opa-decision-log-config.yaml) — OPA config snippet that streams decision logs to the SIEM. Filters on `decision == false` so the SIEM is not flooded with allow events.
-- [`access-analyzer-eventbridge.sh`](./access-analyzer-eventbridge.sh) — wires AWS IAM Access Analyzer findings to EventBridge → Lambda → SIEM.
-- [`sigma-rbac-denial-spike.yaml`](./sigma-rbac-denial-spike.yaml) — SIEM rule firing when more than 10 RBAC denials occur in a single namespace within 5 minutes.
+- [`ship-policy-reports.yaml`](./ship-policy-reports.yaml), CronJob that reads Kyverno PolicyReports across all namespaces every 5 minutes, filters for `summary.fail > 0`, and ships each failure to the SIEM as a structured event.
+- [`opa-decision-log-config.yaml`](./opa-decision-log-config.yaml), OPA config snippet that streams decision logs to the SIEM. Filters on `decision == false` so the SIEM is not flooded with allow events.
+- [`access-analyzer-eventbridge.sh`](./access-analyzer-eventbridge.sh), wires AWS IAM Access Analyzer findings to EventBridge → Lambda → SIEM.
+- [`sigma-rbac-denial-spike.yaml`](./sigma-rbac-denial-spike.yaml), SIEM rule firing when more than 10 RBAC denials occur in a single namespace within 5 minutes.
 
 ## Verification
 

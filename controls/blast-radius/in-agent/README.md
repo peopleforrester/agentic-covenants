@@ -10,7 +10,7 @@ None.
 
 ## Files in this directory
 
-- [`refusal-prompt-template.md`](./refusal-prompt-template.md) — drop-in language for the system prompt that explicitly enumerates destructive operations the agent should refuse. Pair with the constraints block in [`../../identity/in-agent/system-prompt-template.md`](../../identity/in-agent/system-prompt-template.md).
+- [`refusal-prompt-template.md`](./refusal-prompt-template.md), drop-in language for the system prompt that explicitly enumerates destructive operations the agent should refuse. Pair with the constraints block in [`../../identity/in-agent/system-prompt-template.md`](../../identity/in-agent/system-prompt-template.md).
 
 ## Verification
 

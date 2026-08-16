@@ -76,13 +76,13 @@ Full essay: **[`MATRIX.md`](./MATRIX.md)** · Bypass surface for every control: 
 
 | If you are… | Go to |
 |---|---|
-| **A platform engineer with agents in production** | [`checklists/`](./checklists/) — five audit sheets, print and walk, about an hour per agent |
-| **Standing up your first agent** | [`MATRIX.md`](./MATRIX.md), then [`controls/`](./controls/) — copy a cell, run its verification block |
-| **A security lead sizing the problem** | [`BYPASSES.md`](./BYPASSES.md) — every control and how it is defeated, plus the 2026 incident corpus |
-| **In a US federal or DoD program** | [`CITATIONS.md`](./CITATIONS.md#us-dod--federal-crosswalk) — 800-53 families, DoD ZT pillars, RMF/cATO/CSRMC, RAI. Then [`examples/dod-air-gapped/`](./examples/dod-air-gapped/) |
+| **A platform engineer with agents in production** | [`checklists/`](./checklists/), five audit sheets, print and walk, about an hour per agent |
+| **Standing up your first agent** | [`MATRIX.md`](./MATRIX.md), then [`controls/`](./controls/), copy a cell, run its verification block |
+| **A security lead sizing the problem** | [`BYPASSES.md`](./BYPASSES.md), every control and how it is defeated, plus the 2026 incident corpus |
+| **In a US federal or DoD program** | [`CITATIONS.md`](./CITATIONS.md#us-dod--federal-crosswalk), 800-53 families, DoD ZT pillars, RMF/cATO/CSRMC, RAI. Then [`examples/dod-air-gapped/`](./examples/dod-air-gapped/) |
 | **Responsible for governance or audit** | [`CHARTER_MATRIX.md`](./CHARTER_MATRIX.md) and [`charter/templates/`](./charter/templates/) |
-| **Wondering whether you even have agents** | [`INVENTORY_MATRIX.md`](./INVENTORY_MATRIX.md) — shadow-agent discovery |
-| **Already breached** | [`interventions/`](./interventions/) — kill-switch runbooks, five-second blast-radius target |
+| **Wondering whether you even have agents** | [`INVENTORY_MATRIX.md`](./INVENTORY_MATRIX.md), shadow-agent discovery |
+| **Already breached** | [`interventions/`](./interventions/), kill-switch runbooks, five-second blast-radius target |
 
 ## The six matrices
 
@@ -100,12 +100,12 @@ Covenants is one of six. Each maps to a NIST CSF 2.0 function, and each is five 
 
 | Matrix | Function | Question | Artifacts |
 |---|---|---|---|
-| [Charter](./CHARTER_MATRIX.md) | Govern (GV) | Who authorized this agent to exist? | [`charter/`](./charter/) — policy templates, signed agent charters |
-| [Inventory](./INVENTORY_MATRIX.md) | Identify (ID) | What agents exist and what do they touch? | [`inventory/`](./inventory/) — registration daemon, shadow-agent discovery |
-| [**Covenants**](./MATRIX.md) | Protect (PR) | What stops the agent from violating? | [`controls/`](./controls/) — Kyverno, RBAC, seccomp, hooks |
-| [Sentinels](./SENTINELS_MATRIX.md) | Detect (DE) | What just happened? | [`sentinels/`](./sentinels/) — Falco, audit policy, Sigma rules |
-| [Interventions](./INTERVENTIONS_MATRIX.md) | Respond (RS) | How do I stop the bleeding now? | [`interventions/`](./interventions/) — kill-switch runbooks |
-| [Restorations](./RESTORATIONS_MATRIX.md) | Recover (RC) | How do I get back to known-good? | [`restorations/`](./restorations/) — rebuild runbooks |
+| [Charter](./CHARTER_MATRIX.md) | Govern (GV) | Who authorized this agent to exist? | [`charter/`](./charter/), policy templates, signed agent charters |
+| [Inventory](./INVENTORY_MATRIX.md) | Identify (ID) | What agents exist and what do they touch? | [`inventory/`](./inventory/), registration daemon, shadow-agent discovery |
+| [**Covenants**](./MATRIX.md) | Protect (PR) | What stops the agent from violating? | [`controls/`](./controls/), Kyverno, RBAC, seccomp, hooks |
+| [Sentinels](./SENTINELS_MATRIX.md) | Detect (DE) | What just happened? | [`sentinels/`](./sentinels/), Falco, audit policy, Sigma rules |
+| [Interventions](./INTERVENTIONS_MATRIX.md) | Respond (RS) | How do I stop the bleeding now? | [`interventions/`](./interventions/), kill-switch runbooks |
+| [Restorations](./RESTORATIONS_MATRIX.md) | Recover (RC) | How do I get back to known-good? | [`restorations/`](./restorations/), rebuild runbooks |
 
 A defensible minimum is Charter, Inventory, and Covenants populated with Sentinels in flight. Interventions and Restorations come online when you can carry the runbook complexity.
 

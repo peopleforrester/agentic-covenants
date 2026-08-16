@@ -1,4 +1,4 @@
-# Restorations — Blast radius
+# Restorations, Blast radius
 
 **Intent.** Restore data, redeploy infrastructure, rebuild from clean state. Verify network policies and resource quotas survived.
 

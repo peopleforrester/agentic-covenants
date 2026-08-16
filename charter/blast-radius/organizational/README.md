@@ -1,4 +1,4 @@
-# Charter — Blast radius / Organizational
+# Charter, Blast radius / Organizational
 
 **Structural question.** Does the org have a written risk tier taxonomy with explicit damage caps and the matching control requirements per tier?
 

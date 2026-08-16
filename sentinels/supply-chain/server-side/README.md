@@ -1,4 +1,4 @@
-# Sentinels — Supply chain / Server-side
+# Sentinels, Supply chain / Server-side
 
 **Control.** Image-pull events captured via Kyverno mutate. Daily SBOM-diff CronJob. Cosign verification failures surface as PolicyReport entries. Cilium FQDN denial flow events shipped to SIEM.
 
@@ -12,10 +12,10 @@
 
 ## Files in this directory
 
-- [`kyverno-log-image-pulls.yaml`](./kyverno-log-image-pulls.yaml) — mutating ClusterPolicy that annotates every Pod with the image references and pull timestamp; the annotation is shipped to SIEM by the policy-report shipping CronJob in [`../../authorization/server-side/ship-policy-reports.yaml`](../../authorization/server-side/ship-policy-reports.yaml).
-- [`sbom-diff-cronjob.yaml`](./sbom-diff-cronjob.yaml) — daily CronJob that runs syft against every image in agent namespaces, hashes the SBOM, compares to the previous day's hash, ships sbom_diff events when changed.
-- [`hubble-fqdn-deny-export.sh`](./hubble-fqdn-deny-export.sh) — pipes Hubble L7 DNS denials to SIEM (the FQDN-egress denial signal).
-- [`sigma-cosign-failure.yaml`](./sigma-cosign-failure.yaml) — SIEM rule firing on policy-report entries where `data.policy: verify-image-signatures` and `data.failed > 0`.
+- [`kyverno-log-image-pulls.yaml`](./kyverno-log-image-pulls.yaml), mutating ClusterPolicy that annotates every Pod with the image references and pull timestamp; the annotation is shipped to SIEM by the policy-report shipping CronJob in [`../../authorization/server-side/ship-policy-reports.yaml`](../../authorization/server-side/ship-policy-reports.yaml).
+- [`sbom-diff-cronjob.yaml`](./sbom-diff-cronjob.yaml), daily CronJob that runs syft against every image in agent namespaces, hashes the SBOM, compares to the previous day's hash, ships sbom_diff events when changed.
+- [`hubble-fqdn-deny-export.sh`](./hubble-fqdn-deny-export.sh), pipes Hubble L7 DNS denials to SIEM (the FQDN-egress denial signal).
+- [`sigma-cosign-failure.yaml`](./sigma-cosign-failure.yaml), SIEM rule firing on policy-report entries where `data.policy: verify-image-signatures` and `data.failed > 0`.
 
 ## Verification
 

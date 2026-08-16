@@ -1,4 +1,4 @@
-# Inventory — Supply chain / Self-declared
+# Inventory, Supply chain / Self-declared
 
 **What this cell records.** The agent's report of its current dependency state at registration and on dependency changes.
 

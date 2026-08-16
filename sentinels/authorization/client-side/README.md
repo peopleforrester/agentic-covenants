@@ -1,4 +1,4 @@
-# Sentinels — Authorization / Client-side
+# Sentinels, Authorization / Client-side
 
 **Control.** Hook decision events (allow/ask/deny/error) emitted as structured JSON. Auditd watches for hook config edits and `--no-verify`. SIEM rule for multi-deny patterns in a single session.
 
@@ -12,9 +12,9 @@
 
 ## Files in this directory
 
-- [`hook-decision-emit.sh`](./hook-decision-emit.sh) — appendable snippet that extends the deny-then-ask-then-allow hook from [`../../../controls/authorization/client-side/pre_tool_use.sh`](../../../controls/authorization/client-side/pre_tool_use.sh) to emit a structured decision event before exiting.
-- [`auditd-auth.rules`](./auditd-auth.rules) — auditd rules for hook config edits, allowlist edits, Claude Code settings edits, and `--no-verify` execve.
-- [`sigma-multi-deny.yaml`](./sigma-multi-deny.yaml) — SIEM rule that fires when a single session accumulates more than 5 deny events; this is a probing pattern indicator.
+- [`hook-decision-emit.sh`](./hook-decision-emit.sh), appendable snippet that extends the deny-then-ask-then-allow hook from [`../../../controls/authorization/client-side/pre_tool_use.sh`](../../../controls/authorization/client-side/pre_tool_use.sh) to emit a structured decision event before exiting.
+- [`auditd-auth.rules`](./auditd-auth.rules), auditd rules for hook config edits, allowlist edits, Claude Code settings edits, and `--no-verify` execve.
+- [`sigma-multi-deny.yaml`](./sigma-multi-deny.yaml), SIEM rule that fires when a single session accumulates more than 5 deny events; this is a probing pattern indicator.
 
 ## Verification
 
@@ -39,7 +39,7 @@ ausearch -k git_no_verify --start recent
 ## Common mistakes
 
 - Decision events not correlated with the underlying tool input (useful for counting denies, not for forensics).
-- `auditctl -l` not run after rule install — typo'd rules silently fail.
+- `auditctl -l` not run after rule install, typo'd rules silently fail.
 - `--no-verify` rule misses `git commit -n`. Add both forms.
 
 ## Citation

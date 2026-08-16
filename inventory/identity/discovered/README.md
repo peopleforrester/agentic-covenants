@@ -1,4 +1,4 @@
-# Inventory — Identity / Discovered
+# Inventory, Identity / Discovered
 
 **What this cell records.** Independent observation of which agent identities are actually in use, regardless of whether they declared themselves or appear in operator records.
 
@@ -10,8 +10,8 @@
 
 ## Reference tooling
 
-- [`discover-k8s-agents.sh`](./discover-k8s-agents.sh) — lists every namespace-scoped ServiceAccount whose namespace matches `agent-*` or whose name matches `*-agent`/`*-bot`/`claude-*`. Feeds the operator-declared cross-reference.
-- [`discover-cloudtrail-agents.sql`](./discover-cloudtrail-agents.sql) — CloudWatch Logs Insights query listing every distinct AWS principal whose role name starts with the agent prefixes.
+- [`discover-k8s-agents.sh`](./discover-k8s-agents.sh), lists every namespace-scoped ServiceAccount whose namespace matches `agent-*` or whose name matches `*-agent`/`*-bot`/`claude-*`. Feeds the operator-declared cross-reference.
+- [`discover-cloudtrail-agents.sql`](./discover-cloudtrail-agents.sql), CloudWatch Logs Insights query listing every distinct AWS principal whose role name starts with the agent prefixes.
 
 ## Cross-layer cross-references
 

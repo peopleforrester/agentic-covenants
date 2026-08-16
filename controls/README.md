@@ -28,7 +28,7 @@ The artifacts themselves are templates with sensible defaults. Names like `agent
 
 ## A note on the in-agent layer
 
-The in-agent cells contain a `system-prompt-template.md` and not much else. That is by design. The in-agent layer is advisory only — it has no enforcement and the matrix repeatedly says so. If you find yourself building a 200-line in-agent prompt to enforce a security property, stop. Move the property to client-side or server-side.
+The in-agent cells contain a `system-prompt-template.md` and not much else. That is by design. The in-agent layer is advisory only. It has no enforcement and the matrix repeatedly says so. If you find yourself building a 200-line in-agent prompt to enforce a security property, stop. Move the property to client-side or server-side.
 
 ## Order of operations
 

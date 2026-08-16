@@ -1,8 +1,8 @@
-# Sentinels — Blast radius / In-agent
+# Sentinels, Blast radius / In-agent
 
 **Control.** Reasoning-trace and tool-call log capture for forensics, plus a **lethal-trifecta detector** at the wrapper layer that flags when private data, untrusted content, and an external communication tool appear in the same context window.
 
-**Strength.** Forensic for the trace. Real-time for the lethal-trifecta detector — but only because the detector runs in the wrapper, not in the agent. The agent itself cannot be trusted to surface a violation it is participating in.
+**Strength.** Forensic for the trace. Real-time for the lethal-trifecta detector, but only because the detector runs in the wrapper, not in the agent. The agent itself cannot be trusted to surface a violation it is participating in.
 
 ## Tooling
 
@@ -11,7 +11,7 @@
 
 ## Files in this directory
 
-- [`lethal-trifecta-detector.py`](./lethal-trifecta-detector.py) — minimal reference implementation of the detector. Tags inputs as private/untrusted/external as they enter the context window; alerts when all three classes are simultaneously present and the agent attempts a tool call. Intended to wrap the agent runtime; deployment is platform-specific.
+- [`lethal-trifecta-detector.py`](./lethal-trifecta-detector.py), minimal reference implementation of the detector. Tags inputs as private/untrusted/external as they enter the context window; alerts when all three classes are simultaneously present and the agent attempts a tool call. Intended to wrap the agent runtime; deployment is platform-specific.
 
 ## Verification
 
@@ -35,4 +35,4 @@ python3 lethal-trifecta-detector.py --test-negative
 
 Forensic only at the agent layer; no direct CSF 2.0 detection mapping for the trace itself.
 
-For the lethal-trifecta detector: Simon Willison, "the lethal trifecta for AI agents" (June 2025; cited continuously through April 2026). Operational definition of the forbidden state — private data + untrusted content + external communication. NIST CSF 2.0 DE.CM-09 (computing hardware and software monitored) for the detector itself when wired to a SIEM.
+For the lethal-trifecta detector: Simon Willison, "the lethal trifecta for AI agents" (June 2025; cited continuously through April 2026). Operational definition of the forbidden state, private data + untrusted content + external communication. NIST CSF 2.0 DE.CM-09 (computing hardware and software monitored) for the detector itself when wired to a SIEM.

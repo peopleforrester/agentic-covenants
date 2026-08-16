@@ -1,4 +1,4 @@
-# Interventions — Approval gating / Server-side
+# Interventions, Approval gating / Server-side
 
 **Trigger.** Branch protection bypass detected, deployment freeze breach, CODEOWNERS bypass, force-push to a protected branch.
 
@@ -13,9 +13,9 @@
 
 ## Files in this directory
 
-- [`agent-approval-lockdown-server`](./agent-approval-lockdown-server) — runbook script. Locks branch protection to require 4 reviewers, `enforce_admins: true`, `lock_branch: true`. Disables every workflow in the repo. Sets `DEPLOY_FREEZE=true`. Locks every GitHub environment to require the `incident-response` team.
-- [`branch-protection-locked.json`](./branch-protection-locked.json) — pre-staged branch-protection config applied during the lockdown. **Pre-stage** at `/etc/agents/emergency/branch-protection-locked.json`.
-- [`environment-locked.json`](./environment-locked.json) — pre-staged GitHub Environment config restricting deployments to the incident-response team. **Pre-stage** at `/etc/agents/emergency/environment-locked.json`.
+- [`agent-approval-lockdown-server`](./agent-approval-lockdown-server), runbook script. Locks branch protection to require 4 reviewers, `enforce_admins: true`, `lock_branch: true`. Disables every workflow in the repo. Sets `DEPLOY_FREEZE=true`. Locks every GitHub environment to require the `incident-response` team.
+- [`branch-protection-locked.json`](./branch-protection-locked.json), pre-staged branch-protection config applied during the lockdown. **Pre-stage** at `/etc/agents/emergency/branch-protection-locked.json`.
+- [`environment-locked.json`](./environment-locked.json), pre-staged GitHub Environment config restricting deployments to the incident-response team. **Pre-stage** at `/etc/agents/emergency/environment-locked.json`.
 
 ## Verification
 
@@ -36,8 +36,8 @@ gh variable list -R example-org/agent-config | grep DEPLOY_FREEZE
 
 ## Common mistakes
 
-- `enforce_admins` set to false in the locked config — the lockdown does not lock admins out.
-- Workflow disable applied to wrong repo — emergency triage requires double-checking the `-R` flag.
+- `enforce_admins` set to false in the locked config, the lockdown does not lock admins out.
+- Workflow disable applied to wrong repo, emergency triage requires double-checking the `-R` flag.
 - Freeze variable set but the apply job does not check it. Verify the workflow reads `vars.DEPLOY_FREEZE`.
 - Locking out the incident-response team itself by removing them from the restrictions list.
 

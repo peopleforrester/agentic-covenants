@@ -1,4 +1,4 @@
-# Inventory — Authorization / Discovered
+# Inventory, Authorization / Discovered
 
 **What this cell records.** The runtime-effective permissions, regardless of declared scope.
 

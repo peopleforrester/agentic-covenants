@@ -68,9 +68,9 @@ The Charter constraints are what Covenants enforces, what Sentinels watches for,
 
 ## Templates
 
-- [`charter/templates/agent-charter.yaml`](./charter/templates/agent-charter.yaml) — operational template for a single agent's charter. Version-controlled, under branch protection, PR-reviewed.
-- [`charter/templates/domain-charter.md`](./charter/templates/domain-charter.md) — markdown template for a domain governance document.
-- [`charter/templates/organizational-policy.md`](./charter/templates/organizational-policy.md) — markdown template for org-wide AI policy and risk appetite.
+- [`charter/templates/agent-charter.yaml`](./charter/templates/agent-charter.yaml), operational template for a single agent's charter. Version-controlled, under branch protection, PR-reviewed.
+- [`charter/templates/domain-charter.md`](./charter/templates/domain-charter.md), markdown template for a domain governance document.
+- [`charter/templates/organizational-policy.md`](./charter/templates/organizational-policy.md), markdown template for org-wide AI policy and risk appetite.
 
 ## Where this matrix sits
 
@@ -87,10 +87,10 @@ Charter feeds Inventory (every chartered agent should be in inventory). Inventor
 
 ## Reading order
 
-1. This document — framework essay.
-2. [`docs/walkthrough-agentic-charter-matrix-v5.md`](./docs/walkthrough-agentic-charter-matrix-v5.md) — companion walkthrough (gitignored).
-3. [`charter/templates/`](./charter/templates/) — copy and fill in for your environment.
-4. [`charter/`](./charter/) — per-cell governance guidance.
+1. This document: the framework essay.
+2. [`docs/walkthrough-agentic-charter-matrix-v5.md`](./docs/walkthrough-agentic-charter-matrix-v5.md), companion walkthrough (gitignored).
+3. [`charter/templates/`](./charter/templates/), copy and fill in for your environment.
+4. [`charter/`](./charter/), per-cell governance guidance.
 
 ## Citations
 

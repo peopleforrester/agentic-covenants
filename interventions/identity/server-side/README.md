@@ -1,4 +1,4 @@
-# Interventions — Identity / Server-side
+# Interventions, Identity / Server-side
 
 **Trigger.** Same as client-side, plus indicators that the agent has cluster or cloud reach.
 
@@ -14,8 +14,8 @@
 
 ## Files in this directory
 
-- [`agent-revoke-server`](./agent-revoke-server) — runbook script. Disables ServiceAccount automount, force-deletes pods to break token mounts, attaches an IAM `Deny *` policy to the agent role, terminates active OIDC sessions.
-- [`iam-deny-all.json`](./iam-deny-all.json) — pre-staged IAM policy document used by the runbook. `Deny *` on `*`. **Pre-stage this file** at `/etc/agents/emergency/iam-deny-all.json`.
+- [`agent-revoke-server`](./agent-revoke-server), runbook script. Disables ServiceAccount automount, force-deletes pods to break token mounts, attaches an IAM `Deny *` policy to the agent role, terminates active OIDC sessions.
+- [`iam-deny-all.json`](./iam-deny-all.json), pre-staged IAM policy document used by the runbook. `Deny *` on `*`. **Pre-stage this file** at `/etc/agents/emergency/iam-deny-all.json`.
 
 ## Verification
 

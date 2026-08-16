@@ -175,7 +175,7 @@ cells:
   # ---- SUPPLY CHAIN ----
   - concern: supply-chain
     layer: in-agent
-    summary: "Where did this dependency come from" forensically traceable through tool-call log.
+    summary: '"Where did this dependency come from" forensically traceable through tool-call log.'
     sentinels_path: sentinels/supply-chain/in-agent/
     citations:
       nist_csf_2_0: ["DE.CM-09"]

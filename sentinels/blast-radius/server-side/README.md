@@ -1,4 +1,4 @@
-# Sentinels — Blast radius / Server-side
+# Sentinels, Blast radius / Server-side
 
 **Control.** Falco runtime detection in agent containers. NetworkPolicy violation events via Cilium Hubble. ResourceQuota near-limit alerts via Prometheus. VPC Flow Logs for unexpected egress.
 
@@ -13,10 +13,10 @@
 
 ## Files in this directory
 
-- [`falco-agent-container.yaml`](./falco-agent-container.yaml) — Falco rules for agent Pods: shell spawn, sensitive-path writes, non-allowlisted egress.
-- [`hubble-export.sh`](./hubble-export.sh) — pipes `hubble observe --type drop` to the SIEM.
-- [`prometheus-quota-alert.yaml`](./prometheus-quota-alert.yaml) — AlertManager rule firing when ResourceQuota usage exceeds 85%.
-- [`vpc-flow-rejects.sql`](./vpc-flow-rejects.sql) — CloudWatch Logs Insights query for VPC Flow REJECT records sourced from agent CIDRs.
+- [`falco-agent-container.yaml`](./falco-agent-container.yaml), Falco rules for agent Pods: shell spawn, sensitive-path writes, non-allowlisted egress.
+- [`hubble-export.sh`](./hubble-export.sh), pipes `hubble observe --type drop` to the SIEM.
+- [`prometheus-quota-alert.yaml`](./prometheus-quota-alert.yaml), AlertManager rule firing when ResourceQuota usage exceeds 85%.
+- [`vpc-flow-rejects.sql`](./vpc-flow-rejects.sql), CloudWatch Logs Insights query for VPC Flow REJECT records sourced from agent CIDRs.
 
 ## Verification
 
@@ -38,7 +38,7 @@ hubble observe --pod agent-claude-prod/claude-code --type drop --last 2m
 
 - Falco rule output not parseable. Use `json_output: true` in `falco.yaml`.
 - Hubble enabled but `hubble observe --output json` not piped anywhere; SIEM has no detection signal.
-- ResourceQuota alert at 85% with no auto-scale — alerts but no remediation. Pair with HPA or operator runbook.
+- ResourceQuota alert at 85% with no auto-scale, alerts but no remediation. Pair with HPA or operator runbook.
 - VPC Flow Log retention shorter than incident discovery window.
 
 ## Citation

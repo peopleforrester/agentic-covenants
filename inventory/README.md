@@ -36,7 +36,7 @@ Build alerting against these mismatches.
 Every cell directory has a README following the format:
 
 1. **What this cell records.** The specific data this layer captures for this concern.
-2. **Reference tooling.** Sample registration daemon, sample discovery script, sample registry YAML — whichever applies to the layer.
+2. **Reference tooling.** Sample registration daemon, sample discovery script, sample registry YAML, whichever applies to the layer.
 3. **Cross-layer cross-references.** Which other cells should agree with this one, and how to surface mismatches.
 4. **Common failure modes.**
 5. **Citation.**

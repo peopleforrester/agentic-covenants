@@ -1,4 +1,4 @@
-# Interventions — Authorization / Server-side
+# Interventions, Authorization / Server-side
 
 **Trigger.** RBAC denial spike, Kyverno PolicyReport failures from agent SAs, IAM Access Analyzer findings, Git pre-receive rejection spike.
 
@@ -14,9 +14,9 @@
 
 ## Files in this directory
 
-- [`agent-deny-all-server`](./agent-deny-all-server) — runbook script. Applies the emergency Kyverno ClusterPolicy, overwrites the agent's Role with empty rules, attaches IAM `Deny *` policy.
-- [`kyverno-deny-all-agents.yaml`](./kyverno-deny-all-agents.yaml) — pre-staged ClusterPolicy denying every operation from any `system:serviceaccount:agent-*`. Excludes the break-glass operator. **Pre-stage** at `/etc/agents/emergency/kyverno-deny-all-agents.yaml`.
-- [`empty-role.yaml`](./empty-role.yaml) — pre-staged Role with `rules: []` and the same name as the original agent Role. Overwriting it removes every permission. **Pre-stage** at `/etc/agents/emergency/empty-role.yaml`.
+- [`agent-deny-all-server`](./agent-deny-all-server), runbook script. Applies the emergency Kyverno ClusterPolicy, overwrites the agent's Role with empty rules, attaches IAM `Deny *` policy.
+- [`kyverno-deny-all-agents.yaml`](./kyverno-deny-all-agents.yaml), pre-staged ClusterPolicy denying every operation from any `system:serviceaccount:agent-*`. Excludes the break-glass operator. **Pre-stage** at `/etc/agents/emergency/kyverno-deny-all-agents.yaml`.
+- [`empty-role.yaml`](./empty-role.yaml), pre-staged Role with `rules: []` and the same name as the original agent Role. Overwriting it removes every permission. **Pre-stage** at `/etc/agents/emergency/empty-role.yaml`.
 
 The IAM `Deny *` policy is at [`../../identity/server-side/iam-deny-all.json`](../../identity/server-side/iam-deny-all.json) (shared with identity revocation).
 
@@ -38,8 +38,8 @@ aws iam get-role-policy --role-name claude-code-prod --policy-name EmergencyDeny
 
 ## Common mistakes
 
-- Kyverno deny-all rule that does not exclude break-glass identities — locks out the operator who needs to remediate.
-- Kyverno installed in audit-only mode org-wide — emergency `Enforce` policy still does not block.
+- Kyverno deny-all rule that does not exclude break-glass identities, locks out the operator who needs to remediate.
+- Kyverno installed in audit-only mode org-wide, emergency `Enforce` policy still does not block.
 - Empty Role applied with `kubectl apply` but a stale RoleBinding still references a different (non-empty) Role.
 - IAM deny-all that interacts badly with explicit allow policies in the same role's permission boundary.
 

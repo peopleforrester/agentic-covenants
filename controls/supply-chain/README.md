@@ -12,7 +12,7 @@
 
 ## Why it matters
 
-The two highest-impact agent supply-chain incidents through May 2026 — **postmark-mcp** (September 2025) and **ClawHavoc** (1,184+ malicious skills) — both exploited the same gap: trust transferred from a publisher to an artifact without per-artifact verification. postmark-mcp was a signed npm package whose code changed between approval and use; ClawHavoc was a marketplace where publisher trust was assumed to extend to every skill the publisher uploaded.
+The two highest-impact agent supply-chain incidents through May 2026, **postmark-mcp** (September 2025) and **ClawHavoc** (1,184+ malicious skills), both exploited the same gap: trust transferred from a publisher to an artifact without per-artifact verification. postmark-mcp was a signed npm package whose code changed between approval and use; ClawHavoc was a marketplace where publisher trust was assumed to extend to every skill the publisher uploaded.
 
 This row defends against that pattern with three controls applied at different layers:
 
@@ -36,6 +36,6 @@ Lockfile pinning is **only** meaningful when paired with server-side integrity v
 
 See [`../../CITATIONS.md`](../../CITATIONS.md). Quick reference:
 
-- **In-agent**: advisory; thematically MAP 4.1 (third-party risks identified); OWASP LLM03; OWASP ASI04 (Agentic Supply Chain Vulnerabilities) — mitigation principle.
+- **In-agent**: advisory; thematically MAP 4.1 (third-party risks identified); OWASP LLM03; OWASP ASI04 (Agentic Supply Chain Vulnerabilities), mitigation principle.
 - **Client-side**: NIST CSF 2.0 PR.PS-02, PR.PS-01, GV.SC-07 (risks from suppliers identified, recorded, prioritized, assessed); NIST AI RMF MAP 4.1, MANAGE 3.1 (third-party risk treatment); OWASP LLM03 (Supply Chain), LLM04 (Data and Model Poisoning); OWASP ASI04, ASI06 (Memory & Context Poisoning); NIST SP 800-218 PS.2; NIST SP 800-218 Rev. 1 draft (Dec 17, 2025); NIST SP 800-218A (Generative AI Profile of SSDF); OWASP MCP01, MCP03, MCP04.
 - **Server-side**: NIST CSF 2.0 PR.PS-02, PR.PS-05, PR.IR-01, GV.SC-07 (supplier integrity), ID.RA-09 (authenticity and integrity of hardware and software assessed prior to acquisition and use); NIST AI RMF MAP 4.1, MANAGE 3.1; OWASP LLM03, LLM04; OWASP ASI04; OWASP MCP04, MCP09; NIST SP 800-218 PS.3; NIST SP 800-161 Rev. 1 (supply chain risk management); SLSA framework (build provenance); CISA/NSA/FBI AI Data Security CSI (May 2025); CISA/ASD ACSC OT Principles (Dec 2025).

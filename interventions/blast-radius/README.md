@@ -1,4 +1,4 @@
-# Interventions — Blast radius
+# Interventions, Blast radius
 
 **Intent.** Contain the in-flight damage.
 

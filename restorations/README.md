@@ -21,11 +21,11 @@ The L1 in-agent column is empty for every concern. **The agent is the patient, n
 
 ## The recovery order is not optional
 
-1. **Identity first** — every later step authenticates against an identity.
-2. **Authorization** — restoring data into a permission environment that still allows the attacker is restoring the attack.
-3. **Blast radius** — data and workloads need a known-good identity and authorization environment.
-4. **Approval gating** — re-enabling gates before rebuild is complete blocks legitimate recovery.
-5. **Supply chain last** — rebuilding from clean source assumes the rest of the stack is ready.
+1. **Identity first**: every later step authenticates against an identity.
+2. **Authorization**: restoring data into a permission environment that still allows the attacker is restoring the attack.
+3. **Blast radius**: data and workloads need a known-good identity and authorization environment.
+4. **Approval gating**: re-enabling gates before rebuild is complete blocks legitimate recovery.
+5. **Supply chain last**: rebuilding from clean source assumes the rest of the stack is ready.
 
 Each cell assumes the prior cells have completed.
 

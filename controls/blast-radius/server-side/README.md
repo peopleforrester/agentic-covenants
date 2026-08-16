@@ -13,13 +13,13 @@
 
 ## Files in this directory
 
-- [`iac-gated-pipeline.yml`](./iac-gated-pipeline.yml) — split-stage Terraform pipeline. The `plan` job runs on every PR and push with read-only credentials; the `apply` job runs only on `main` push and requires manual approval via a GitHub environment with required reviewers. Drop in `.github/workflows/`.
-- [`networkpolicy-default-deny.yaml`](./networkpolicy-default-deny.yaml) — namespace-wide default deny on ingress and egress.
-- [`networkpolicy-allowlist.yaml`](./networkpolicy-allowlist.yaml) — explicit allow rules layered over the default deny: kube-dns, public HTTPS to non-RFC1918 ranges only.
-- [`resourcequota.yaml`](./resourcequota.yaml) — namespace-level quota on CPU, memory, pods, PVCs, LoadBalancer/NodePort services (set to 0).
-- [`limitrange.yaml`](./limitrange.yaml) — per-container default and max requests/limits.
-- [`s3-immutable-backups.sh`](./s3-immutable-backups.sh) — provisions an S3 bucket with Object Lock in compliance mode and a 30-day default retention.
-- [`cross-account-providers.tf`](./cross-account-providers.tf) — Terraform provider blocks demonstrating the cross-account separation pattern: agent role lives in the non-prod account and explicitly cannot AssumeRole into prod.
+- [`iac-gated-pipeline.yml`](./iac-gated-pipeline.yml), split-stage Terraform pipeline. The `plan` job runs on every PR and push with read-only credentials; the `apply` job runs only on `main` push and requires manual approval via a GitHub environment with required reviewers. Drop in `.github/workflows/`.
+- [`networkpolicy-default-deny.yaml`](./networkpolicy-default-deny.yaml), namespace-wide default deny on ingress and egress.
+- [`networkpolicy-allowlist.yaml`](./networkpolicy-allowlist.yaml), explicit allow rules layered over the default deny: kube-dns, public HTTPS to non-RFC1918 ranges only.
+- [`resourcequota.yaml`](./resourcequota.yaml), namespace-level quota on CPU, memory, pods, PVCs, LoadBalancer/NodePort services (set to 0).
+- [`limitrange.yaml`](./limitrange.yaml), per-container default and max requests/limits.
+- [`s3-immutable-backups.sh`](./s3-immutable-backups.sh), provisions an S3 bucket with Object Lock in compliance mode and a 30-day default retention.
+- [`cross-account-providers.tf`](./cross-account-providers.tf), Terraform provider blocks demonstrating the cross-account separation pattern: agent role lives in the non-prod account and explicitly cannot AssumeRole into prod.
 
 ## Verification
 

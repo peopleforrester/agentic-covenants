@@ -1,4 +1,4 @@
-# Sentinels — Identity / Client-side
+# Sentinels, Identity / Client-side
 
 **Control.** PreToolUse hook emits structured identity events; auditd watches agent process startup; Vector or Fluent Bit ships to SIEM.
 
@@ -12,9 +12,9 @@
 
 ## Files in this directory
 
-- [`identity-log-hook.sh`](./identity-log-hook.sh) — PreToolUse hook that emits a structured JSON event with session ID, tool name, credential fingerprint (hash, never the token), effective UID, hostname, timestamp.
-- [`auditd-agent.rules`](./auditd-agent.rules) — auditd watch rules for agent process startup. Drop in `/etc/audit/rules.d/`.
-- [`vector.toml`](./vector.toml) — Vector config that parses syslog, enriches, and ships to Elasticsearch (substitute your SIEM endpoint).
+- [`identity-log-hook.sh`](./identity-log-hook.sh), PreToolUse hook that emits a structured JSON event with session ID, tool name, credential fingerprint (hash, never the token), effective UID, hostname, timestamp.
+- [`auditd-agent.rules`](./auditd-agent.rules), auditd watch rules for agent process startup. Drop in `/etc/audit/rules.d/`.
+- [`vector.toml`](./vector.toml), Vector config that parses syslog, enriches, and ships to Elasticsearch (substitute your SIEM endpoint).
 
 ## Verification
 

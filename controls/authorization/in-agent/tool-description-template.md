@@ -1,4 +1,4 @@
-# Tool-description template — Authorization scoping
+# Tool-description template, Authorization scoping
 
 Use this shape for every tool description in your agent's tool registry, MCP server, or Claude Code skill. The model reads the description; write it for the model.
 

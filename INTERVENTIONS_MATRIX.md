@@ -97,7 +97,7 @@ The incident command must record which steps fired in what order and which steps
 
 Every runbook in [`interventions/`](./interventions/) assumes pre-staging:
 
-- A **break-glass identity** with permissions to revoke, disable, and lock — separate from the agent's own identity. Stored in a hardware key or sealed-secret vault. Tested in non-prod within the last 90 days.
+- A **break-glass identity** with permissions to revoke, disable, and lock, separate from the agent's own identity. Stored in a hardware key or sealed-secret vault. Tested in non-prod within the last 90 days.
 - A **pre-staged emergency policy directory** in source control (`emergency/` at repo root) containing the deny-all hook config, the deny-all Kyverno policy, the deny-all NetworkPolicy, the locked branch-protection JSON, and the IAM deny-all policy. These are the artifacts Interventions applies; pre-staging means seconds to apply, not minutes to write.
 - **PagerDuty (or equivalent) wired to Sentinels alerts.**
 - **On-call drilled on the runbooks.** Drilled, not "informed."
@@ -117,9 +117,9 @@ The pre-engagement order is Sentinels → Interventions → Restorations. You ca
 
 ## Reading order
 
-1. This document — framework essay.
-2. [`docs/walkthrough-agentic-interventions-engineering-actions-v5.md`](./docs/walkthrough-agentic-interventions-engineering-actions-v5.md) — engineering-actions companion (gitignored; lives in operator working notes).
-3. [`interventions/`](./interventions/) — pick a cell, run the runbook (after drill).
+1. This document: the framework essay.
+2. [`docs/walkthrough-agentic-interventions-engineering-actions-v5.md`](./docs/walkthrough-agentic-interventions-engineering-actions-v5.md), engineering-actions companion (gitignored; lives in operator working notes).
+3. [`interventions/`](./interventions/), pick a cell, run the runbook (after drill).
 
 ## Citations
 

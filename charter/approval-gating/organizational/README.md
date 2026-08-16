@@ -1,4 +1,4 @@
-# Charter — Approval gating / Organizational
+# Charter, Approval gating / Organizational
 
 **Structural question.** Does the org have a named AI Governance Council with member roles, quorum, voting rules, and recorded minutes?
 

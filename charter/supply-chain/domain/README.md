@@ -1,4 +1,4 @@
-# Charter — Supply chain / Domain
+# Charter, Supply chain / Domain
 
 **Structural question.** Does the domain charter inherit the org's approved-models list, add domain-specific restrictions, and maintain its own MCP server approval list?
 

@@ -1,4 +1,4 @@
-# Inventory — Supply chain / Operator-declared
+# Inventory, Supply chain / Operator-declared
 
 **What this cell records.** The authorized dependency manifest from the agent charter, version-controlled with audit trail.
 

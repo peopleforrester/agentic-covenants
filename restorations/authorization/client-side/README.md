@@ -1,4 +1,4 @@
-# Restorations — Authorization / Client-side
+# Restorations, Authorization / Client-side
 
 **Precondition.** Interventions L2-C2 has fired (deny-all hook applied, immutable bit set, agent killed). Restorations identity row complete (the agent has a fresh credential to start with after the rebuild).
 
@@ -12,7 +12,7 @@
 
 ## Files in this directory
 
-- [`agent-restore-authorization-local`](./agent-restore-authorization-local) — runbook script. Clears the chattr +i, restores hook config from `git checkout`, verifies file ownership returned to operator account, re-installs pre-commit, checks Claude Code version against the May 2026 patched line.
+- [`agent-restore-authorization-local`](./agent-restore-authorization-local), runbook script. Clears the chattr +i, restores hook config from `git checkout`, verifies file ownership returned to operator account, re-installs pre-commit, checks Claude Code version against the May 2026 patched line.
 
 ## Verification
 

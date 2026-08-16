@@ -1,4 +1,4 @@
-# Sentinels — Identity / Server-side
+# Sentinels, Identity / Server-side
 
 **Control.** Cloud audit log attributes every API call to a verified identity. Alert on identity not in expected set, identity used outside expected hours, identity used from unexpected source IP, identity reuse across agents.
 
@@ -12,10 +12,10 @@
 
 ## Files in this directory
 
-- [`audit-policy.yaml`](./audit-policy.yaml) — Kubernetes audit policy that captures every agent SA action at RequestResponse level for mutations and Metadata level for reads. Identity-binding events (RoleBindings, ServiceAccount creation) are captured at full body.
-- [`enable-cloudtrail.sh`](./enable-cloudtrail.sh) — provisions a multi-region CloudTrail trail with log file validation enabled, delivering to an Object-Lock S3 bucket (provisioned in [`../../../controls/blast-radius/server-side/s3-immutable-backups.sh`](../../../controls/blast-radius/server-side/s3-immutable-backups.sh)).
-- [`sigma-out-of-hours.yaml`](./sigma-out-of-hours.yaml) — Sigma rule firing when an agent SA is used outside the expected business-hours window.
-- [`sigma-unexpected-source-ip.yaml`](./sigma-unexpected-source-ip.yaml) — Sigma rule firing when the source IP of an agent action is outside the known agent-egress IP set.
+- [`audit-policy.yaml`](./audit-policy.yaml), Kubernetes audit policy that captures every agent SA action at RequestResponse level for mutations and Metadata level for reads. Identity-binding events (RoleBindings, ServiceAccount creation) are captured at full body.
+- [`enable-cloudtrail.sh`](./enable-cloudtrail.sh), provisions a multi-region CloudTrail trail with log file validation enabled, delivering to an Object-Lock S3 bucket (provisioned in [`../../../controls/blast-radius/server-side/s3-immutable-backups.sh`](../../../controls/blast-radius/server-side/s3-immutable-backups.sh)).
+- [`sigma-out-of-hours.yaml`](./sigma-out-of-hours.yaml), Sigma rule firing when an agent SA is used outside the expected business-hours window.
+- [`sigma-unexpected-source-ip.yaml`](./sigma-unexpected-source-ip.yaml), Sigma rule firing when the source IP of an agent action is outside the known agent-egress IP set.
 
 ## Verification
 

@@ -1,4 +1,4 @@
-# Sentinels — Supply chain / Client-side
+# Sentinels, Supply chain / Client-side
 
 **Control.** mcp-launch wrapper logs every connection attempt with status (`ok | hash_mismatch | not_in_allowlist`). Tool-description hash mismatch alerts on rug-pull. Lockfile diff in CI shipped to SIEM. Pre-commit dependency scan results centralized.
 
@@ -12,9 +12,9 @@
 
 ## Files in this directory
 
-- [`mcp-launch-emit.sh`](./mcp-launch-emit.sh) — append-only snippet that the mcp-launch wrapper sources to emit a structured per-connection event including status and hash.
-- [`tool-desc-mismatch-emit.py`](./tool-desc-mismatch-emit.py) — patch fragment for `mcp-verify-tools.py` that emits a structured event on hash mismatch (the rug-pull alert).
-- [`ci-lockfile-diff.yml`](./ci-lockfile-diff.yml) — workflow extension that ships the truncated lockfile diff to SIEM on every PR that touches a lockfile.
+- [`mcp-launch-emit.sh`](./mcp-launch-emit.sh), append-only snippet that the mcp-launch wrapper sources to emit a structured per-connection event including status and hash.
+- [`tool-desc-mismatch-emit.py`](./tool-desc-mismatch-emit.py), patch fragment for `mcp-verify-tools.py` that emits a structured event on hash mismatch (the rug-pull alert).
+- [`ci-lockfile-diff.yml`](./ci-lockfile-diff.yml), workflow extension that ships the truncated lockfile diff to SIEM on every PR that touches a lockfile.
 
 ## Verification
 

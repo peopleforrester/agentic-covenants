@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# ABOUTME: Pre-commit hook running the repo's own checks against staged files.
+# ABOUTME: Enable with: git config core.hooksPath .githooks
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "pre-commit: python3 not found, skipping checks" >&2
+    exit 0
+fi
+
+echo "pre-commit: checking staged files"
+
+if ! "$repo_root/scripts/check.py" --staged; then
+    cat >&2 <<'MSG'
+
+Commit blocked. Fix the problems above, or bypass deliberately with:
+
+    git commit --no-verify
+
+The checks are the same ones a reviewer would run by hand. Bypassing is a
+choice you are allowed to make; it just should not be the default one.
+MSG
+    exit 1
+fi
+
+exit 0

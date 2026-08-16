@@ -1,4 +1,4 @@
-# Sentinels — Approval gating
+# Sentinels, Approval gating
 
 **Intent.** Surface alert-fatigue patterns (response time below threshold = reflexive approval). Catch tier-3 typed-confirmation rejections, branch-protection bypass events, deployment-freeze breach attempts, and changes to branch protection itself.
 

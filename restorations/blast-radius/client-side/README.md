@@ -1,4 +1,4 @@
-# Restorations — Blast radius / Client-side
+# Restorations, Blast radius / Client-side
 
 **Precondition.** Interventions L2-C3 has fired (process tree killed, sandbox torn down). Identity and Authorization restorations rows complete. **If the operator host itself is suspect, reimage from a known-good base before running this script.**
 
@@ -12,7 +12,7 @@
 
 ## Files in this directory
 
-- [`agent-restore-host-local`](./agent-restore-host-local) — runbook script. Reinstalls the agent runtime from a verified source with cosign signature check, reapplies the bubblewrap launcher and Seatbelt profile from source, optionally re-derives the seccomp allowlist using `strace`.
+- [`agent-restore-host-local`](./agent-restore-host-local), runbook script. Reinstalls the agent runtime from a verified source with cosign signature check, reapplies the bubblewrap launcher and Seatbelt profile from source, optionally re-derives the seccomp allowlist using `strace`.
 
 ## Verification
 
@@ -31,7 +31,7 @@ sudo -u agent-runner /usr/local/bin/agent-bwrap /tmp -- /bin/sh -c 'unshare -n e
 ## Common failure modes
 
 - Hardware-level compromise (firmware, BIOS) survives reimage. Hardware replacement may be required for top-tier compromises.
-- Sandbox profile re-derived against a still-compromised workload — the new profile inherits the malicious syscall pattern. Derive against a clean baseline only.
+- Sandbox profile re-derived against a still-compromised workload, the new profile inherits the malicious syscall pattern. Derive against a clean baseline only.
 
 ## Citation
 

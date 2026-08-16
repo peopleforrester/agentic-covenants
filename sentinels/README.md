@@ -46,4 +46,4 @@ If you have no log aggregation, build that first. Detection without aggregation 
 
 ## A note on the in-agent layer
 
-The in-agent cells are deliberately thin. The agent-runtime layer is forensic-only — useful after the fact when you have a remote sink, but not real-time detection. The lethal-trifecta detector is the one exception, and it is implemented at the wrapper layer (`controls/` or `sentinels/` depending on whether you treat it as prevention or detection), not in the agent.
+The in-agent cells are deliberately thin. The agent-runtime layer is forensic-only, useful after the fact when you have a remote sink, but not real-time detection. The lethal-trifecta detector is the one exception, and it is implemented at the wrapper layer (`controls/` or `sentinels/` depending on whether you treat it as prevention or detection), not in the agent.

@@ -1,4 +1,4 @@
-# Charter — Approval gating / Agent
+# Charter, Approval gating / Agent
 
 **Structural question.** Does the agent charter carry the required approval signatures, an annual review cadence, conditions for emergency revocation, and a clear identifier of the approver of every subsequent change?
 
@@ -43,7 +43,7 @@ incident_revocation:
 
 ## Common failure mode
 
-Approval signatures become reflexive — alert fatigue at the governance layer. Tiered approval (more rigorous review for Tier 3+) is the same cure used in [Covenants L2-C4](../../../controls/approval-gating/client-side/).
+Approval signatures become reflexive, alert fatigue at the governance layer. Tiered approval (more rigorous review for Tier 3+) is the same cure used in [Covenants L2-C4](../../../controls/approval-gating/client-side/).
 
 ## Citation
 

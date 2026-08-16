@@ -1,4 +1,4 @@
-# Inventory — Supply chain / Discovered
+# Inventory, Supply chain / Discovered
 
 **What this cell records.** Independent observation of what the agent actually loads, regardless of declared dependencies.
 

@@ -1,4 +1,4 @@
-# Interventions — Authorization / Client-side
+# Interventions, Authorization / Client-side
 
 **Trigger.** Sentinels alert: hook decision spike (multiple denies in short window suggesting probing); hook config tampering detected; auditd watch fires on `/etc/agents/hooks/`.
 
@@ -13,9 +13,9 @@
 
 ## Files in this directory
 
-- [`agent-deny-all-local`](./agent-deny-all-local) — runbook script. Replaces the hook with the deny-all template, sets `chattr +i`, replaces `settings.json` with the deny-all version, kills any in-flight agent so the new state applies.
-- [`deny-all-hook.sh`](./deny-all-hook.sh) — pre-staged hook template. Always returns exit code 2 with a "BLOCKED: agent in emergency lockdown" message. **Pre-stage** at `/etc/agents/emergency/deny-all-hook.sh`.
-- [`settings-deny-all.json`](./settings-deny-all.json) — pre-staged Claude Code settings with `defaultMode: deny`, empty allow/ask, deny `*`. **Pre-stage** at `/etc/agents/emergency/settings-deny-all.json`.
+- [`agent-deny-all-local`](./agent-deny-all-local), runbook script. Replaces the hook with the deny-all template, sets `chattr +i`, replaces `settings.json` with the deny-all version, kills any in-flight agent so the new state applies.
+- [`deny-all-hook.sh`](./deny-all-hook.sh), pre-staged hook template. Always returns exit code 2 with a "BLOCKED: agent in emergency lockdown" message. **Pre-stage** at `/etc/agents/emergency/deny-all-hook.sh`.
+- [`settings-deny-all.json`](./settings-deny-all.json), pre-staged Claude Code settings with `defaultMode: deny`, empty allow/ask, deny `*`. **Pre-stage** at `/etc/agents/emergency/settings-deny-all.json`.
 
 ## Verification
 
@@ -35,7 +35,7 @@ sudo -u agent-runner /usr/local/bin/claude --print "test" 2>&1 | grep "emergency
 
 - `chattr +i` does not work on every filesystem (tmpfs, NFS, FAT). Verify your `/etc/agents/` mount.
 - Pre-staged emergency template not in source control means you discover the typo during the incident.
-- Forgetting to kill the running agent — the new hook applies only to new sessions.
+- Forgetting to kill the running agent, the new hook applies only to new sessions.
 
 ## Citation
 

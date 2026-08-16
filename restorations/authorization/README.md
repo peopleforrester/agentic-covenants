@@ -1,4 +1,4 @@
-# Restorations — Authorization
+# Restorations, Authorization
 
 **Intent.** Rebuild RBAC and IAM from declarative source. Audit for drift introduced during the incident.
 

@@ -1,4 +1,4 @@
-# Restorations — Supply chain / Server-side
+# Restorations, Supply chain / Server-side
 
 **Precondition.** Interventions L3-C5 has fired (poisoned image deleted from registry, Kyverno deny rule on suspect digest applied, FQDN deny in effect, workloads on last-known-good SHA). All four prior recovery rows complete.
 
@@ -13,7 +13,7 @@
 
 ## Files in this directory
 
-- [`agent-restore-supply-chain-server`](./agent-restore-supply-chain-server) — runbook script. Removes the emergency Kyverno deny ClusterPolicies, optionally rotates the cosign signing key (if `--rotate-signing-key` is passed), rebuilds and re-signs every agent image, regenerates SBOMs, force-rolls workloads to the new images, removes the emergency Cilium FQDN deny.
+- [`agent-restore-supply-chain-server`](./agent-restore-supply-chain-server), runbook script. Removes the emergency Kyverno deny ClusterPolicies, optionally rotates the cosign signing key (if `--rotate-signing-key` is passed), rebuilds and re-signs every agent image, regenerates SBOMs, force-rolls workloads to the new images, removes the emergency Cilium FQDN deny.
 
 ## Verification
 

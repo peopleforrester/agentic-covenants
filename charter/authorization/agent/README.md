@@ -1,4 +1,4 @@
-# Charter — Authorization / Agent
+# Charter, Authorization / Agent
 
 **Structural question.** Does the agent charter declare a specific authorized scope (named tools, MCP servers, environments, RBAC role reference) that requires re-signature to expand?
 
@@ -36,7 +36,7 @@ authorized_scope:
 - `rbac_role_ref` → `controls/authorization/server-side/` (the Role with that name must exist and contain only the verbs the charter allows).
 - `iam_role_arn` → `controls/identity/server-side/serviceaccount.yaml` IRSA annotation and `controls/authorization/server-side/aws-iam-scoped-policy.json`.
 
-**If the charter scope and the runtime scope drift apart, that is a Sentinels finding** — the drift detection in `sentinels/approval-gating/server-side/audit-branch-protection.yml` is the analogous pattern, but for agent scope it requires a custom drift check that compares charter YAML to live RBAC + IAM.
+**If the charter scope and the runtime scope drift apart, that is a Sentinels finding**: the drift detection in `sentinels/approval-gating/server-side/audit-branch-protection.yml` is the analogous pattern, but for agent scope it requires a custom drift check that compares charter YAML to live RBAC + IAM.
 
 ## Citation
 

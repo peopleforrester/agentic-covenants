@@ -12,9 +12,9 @@
 
 ## Files in this directory
 
-- [`pre_tool_use_tiered.sh`](./pre_tool_use_tiered.sh) — the deny-then-ask-then-allow hook from Authorization, plus tier-3 typed verbatim confirmation, tier-4 out-of-band approval flow with timeout-deny default, session destructive-action counter (default cap: 10 per session).
-- [`tier-config.yaml`](./tier-config.yaml) — declarative tier definitions consumed by the hook. The hook reads pattern lists from here so operators can update tiers without editing the script.
-- [`escalate.py`](./escalate.py) — judgment-query escalation tool. Distinct from approval: the operator supplies the missing input rather than a yes/no.
+- [`pre_tool_use_tiered.sh`](./pre_tool_use_tiered.sh), the deny-then-ask-then-allow hook from Authorization, plus tier-3 typed verbatim confirmation, tier-4 out-of-band approval flow with timeout-deny default, session destructive-action counter (default cap: 10 per session).
+- [`tier-config.yaml`](./tier-config.yaml), declarative tier definitions consumed by the hook. The hook reads pattern lists from here so operators can update tiers without editing the script.
+- [`escalate.py`](./escalate.py), judgment-query escalation tool. Distinct from approval: the operator supplies the missing input rather than a yes/no.
 
 ## Verification
 

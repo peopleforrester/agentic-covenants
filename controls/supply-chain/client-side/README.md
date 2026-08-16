@@ -13,10 +13,10 @@
 
 ## Files in this directory
 
-- [`mcp-allowlist.json`](./mcp-allowlist.json) — declarative allowlist of approved MCP servers with binary `sha256`, `tool_descriptions_sha256`, and per-server `permissions` scope. Owned by the operator; the agent's user must not have write permission on this file.
-- [`mcp-launch`](./mcp-launch) — wrapper that verifies the binary's `sha256` against the allowlist before `exec`, and calls `cosign verify-blob` if a signature is present. Refuses to start if the server is not allowlisted or the hash mismatches.
-- [`mcp-verify-tools.py`](./mcp-verify-tools.py) — runs after the MCP handshake, hashes the returned tool descriptions in a canonical order, compares to `tool_descriptions_sha256` in the allowlist. Mismatch → block + re-approve flow. **This is the rug-pull defense.**
-- [`pre-commit-deps-scan.yaml`](./pre-commit-deps-scan.yaml) — extension to `.pre-commit-config.yaml` adding `pip-audit` and `trivy-fs` hooks. The server-side lockfile-integrity job in [`../server-side/lockfile-integrity.yml`](../server-side/lockfile-integrity.yml) is the backstop when `--no-verify` is used.
+- [`mcp-allowlist.json`](./mcp-allowlist.json), declarative allowlist of approved MCP servers with binary `sha256`, `tool_descriptions_sha256`, and per-server `permissions` scope. Owned by the operator; the agent's user must not have write permission on this file.
+- [`mcp-launch`](./mcp-launch), wrapper that verifies the binary's `sha256` against the allowlist before `exec`, and calls `cosign verify-blob` if a signature is present. Refuses to start if the server is not allowlisted or the hash mismatches.
+- [`mcp-verify-tools.py`](./mcp-verify-tools.py), runs after the MCP handshake, hashes the returned tool descriptions in a canonical order, compares to `tool_descriptions_sha256` in the allowlist. Mismatch → block + re-approve flow. **This is the rug-pull defense.**
+- [`pre-commit-deps-scan.yaml`](./pre-commit-deps-scan.yaml), extension to `.pre-commit-config.yaml` adding `pip-audit` and `trivy-fs` hooks. The server-side lockfile-integrity job in [`../server-side/lockfile-integrity.yml`](../server-side/lockfile-integrity.yml) is the backstop when `--no-verify` is used.
 
 ## Verification
 

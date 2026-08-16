@@ -1,4 +1,4 @@
-# Sentinels — Approval gating / Server-side
+# Sentinels, Approval gating / Server-side
 
 **Control.** GitHub webhook for branch-protection bypass and force-push events. Hourly drift-detection job comparing live branch protection to a checked-in expected JSON. Deployment-freeze breach alerts. Audit log on changes to branch protection itself.
 
@@ -12,9 +12,9 @@
 
 ## Files in this directory
 
-- [`webhook-receiver.py`](./webhook-receiver.py) — Lambda-style handler that verifies the webhook signature, then ships filtered events (`branch_protection_rule.deleted|edited`, force-pushes, branch deletions on protected branches) to the SIEM.
-- [`audit-branch-protection.yml`](./audit-branch-protection.yml) — hourly GitHub Actions workflow that fetches the live branch protection and diffs against [`../../../controls/approval-gating/server-side/branch-protection-expected.json`](../../../controls/approval-gating/server-side/branch-protection-expected.json). Drift fires a SIEM event.
-- [`freeze-breach-step.yml`](./freeze-breach-step.yml) — drop-in workflow step (snippet) for the IaC apply job that posts a SIEM event when an apply attempts to run while `DEPLOY_FREEZE=true`.
+- [`webhook-receiver.py`](./webhook-receiver.py), Lambda-style handler that verifies the webhook signature, then ships filtered events (`branch_protection_rule.deleted|edited`, force-pushes, branch deletions on protected branches) to the SIEM.
+- [`audit-branch-protection.yml`](./audit-branch-protection.yml), hourly GitHub Actions workflow that fetches the live branch protection and diffs against [`../../../controls/approval-gating/server-side/branch-protection-expected.json`](../../../controls/approval-gating/server-side/branch-protection-expected.json). Drift fires a SIEM event.
+- [`freeze-breach-step.yml`](./freeze-breach-step.yml), drop-in workflow step (snippet) for the IaC apply job that posts a SIEM event when an apply attempts to run while `DEPLOY_FREEZE=true`.
 
 ## Verification
 
@@ -36,7 +36,7 @@ gh variable set DEPLOY_FREEZE -b false
 
 ## Common mistakes
 
-- Webhook secret not set or not verified — anyone can spoof events.
+- Webhook secret not set or not verified, anyone can spoof events.
 - Audit cron at 24h interval. Bypass-then-restore goes undetected.
 - Expected protection JSON not version-controlled. Drift detection uses a stale baseline.
 - Webhook receiver discards push events with `forced: false`. `--force-with-lease` is also a bypass and presents differently.

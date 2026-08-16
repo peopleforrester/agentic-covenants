@@ -1,4 +1,4 @@
-# Interventions — Approval gating / Client-side
+# Interventions, Approval gating / Client-side
 
 **Trigger.** Sentinels detected approval bypass, fatigue pattern saturation (mean response under 2s across 50+ approvals), judgment-query escalation channel compromise.
 
@@ -14,7 +14,7 @@
 
 ## Files in this directory
 
-- [`agent-approval-lockdown-local`](./agent-approval-lockdown-local) — runbook script. Replaces the approval hook with the deny-all hook (shared with authorization client-side), disables Auto Mode in `settings.json`, sets `requireOutOfBand: true`, disables the judgment-query escalation channel, kills the agent.
+- [`agent-approval-lockdown-local`](./agent-approval-lockdown-local), runbook script. Replaces the approval hook with the deny-all hook (shared with authorization client-side), disables Auto Mode in `settings.json`, sets `requireOutOfBand: true`, disables the judgment-query escalation channel, kills the agent.
 
 ## Verification
 
@@ -35,7 +35,7 @@ curl -sS https://escalate.example.com/api/status?agent=claude-code-prod
 ## Common mistakes
 
 - Disabling Auto Mode but not replacing the hook. Auto Mode disabled means more prompts; the agent still proceeds on the prompts.
-- Not disabling the escalation channel — the agent escalates to a compromised channel and gets fake approvals.
+- Not disabling the escalation channel, the agent escalates to a compromised channel and gets fake approvals.
 - Settings JSON edited in place; if the original was JSON5 (with comments), the standard `jq` rewrite breaks it. Use a JSON-comment-aware tool if your config is JSON5.
 
 ## Citation

@@ -6,7 +6,7 @@ It is written for a program office that has to defend this to an AO, so every su
 
 ## What changes and what does not
 
-**Does not change.** The framework's thesis is unaffected by air-gapping. In-agent controls are still advisory. Client-side hooks still catch casual misuse. Server-side enforcement is still the backstop. The five concerns are the same five concerns. **An air gap is a network control, not a behavioral control** — it constrains where the agent can reach, and does nothing about what the agent does with what it can already reach. Several of the incidents in [`BYPASSES.md`](../../BYPASSES.md) (Replit's freeze-violation wipe, the K8s MCP read-only bypass) would have happened identically inside an enclave.
+**Does not change.** The framework's thesis is unaffected by air-gapping. In-agent controls are still advisory. Client-side hooks still catch casual misuse. Server-side enforcement is still the backstop. The five concerns are the same five concerns. **An air gap is a network control, not a behavioral control**, it constrains where the agent can reach, and does nothing about what the agent does with what it can already reach. Several of the incidents in [`BYPASSES.md`](../../BYPASSES.md) (Replit's freeze-violation wipe, the K8s MCP read-only bypass) would have happened identically inside an enclave.
 
 **Does change.** Every cell that depended on a public service needs an in-enclave substitute, and the identity cells need to bind to ICAM rather than to a commercial IdP.
 
@@ -32,16 +32,16 @@ DoD ICAM requires that every **Non-Person Entity** be **under the control of an 
 Two consequences worth stating to an AO:
 
 1. **The Charter file becomes an ICAM artifact, not just governance paperwork.** [`charter/templates/agent-charter.yaml`](../../charter/templates/agent-charter.yaml) already carries `ownership.owner_name`, `agent.identifier`, and the approval signatures. In an ICAM context those fields are the PE-to-NPE binding record.
-2. **Agent NPEs must be in the same lifecycle as every other NPE.** Provisioning, rotation, and — critically — **de-provisioning**. The charter's `retirement_criteria` is the de-provisioning trigger. An agent whose owner departs and whose backup owner does not accept handoff has no controlling PE, which under FICAM means the NPE account should not continue to exist.
+2. **Agent NPEs must be in the same lifecycle as every other NPE.** Provisioning, rotation, and, critically, **de-provisioning**. The charter's `retirement_criteria` is the de-provisioning trigger. An agent whose owner departs and whose backup owner does not accept handoff has no controlling PE, which under FICAM means the NPE account should not continue to exist.
 
 See [`icam-npe-binding.md`](./icam-npe-binding.md) for the field-by-field mapping.
 
 ## Files in this directory
 
-- [`icam-npe-binding.md`](./icam-npe-binding.md) — maps agent-charter fields to ICAM NPE registry attributes and the PE control relationship.
-- [`offline-cosign-verify.yaml`](./offline-cosign-verify.yaml) — Kyverno `verifyImages` using a **static public key from a ConfigMap** instead of keyless/Rekor, for enclaves with no transparency log.
-- [`enclave-registry-policy.yaml`](./enclave-registry-policy.yaml) — admission policy restricting images to the enclave registry only, with an explicit deny on every public registry.
-- [`airgap-preflight.sh`](./airgap-preflight.sh) — verifies the enclave actually has no egress to the public services this framework otherwise assumes, so you find out at deploy time rather than during an assessment.
+- [`icam-npe-binding.md`](./icam-npe-binding.md), maps agent-charter fields to ICAM NPE registry attributes and the PE control relationship.
+- [`offline-cosign-verify.yaml`](./offline-cosign-verify.yaml), Kyverno `verifyImages` using a **static public key from a ConfigMap** instead of keyless/Rekor, for enclaves with no transparency log.
+- [`enclave-registry-policy.yaml`](./enclave-registry-policy.yaml), admission policy restricting images to the enclave registry only, with an explicit deny on every public registry.
+- [`airgap-preflight.sh`](./airgap-preflight.sh), verifies the enclave actually has no egress to the public services this framework otherwise assumes, so you find out at deploy time rather than during an assessment.
 
 ## Impact Level applicability
 

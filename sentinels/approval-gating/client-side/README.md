@@ -1,8 +1,8 @@
-# Sentinels — Approval gating / Client-side
+# Sentinels, Approval gating / Client-side
 
 **Control.** Approval-timing logger captures local think-time on every confirmation. OOB approval channel logger captures decisions joined to session. SIEM rule fires on response under 2s across more than 50 approvals (the alert-fatigue pattern, calibrated against AHRQ PSNet research and Anthropic Auto Mode telemetry).
 
-**Strength.** Deterministic when timings are measured locally and shipped reliably. Failure modes: timing measurement that includes network latency to a remote approval service (measure local think-time only); threshold too aggressive (anything under 5 seconds is "fatigue") yielding false positives; threshold too lenient (anything over 100ms is "real consideration") so the rule never fires; OOB channel log not joined to the original request session — cannot reconstruct the chain.
+**Strength.** Deterministic when timings are measured locally and shipped reliably. Failure modes: timing measurement that includes network latency to a remote approval service (measure local think-time only); threshold too aggressive (anything under 5 seconds is "fatigue") yielding false positives; threshold too lenient (anything over 100ms is "real consideration") so the rule never fires; OOB channel log not joined to the original request session, cannot reconstruct the chain.
 
 ## Tooling
 
@@ -11,9 +11,9 @@
 
 ## Files in this directory
 
-- [`approval-timing-emit.sh`](./approval-timing-emit.sh) — appendable snippet that wraps the typed-confirmation read with timing measurement (start/end nanoseconds, response_ms, matched).
-- [`oob-decision-log.sh`](./oob-decision-log.sh) — script that the out-of-band approval workflow calls when an approver decides; emits a structured event keyed to the original request ID and session.
-- [`sigma-approval-fatigue.yaml`](./sigma-approval-fatigue.yaml) — SIEM rule firing when a user's mean tier-≥2 response time is under 2s across more than 50 approvals.
+- [`approval-timing-emit.sh`](./approval-timing-emit.sh), appendable snippet that wraps the typed-confirmation read with timing measurement (start/end nanoseconds, response_ms, matched).
+- [`oob-decision-log.sh`](./oob-decision-log.sh), script that the out-of-band approval workflow calls when an approver decides; emits a structured event keyed to the original request ID and session.
+- [`sigma-approval-fatigue.yaml`](./sigma-approval-fatigue.yaml), SIEM rule firing when a user's mean tier-≥2 response time is under 2s across more than 50 approvals.
 
 ## Verification
 

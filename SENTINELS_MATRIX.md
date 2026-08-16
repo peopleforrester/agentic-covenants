@@ -64,10 +64,10 @@ Three reasons, all of which the matrix names:
 
 Sentinels is one of four operational matrices in the Agentic Matrix family:
 
-- **Covenants** (Protect, NIST CSF 2.0 PR): what binds the running agent — [`MATRIX.md`](./MATRIX.md), [`controls/`](./controls/)
-- **Sentinels** (Detect, NIST CSF 2.0 DE): what watches the running agent — this document, [`sentinels/`](./sentinels/)
-- **Interventions** (Respond, NIST CSF 2.0 RS): what stops the running agent — tracked separately
-- **Restorations** (Recover, NIST CSF 2.0 RC): what fixes after the agent — tracked separately
+- **Covenants** (Protect, NIST CSF 2.0 PR): what binds the running agent, [`MATRIX.md`](./MATRIX.md), [`controls/`](./controls/)
+- **Sentinels** (Detect, NIST CSF 2.0 DE): what watches the running agent, this document, [`sentinels/`](./sentinels/)
+- **Interventions** (Respond, NIST CSF 2.0 RS): what stops the running agent, tracked separately
+- **Restorations** (Recover, NIST CSF 2.0 RC): what fixes after the agent, tracked separately
 
 Two upstream strategic matrices wrap the operational four:
 
@@ -83,19 +83,19 @@ A complete agent governance posture has all six. Most teams start with Covenants
 
 ## Reading order
 
-1. This document — framework essay.
-2. [`docs/walkthrough-agentic-sentinels-engineering-actions-v5.md`](./docs/walkthrough-agentic-sentinels-engineering-actions-v5.md) — engineering-actions companion (gitignored; lives in operator working notes).
-3. [`sentinels/`](./sentinels/) — pick a cell, copy the artifact.
+1. This document: the framework essay.
+2. [`docs/walkthrough-agentic-sentinels-engineering-actions-v5.md`](./docs/walkthrough-agentic-sentinels-engineering-actions-v5.md), engineering-actions companion (gitignored; lives in operator working notes).
+3. [`sentinels/`](./sentinels/), pick a cell, copy the artifact.
 
 ## Engineering actions
 
 Each cell has a directory under [`sentinels/`](./sentinels/) with:
 
-- **Tooling** — what to install or enable.
-- **Configuration** — the actual files, snippets, or commands you commit.
-- **Verification** — how you confirm the detection is firing on real events.
-- **Common mistakes** — failure modes that defeat detection.
-- **Citation** — authoritative source.
+- **Tooling**: what to install or enable.
+- **Configuration**: the actual files, snippets, or commands you commit.
+- **Verification**: how you confirm the detection is firing on real events.
+- **Common mistakes**: failure modes that defeat detection.
+- **Citation**: authoritative source.
 
 ## Citations
 

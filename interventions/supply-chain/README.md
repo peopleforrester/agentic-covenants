@@ -1,4 +1,4 @@
-# Interventions — Supply chain
+# Interventions, Supply chain
 
 **Intent.** Quarantine packages, halt distribution.
 

@@ -1,6 +1,6 @@
-# Restorations — Blast radius / Server-side
+# Restorations, Blast radius / Server-side
 
-**Precondition.** Interventions L3-C3 has fired (NetworkPolicy default-deny applied, Deployments scaled to zero, pods deleted). Identity and Authorization restorations rows complete. **The earliest indicator of compromise from Sentinels has been identified — pick a backup from before that timestamp.**
+**Precondition.** Interventions L3-C3 has fired (NetworkPolicy default-deny applied, Deployments scaled to zero, pods deleted). Identity and Authorization restorations rows complete. **The earliest indicator of compromise from Sentinels has been identified, pick a backup from before that timestamp.**
 
 **Authority.** On-call plus security review.
 
@@ -13,7 +13,7 @@
 
 ## Files in this directory
 
-- [`agent-restore-blast-radius-server`](./agent-restore-blast-radius-server) — runbook script. Removes emergency NetworkPolicy, reapplies operational NetworkPolicies + ResourceQuota + LimitRange from source, runs `terraform apply` against fresh state, optionally re-creates the namespace, restores data from a specified pre-incident backup snapshot.
+- [`agent-restore-blast-radius-server`](./agent-restore-blast-radius-server), runbook script. Removes emergency NetworkPolicy, reapplies operational NetworkPolicies + ResourceQuota + LimitRange from source, runs `terraform apply` against fresh state, optionally re-creates the namespace, restores data from a specified pre-incident backup snapshot.
 
 ## Verification
 
@@ -40,7 +40,7 @@ terraform plan -no-color | grep -E "Plan: 0 to add"
 - Backup taken after contamination point. **Always pick a backup from before the earliest indicator of compromise from Sentinels**, not the most recent backup.
 - Backups stored in same account as production. Immutable backups (S3 Object Lock, GCP Bucket Retention) reduce but do not eliminate this risk if the credentials that wrote them were compromised.
 - Emergency NetworkPolicy not removed. Workloads come back up but cannot communicate.
-- `terraform apply` against drifted state — the recovery applies the state-of-the-incident, not the desired state. Always `terraform plan` first and review the diff.
+- `terraform apply` against drifted state, the recovery applies the state-of-the-incident, not the desired state. Always `terraform plan` first and review the diff.
 
 ## Citation
 

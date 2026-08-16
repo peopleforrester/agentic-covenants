@@ -1,4 +1,4 @@
-# Interventions — Identity
+# Interventions, Identity
 
 **Intent.** Revoke the credential, kill the session.
 

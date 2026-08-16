@@ -1,4 +1,4 @@
-# Interventions — Approval gating
+# Interventions, Approval gating
 
 **Intent.** Lock down all approval surfaces.
 

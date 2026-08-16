@@ -1,4 +1,4 @@
-# Inventory — Authorization / Self-declared
+# Inventory, Authorization / Self-declared
 
 **What this cell records.** The agent's report of its current effective scope at startup and on scope changes.
 

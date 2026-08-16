@@ -14,10 +14,10 @@
 
 ## Files in this directory
 
-- [`agent-bwrap`](./agent-bwrap) — bubblewrap launcher script. Drop in `/usr/local/bin/`. Wraps the agent in a sandbox with inheritance enforcement (`--die-with-parent`, `--new-session`), no network by default, capability dropping. The systemd unit in [`../../identity/client-side/claude-code-prod.service`](../../identity/client-side/claude-code-prod.service) can call this instead of `claude` directly.
-- [`seccomp-claude.json`](./seccomp-claude.json) — illustrative seccomp profile in OCI format. **Use `strace -c` against your real workload to derive the actual minimal allowlist.** Anthropic publishes a reference seccomp profile for Claude Code in their sandbox docs; consult the current list.
-- [`claude.sb`](./claude.sb) — Seatbelt sandbox profile for macOS. Run with `sandbox-exec -D WORKSPACE="$PWD" -D HOME="$HOME" -f claude.sb /usr/local/bin/claude`.
-- [`gvisor-runtimeclass-and-pod.yaml`](./gvisor-runtimeclass-and-pod.yaml) — Kubernetes RuntimeClass declaring `runsc` and a sample Pod that uses it. Combines with the Pod from [`../../identity/server-side/pod-with-projected-token.yaml`](../../identity/server-side/pod-with-projected-token.yaml).
+- [`agent-bwrap`](./agent-bwrap), bubblewrap launcher script. Drop in `/usr/local/bin/`. Wraps the agent in a sandbox with inheritance enforcement (`--die-with-parent`, `--new-session`), no network by default, capability dropping. The systemd unit in [`../../identity/client-side/claude-code-prod.service`](../../identity/client-side/claude-code-prod.service) can call this instead of `claude` directly.
+- [`seccomp-claude.json`](./seccomp-claude.json), illustrative seccomp profile in OCI format. **Use `strace -c` against your real workload to derive the actual minimal allowlist.** Anthropic publishes a reference seccomp profile for Claude Code in their sandbox docs; consult the current list.
+- [`claude.sb`](./claude.sb), Seatbelt sandbox profile for macOS. Run with `sandbox-exec -D WORKSPACE="$PWD" -D HOME="$HOME" -f claude.sb /usr/local/bin/claude`.
+- [`gvisor-runtimeclass-and-pod.yaml`](./gvisor-runtimeclass-and-pod.yaml), Kubernetes RuntimeClass declaring `runsc` and a sample Pod that uses it. Combines with the Pod from [`../../identity/server-side/pod-with-projected-token.yaml`](../../identity/server-side/pod-with-projected-token.yaml).
 
 ## Verification
 

@@ -1,4 +1,4 @@
-# System-prompt template — Identity declaration
+# System-prompt template, Identity declaration
 
 Drop the following block at the top of your agent's system prompt. Substitute the bracketed values. Do not rely on this for security; it is a nudge.
 

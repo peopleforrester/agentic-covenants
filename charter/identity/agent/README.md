@@ -1,4 +1,4 @@
-# Charter — Identity / Agent
+# Charter, Identity / Agent
 
 **Structural question.** Does each agent have a charter file naming a specific accountable human owner, a backup owner, and a registered agent identifier that ties runtime identity claims back to the charter?
 

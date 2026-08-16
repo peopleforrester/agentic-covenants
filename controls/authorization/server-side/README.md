@@ -10,14 +10,14 @@
 - Kyverno 1.18+ (older releases use a different `attestors` block shape) or OPA Gatekeeper.
 - **Kubernetes-native admission (no controller to install): ValidatingAdmissionPolicy (GA since 1.30) and MutatingAdmissionPolicy (GA and default-on in 1.36 "Haru", April 2026).** These are in-tree CEL admission policies with no webhook, which removes the "admission webhook fail-open" bypass listed below. Prefer VAP for the deny-wildcard-verbs / deny-ClusterRoleBinding rules where you want zero external dependencies; reach for Kyverno/OPA when you need `verifyImages`, generate rules, or cross-cluster policy libraries. The two compose.
 - AWS IAM, GCP IAM, or Azure RBAC.
-- **Managed deterministic pre-action authorization (this cell as a product).** **Amazon Bedrock AgentCore Policy went GA March 3, 2026**: authorization rules written in the **Cedar** policy language, default-deny, evaluated **at the Gateway** on every agent-to-tool request — outside the agent's code, outside the model's reasoning, and therefore not reachable by prompt injection. Microsoft shipped comparable runtime enforcement starting with Copilot in Q1 2026. This is the same control the rest of this cell builds by hand; if you are on Bedrock, use it rather than reimplementing it, and keep the Kubernetes-side admission policies as the second layer for anything the gateway does not mediate. The design point to preserve either way: **policy is evaluated before the tool executes, by something the agent does not control.**
+- **Managed deterministic pre-action authorization (this cell as a product).** **Amazon Bedrock AgentCore Policy went GA March 3, 2026**: authorization rules written in the **Cedar** policy language, default-deny, evaluated **at the Gateway** on every agent-to-tool request, outside the agent's code, outside the model's reasoning, and therefore not reachable by prompt injection. Microsoft shipped comparable runtime enforcement starting with Copilot in Q1 2026. This is the same control the rest of this cell builds by hand; if you are on Bedrock, use it rather than reimplementing it, and keep the Kubernetes-side admission policies as the second layer for anything the gateway does not mediate. The design point to preserve either way: **policy is evaluated before the tool executes, by something the agent does not control.**
 - Server-side Git pre-receive hooks (every Git server in your org, not just origin).
 
 ## Files in this directory
 
-- [`kyverno-no-cluster-roles.yaml`](./kyverno-no-cluster-roles.yaml) — ClusterPolicy with three rules: deny `ClusterRoleBinding` whose subjects include any agent ServiceAccount; deny wildcard verbs in any Role or ClusterRole; deny RoleBinding into prod namespaces with agent SA subjects. Apply with `kubectl apply -f`.
-- [`git-pre-receive-hook.sh`](./git-pre-receive-hook.sh) — server-side pre-receive hook. Rejects force-pushes to main, blocks edits to protected paths from non-CODEOWNERS, runs gitleaks against the diff. Install in `/var/lib/git/<repo>.git/hooks/pre-receive` on every Git server.
-- [`aws-iam-scoped-policy.json`](./aws-iam-scoped-policy.json) — example IAM policy with explicit `Resource` ARNs for the allow list and a tagged-deny clause for everything else. Substitute resource ARNs for your environment.
+- [`kyverno-no-cluster-roles.yaml`](./kyverno-no-cluster-roles.yaml), ClusterPolicy with three rules: deny `ClusterRoleBinding` whose subjects include any agent ServiceAccount; deny wildcard verbs in any Role or ClusterRole; deny RoleBinding into prod namespaces with agent SA subjects. Apply with `kubectl apply -f`.
+- [`git-pre-receive-hook.sh`](./git-pre-receive-hook.sh), server-side pre-receive hook. Rejects force-pushes to main, blocks edits to protected paths from non-CODEOWNERS, runs gitleaks against the diff. Install in `/var/lib/git/<repo>.git/hooks/pre-receive` on every Git server.
+- [`aws-iam-scoped-policy.json`](./aws-iam-scoped-policy.json), example IAM policy with explicit `Resource` ARNs for the allow list and a tagged-deny clause for everything else. Substitute resource ARNs for your environment.
 
 ## Verification
 
@@ -59,7 +59,7 @@ kubectl get clusterpolicyreport -A
 - IAM with `"Resource": "*"` and a forgotten `"Action": "*"` next to it.
 - ClusterRole created for legitimate operator use, then accidentally bound to an agent SA via a copy-pasted RoleBinding.
 - Forgetting subresources: denying `pods` does not deny `pods/exec`, `pods/portforward`, `pods/attach`. List them.
-- Webhook timeout `failurePolicy: Ignore` — under load, the policy fails open and admits the violating resource.
+- Webhook timeout `failurePolicy: Ignore`, under load, the policy fails open and admits the violating resource.
 
 ## Citation
 

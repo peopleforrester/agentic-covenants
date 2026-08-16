@@ -1,4 +1,4 @@
-# Restorations — Approval gating / Client-side
+# Restorations, Approval gating / Client-side
 
 **Precondition.** Interventions L2-C4 has fired (deny-all hook, Auto Mode disabled, escalation channel disabled). Restorations identity and authorization rows complete.
 
@@ -6,7 +6,7 @@
 
 ## Files in this directory
 
-- [`agent-restore-approval-local`](./agent-restore-approval-local) — runbook script. Restores the tiered hook from VCS, reapplies tier-config.yaml, sets `autoMode: true` and `requireOutOfBand: false` in `settings.json`, re-enables the judgment-query escalation channel via service API.
+- [`agent-restore-approval-local`](./agent-restore-approval-local), runbook script. Restores the tiered hook from VCS, reapplies tier-config.yaml, sets `autoMode: true` and `requireOutOfBand: false` in `settings.json`, re-enables the judgment-query escalation channel via service API.
 
 ## Verification
 
