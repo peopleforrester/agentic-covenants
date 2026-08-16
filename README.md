@@ -1,122 +1,152 @@
 # Agentic Covenants
 
-**A practitioner framework for autonomous-agent governance.** Six matrices, mapped to NIST CSF 2.0's six functions, with working artifacts in every populated cell.
+**Governance for autonomous agents, enforced by infrastructure instead of by prompt.**
 
-```
-        Govern      Identify      Protect      Detect      Respond      Recover
-       ┌───────┐   ┌─────────┐   ┌─────────┐  ┌─────────┐  ┌─────────────┐  ┌──────────────┐
-       │Charter│ → │Inventory│ → │Covenants│  │Sentinels│  │Interventions│  │Restorations  │
-       └───────┘   └─────────┘   └─────────┘  └─────────┘  └─────────────┘  └──────────────┘
-        authorize   track          bind         watch        stop             rebuild
-```
+Six matrices mapped to the six NIST CSF 2.0 functions. Ninety cells. Working Kyverno policies, RBAC, seccomp profiles, PreToolUse hooks, Falco rules, Sigma detections, and kill-switch runbooks in every populated cell.
 
-The framework that tells a platform engineer *which Kyverno policy to write on Monday morning*, *which Falco rule alerts on Tuesday*, *which kill-switch runbook fires on Wednesday*, and *which backup to restore from on Thursday*.
+[![License: dual](https://img.shields.io/badge/license-Apache--2.0%20(code)%20%2F%20CC--BY--SA--4.0%20(content)-blue)](./LICENSE)
+[![Dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen)](#what-this-is-not)
+[![Cells: 90](https://img.shields.io/badge/cells-90-informational)](#the-six-matrices)
 
 ---
 
-## TL;DR — start with Covenants
+## The 30-second version
 
-Stop trying to prompt your way out of an agent governance problem.
+In July 2025, Replit's coding agent deleted a production database **during an explicit action freeze**, after being told eleven times not to act. It then fabricated roughly 4,000 fake records and misrepresented whether a rollback was possible.
 
-The **Agentic Covenants Matrix** ([`MATRIX.md`](./MATRIX.md)) is the prevention layer. Three columns, five rows, fifteen cells. Each cell answers: *if the agent decides to violate this concern, what stops it at this layer?*
+That agent was perfectly prompted. The instructions were clear, repeated, and unambiguous.
 
-| Concern | In-agent (advisory) | Client-side hooks | Server-side enforcement |
+**The layer you can talk to is the layer that fails.** Everything an agent can be *told* is advisory: it can be argued out of it, injected past it, or simply ignored. Constraints that hold are the ones that live outside the model's reasoning, in the hooks on the operator's machine and the admission controllers on the target system.
+
+This repo is the map of where those constraints go, and the artifacts to put there.
+
+## Why now
+
+The threat is no longer hypothetical on either side of the wire.
+
+- **You govern agents.** In July 2026, near-autonomous agents built from publicly available tooling mapped 21 Taiwanese government systems, cracked 85 accounts, and exfiltrated roughly 2,500 personnel records in four days, then expanded to a nuclear safety agency and seven energy companies. Widely reported as the first known largely autonomous attack on government agencies.
+- **Agents are also the attacker.** The same class of tooling that runs inside your perimeter is being pointed at perimeters. Defensive posture and offensive capability are converging on identical technology.
+- **Regulators started counting.** EU AI Act Article 73 serious-incident reporting is expected to apply from 2 August 2026, with a two-day clock for serious and irreversible disruption of critical infrastructure. You cannot report in two days what you cannot detect.
+
+## The core idea
+
+Three layers, ordered by how hard they are for an agent to get around.
+
+```
+                 ┌──────────────────────────────────────────────────────┐
+   WEAKEST       │  L1  IN-AGENT        system prompts, tool descriptions │
+                 │      advisory        refusals, "are you sure?"         │
+                 │                      → bypassable by language alone    │
+                 ├──────────────────────────────────────────────────────┤
+                 │  L2  CLIENT-SIDE     PreToolUse hooks, sandbox at      │
+                 │      deterministic   launch, MCP allowlists, ACLs      │
+                 │                      → outside the model's reasoning   │
+                 ├──────────────────────────────────────────────────────┤
+   STRONGEST     │  L3  SERVER-SIDE     RBAC, admission policy, IAM,      │
+                 │      external        branch protection, cosign         │
+                 │                      → outside the agent entirely      │
+                 └──────────────────────────────────────────────────────┘
+```
+
+Crossed with five things that go wrong:
+
+**Identity** · **Authorization** · **Blast radius** · **Approval gating** · **Supply chain**
+
+Fifteen cells. Walk a row left to right and ask one question at each layer:
+
+> **If the agent decides to violate this concern, what stops it *here*?**
+
+Three outcomes. All three cells populated is defense in depth. Only the in-agent cell populated is an audit finding, because the model can be talked out of it. Server-side only means it is enforced but discovered late.
+
+## The matrix
+
+| Concern | L1 In-agent *(advisory)* | L2 Client-side *(deterministic)* | L3 Server-side *(external)* |
 |---|---|---|---|
-| **Identity** | system-prompt declaration | per-agent credentials, FS ACLs | dedicated SA / IAM, OIDC, short-TTL tokens |
-| **Authorization** | scoped tool descriptions | `--allowedTools`, PreToolUse, pre-commit | RBAC, IAM, Kyverno/OPA admission |
-| **Blast radius** | refusals (verified-bypassable) | sandbox at launch, seccomp/AppArmor, dry-run | gated IaC apply, ResourceQuota, NetworkPolicy, immutable backups |
-| **Approval gating** | "are you sure?" (93% rubber-stamp ceiling) | tiered hooks, judgment-query escalation | branch protection (`enforce_admins: true`), CODEOWNERS, plan-and-apply split |
-| **Supply chain** | warning prompt | MCP allowlist + tool-description hashing, Sigstore, lockfile pinning | cosign verification, SBOM admission, egress NetworkPolicy |
+| **Identity** | Prompt declares the agent. Identity is *carried*, never *established* | Per-agent credentials, operator-owned config, filesystem ACLs | Dedicated ServiceAccount, OIDC federation, 15-minute bound tokens, SPIFFE/SPIRE |
+| **Authorization** | Scoped tool descriptions | Deny-by-default `--allowedTools`, PreToolUse hooks, pre-commit | Scoped RBAC Roles, explicit-ARN IAM, Kyverno/OPA or in-tree admission policy |
+| **Blast radius** | *Empty by design.* Refusal is a verified failure mode | Sandbox at launch with inheritance, seccomp/AppArmor, egress proxy, read-only mounts | Gated IaC apply, NetworkPolicy default-deny, ResourceQuota, immutable backups |
+| **Approval gating** | "Are you sure?" Measured at a **93% approval rate** | Tiered gating, typed verbatim confirmation, out-of-band for tier-4, judgment-query escalation | Branch protection with `enforce_admins`, CODEOWNERS, plan/apply split, deployment freeze |
+| **Supply chain** | *Empty by design.* Model provenance judgment is unreliable | MCP allowlist with hash pinning, tool-description hashing, lockfile pinning | cosign verification, SBOM admission, egress allowlist, SLSA provenance gates |
 
-Every cell ships working artifacts in [`controls/`](./controls/).
+Two cells are deliberately empty. That is the argument, not a gap: for blast radius and supply chain, the in-agent layer enforces nothing at all.
 
----
+Full essay: **[`MATRIX.md`](./MATRIX.md)** · Bypass surface for every control: **[`BYPASSES.md`](./BYPASSES.md)**
+
+## Start here
+
+| If you are… | Go to |
+|---|---|
+| **A platform engineer with agents in production** | [`checklists/`](./checklists/) — five audit sheets, print and walk, about an hour per agent |
+| **Standing up your first agent** | [`MATRIX.md`](./MATRIX.md), then [`controls/`](./controls/) — copy a cell, run its verification block |
+| **A security lead sizing the problem** | [`BYPASSES.md`](./BYPASSES.md) — every control and how it is defeated, plus the 2026 incident corpus |
+| **In a US federal or DoD program** | [`CITATIONS.md`](./CITATIONS.md#us-dod--federal-crosswalk) — 800-53 families, DoD ZT pillars, RMF/cATO/CSRMC, RAI. Then [`examples/dod-air-gapped/`](./examples/dod-air-gapped/) |
+| **Responsible for governance or audit** | [`CHARTER_MATRIX.md`](./CHARTER_MATRIX.md) and [`charter/templates/`](./charter/templates/) |
+| **Wondering whether you even have agents** | [`INVENTORY_MATRIX.md`](./INVENTORY_MATRIX.md) — shadow-agent discovery |
+| **Already breached** | [`interventions/`](./interventions/) — kill-switch runbooks, five-second blast-radius target |
 
 ## The six matrices
 
-| Matrix | Function | Question | Top-level | Artifacts |
-|---|---|---|---|---|
-| **Charter** | Govern (GV) | *Who authorized this agent to exist?* | [`CHARTER_MATRIX.md`](./CHARTER_MATRIX.md) | [`charter/`](./charter/) — policy templates |
-| **Inventory** | Identify (ID) | *What agents exist and what do they touch?* | [`INVENTORY_MATRIX.md`](./INVENTORY_MATRIX.md) | [`inventory/`](./inventory/) — registration daemon, discovery scripts |
-| **Covenants** | Protect (PR) | *What stops the agent from violating?* | [`MATRIX.md`](./MATRIX.md) | [`controls/`](./controls/) — Kyverno, RBAC, seccomp, hooks |
-| **Sentinels** | Detect (DE) | *What just happened?* | [`SENTINELS_MATRIX.md`](./SENTINELS_MATRIX.md) | [`sentinels/`](./sentinels/) — Falco, audit, SIEM rules |
-| **Interventions** | Respond (RS) | *How do I stop the bleeding now?* | [`INTERVENTIONS_MATRIX.md`](./INTERVENTIONS_MATRIX.md) | [`interventions/`](./interventions/) — kill-switch runbooks |
-| **Restorations** | Recover (RC) | *How do I get back to known-good?* | [`RESTORATIONS_MATRIX.md`](./RESTORATIONS_MATRIX.md) | [`restorations/`](./restorations/) — rebuild runbooks |
-
-The flow: **Charter authorizes → Inventory tracks → Covenants binds → Sentinels watches → Interventions stops → Restorations rebuilds → feedback loops back to Charter.**
-
-A defensible posture has at minimum Charter, Inventory, and Covenants populated, with Sentinels in flight. Interventions and Restorations come online when the org has the operational maturity to handle the runbook complexity.
-
-## What this is
-
-The practitioner-layer realization of:
-
-- **NIST Cybersecurity Framework 2.0** (CSF 2.0): all six functions.
-- **NIST AI RMF 1.0** GOVERN, MAP, MEASURE, MANAGE; AI 600-1 GAI Profile; AI 100-2 E2025; AI Action Plan + CAISI directions.
-- **OWASP** LLM Top 10 (2025), Agentic Top 10 (2026), MCP Top 10 (beta), AIVSS scoring.
-- **CSA MAESTRO** seven-layer threat model.
-- **ISO/IEC 42001:2023** AI management system.
-- **EU AI Act** Articles 9, 14, 15, 17, 25, 26.
-- **NIST SPs**: 800-207 (Zero Trust), 800-218 / 218A (SSDF / GenAI Profile), 800-160 Vol. 1 (defense in depth), 800-61 Rev. 2 (incident handling), 800-34 Rev. 1 (contingency planning), 800-92 (log management), 800-63 Rev. 4 (digital identity).
-- **Government / international**: NIST NCCoE Concept Paper on AI Agent Identity (Feb 2026), CISA/NSA/FBI AI Data Security CSI (May 2025), CISA/ASD ACSC OT Principles (Dec 2025), Singapore IMDA Agentic AI Framework (Jan 2026).
-
-The 2026 incident corpus is catalogued in [`BYPASSES.md`](./BYPASSES.md): OpenClaw ClawJacked (CVE-2026-32025), ClawHavoc, postmark-mcp, Cline/Cacheract/Clinejection, Comment-and-Control, Filesystem MCP EscapeRoute, Amazon Q CVE-2025-8217, Trend Micro Trust Signals, Check Point CVEs.
-
-## Why prevention-first
-
-Corporate governance (audits, reviews, quarterly access reviews, postmortems) was built for actors that are slow and have internal valence: a homeostatic stake, a pre-action pause, a learning loop. Agents collapse the time gap and have none of the internal machinery. **Scaling up post-hoc machinery either becomes a bottleneck or induces alert fatigue** — Anthropic's Auto Mode telemetry: 93% approval rate on permission prompts is the empirical ceiling.
-
-Engineer the bad outcome out of reach (server-side). Make deterministic checks fail fast at the operator's machine (client-side). Use the in-agent layer as a nudge, not a control. Then attach Detect / Respond / Recover for residual risk.
-
-## How to use this repo
-
-1. **If you have nothing yet:** start with [`MATRIX.md`](./MATRIX.md) and [`controls/`](./controls/). Walk one row, populate the three cells, run the verification commands. Repeat.
-2. **If Covenants is in place:** add [`SENTINELS_MATRIX.md`](./SENTINELS_MATRIX.md) and [`sentinels/`](./sentinels/). Each prevention control gets a corresponding detection.
-3. **If Sentinels is in place:** wire Sentinels alerts to [`interventions/`](./interventions/) runbooks. Every alert needs a runbook; alerts without runbooks are theatre.
-4. **If you have an incident response capability:** add [`restorations/`](./restorations/) for the rebuild after intervention.
-5. **If you face a regulatory review (EU AI Act, ISO/IEC 42001):** start with [`CHARTER_MATRIX.md`](./CHARTER_MATRIX.md) and the templates under [`charter/templates/`](./charter/templates/).
-6. **If you have agents proliferating without ownership:** start with [`INVENTORY_MATRIX.md`](./INVENTORY_MATRIX.md) and the discovery tooling under [`inventory/identity/discovered/`](./inventory/identity/discovered/).
-
-## Layout
+Covenants is one of six. Each maps to a NIST CSF 2.0 function, and each is five concerns by three layers.
 
 ```
-agentic-covenants/
-├── README.md
-├── MATRIX.md, BYPASSES.md, CITATIONS.md, matrix.yaml      # Covenants (Protect)
-├── SENTINELS_MATRIX.md, sentinels.yaml                     # Sentinels (Detect)
-├── INTERVENTIONS_MATRIX.md, interventions.yaml             # Interventions (Respond)
-├── RESTORATIONS_MATRIX.md, restorations.yaml               # Restorations (Recover)
-├── CHARTER_MATRIX.md, charter.yaml                         # Charter (Govern)
-├── INVENTORY_MATRIX.md, inventory.yaml                     # Inventory (Identify)
-├── controls/{identity,authorization,blast-radius,approval-gating,supply-chain}/
-├── sentinels/      (mirror of controls/)
-├── interventions/  (mirror; in-agent cells deliberately empty)
-├── restorations/   (mirror; in-agent cells deliberately empty)
-├── charter/        (organizational / domain / agent layers — policy templates)
-└── inventory/      (self-declared / operator-declared / discovered layers — registration + discovery tooling)
+   GOVERN        IDENTIFY        PROTECT        DETECT        RESPOND         RECOVER
+  ┌────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌─────────────┐   ┌──────────────┐
+  │Charter │ → │Inventory │ → │Covenants │ → │Sentinels │ → │Interventions│ → │Restorations  │
+  └────────┘   └──────────┘   └──────────┘   └──────────┘   └─────────────┘   └──────────────┘
+   authorize      track           bind          watch            stop            rebuild
+        ▲                                                                            │
+        └──────────────────── recovery feeds prevention ─────────────────────────────┘
 ```
 
-## License
+| Matrix | Function | Question | Artifacts |
+|---|---|---|---|
+| [Charter](./CHARTER_MATRIX.md) | Govern (GV) | Who authorized this agent to exist? | [`charter/`](./charter/) — policy templates, signed agent charters |
+| [Inventory](./INVENTORY_MATRIX.md) | Identify (ID) | What agents exist and what do they touch? | [`inventory/`](./inventory/) — registration daemon, shadow-agent discovery |
+| [**Covenants**](./MATRIX.md) | Protect (PR) | What stops the agent from violating? | [`controls/`](./controls/) — Kyverno, RBAC, seccomp, hooks |
+| [Sentinels](./SENTINELS_MATRIX.md) | Detect (DE) | What just happened? | [`sentinels/`](./sentinels/) — Falco, audit policy, Sigma rules |
+| [Interventions](./INTERVENTIONS_MATRIX.md) | Respond (RS) | How do I stop the bleeding now? | [`interventions/`](./interventions/) — kill-switch runbooks |
+| [Restorations](./RESTORATIONS_MATRIX.md) | Recover (RC) | How do I get back to known-good? | [`restorations/`](./restorations/) — rebuild runbooks |
 
-Dual-licensed:
+A defensible minimum is Charter, Inventory, and Covenants populated with Sentinels in flight. Interventions and Restorations come online when you can carry the runbook complexity.
 
-- **Code** (shell, Python, Terraform, Rego, YAML policy, hooks, runbook scripts) under [Apache 2.0](./LICENSE-CODE).
-- **Content** (Markdown, the matrices, the citations, the framework text) under [CC BY-SA 4.0](./LICENSE-CONTENT).
+In Interventions and Restorations **every** in-agent cell is empty. An agent that is misbehaving cannot be told to stop, and it does not participate in its own recovery.
 
-See [`LICENSE`](./LICENSE) for the split rule.
+## Why you should believe the decomposition
+
+Independent work converged on the same five concerns. On 30 April 2026, six allied cyber agencies (CISA, NSA, ACSC, Canadian Centre for Cyber Security, NZ NCSC, UK NCSC) published *Careful Adoption of Agentic AI Services*, the first multi-nation joint guidance on agentic AI. Its five risk categories:
+
+| Five Eyes risk category | Concern here |
+|---|---|
+| Privilege escalation | Identity + Authorization |
+| Design and configuration flaws | Authorization |
+| Behavioral misalignment | Blast radius + Approval gating |
+| Structural cascading failures | Blast radius |
+| Accountability opacity | Charter + Inventory |
+
+Every cell is also crosswalked to NIST CSF 2.0, NIST AI RMF, OWASP LLM Top 10, OWASP Agentic Top 10, OWASP MCP Top 10, ISO/IEC 42001, the EU AI Act, and (for federal readers) NIST SP 800-53, DoD Zero Trust, RMF/cATO/CSRMC, and DoD Responsible AI. See [`CITATIONS.md`](./CITATIONS.md).
+
+## Every control here can be bypassed
+
+[`BYPASSES.md`](./BYPASSES.md) documents how, for all of them. That is the point of having three layers rather than one. It also carries the running incident and CVE corpus, because these are not thought experiments:
+
+Taiwan government agencies (July 2026) · Replit production wipe during a freeze · ClawHavoc, 1,184+ malicious marketplace skills · postmark-mcp, the first in-the-wild malicious MCP server · CVE-2026-46519, a Kubernetes MCP server whose read-only mode was enforced only at tool-discovery · CVE-2026-5058/5059, unauthenticated MCP RCE at CVSS 9.8 · the Trivy release pipeline, where the scanner itself was the vector.
+
+An undocumented control that fails to its bypass is worse than no control, because somebody trusted it.
+
+## What this is not
+
+- **Not a product.** No install, no runtime, no service. Templates you copy and adapt.
+- **Not a dependency.** No package manifest, no build, no test suite, by design. Nothing here executes in your pipeline unless you put it there.
+- **Not compliance.** The federal crosswalks are defensible starting points for a conversation with an authorizing official, not compliance claims. As of July 2026 there is still no official US government policy specifically on agentic AI.
+- **Not detection or response, in the Covenants matrix.** Those are separate matrices on purpose. Conflating prevention with detection is how you end up with a checklist that treats after-the-fact logging as equivalent to an admission policy.
+- **Not finished.** Placeholders like `REPLACE_WITH_DIGEST_FROM_CRANE` and `123456789012` are intentional and must be substituted.
 
 ## Contributing
 
-A reviewer who finds an additional citation mapping is welcome to contribute it; a reviewer who finds an incorrect mapping is welcome to flag it. Both improve the document.
+The most valuable contributions are a citation that is wrong, a bypass that is missing, and a version pin that has gone stale. See [`CONTRIBUTING.md`](./CONTRIBUTING.md). Currency is the product here: any version, deprecation, or regulatory-date claim needs a dated primary source.
 
-## Status
+## License
 
-This repo is the practitioner layer beneath OWASP (which catalogs the threats), NIST (which governs and structures), CSA MAESTRO (which models the attack surface), ISO/IEC 42001 (which provides the management system), the EU AI Act (which sets the regulatory floor), and lab-side capability frameworks (which govern what models are released). **None of those tells a platform engineer what to commit on Monday morning. This does.**
+Dual-licensed. **Code** (hooks, policies, runbooks, Terraform, Rego) under [Apache 2.0](./LICENSE-CODE). **Content** (prose, matrices, crosswalks) under [CC BY-SA 4.0](./LICENSE-CONTENT). See [`LICENSE`](./LICENSE) for the split rule.
 
-## For US federal and DoD readers
-
-The five concerns line up almost one-to-one with the five risk categories named in **"Careful Adoption of Agentic AI Services"** (CISA, NSA, ACSC, Canadian Centre for Cyber Security, NZ NCSC, UK NCSC — April 30, 2026), the first multi-nation joint guidance on agentic AI.
-
-[`CITATIONS.md`](./CITATIONS.md#us-dod--federal-crosswalk) carries a **US DoD / federal crosswalk**: NIST SP 800-53 Rev. 5 control families per concern, DoD Zero Trust pillars, RMF / cATO / CSRMC, DoD Responsible AI principles, ICAM NPE constraints, and Cloud SRG Impact Levels. [`examples/dod-air-gapped/`](./examples/dod-air-gapped/) is an IL4–IL5 variant with every public dependency (Sigstore, public registries, commercial IdP) replaced by an in-enclave equivalent, plus the ICAM PE-to-NPE binding.
-
-The framing that matters: **ICAM tells you who the agent is and what it may reach. Zero Trust conditional access tells you whether this request is permitted right now. Neither tells you what an authenticated, authorized agent is permitted to *do* once it is inside.** RMF to cATO already moved assurance out of periodic review and into the infrastructure; CSRMC made that the default. This framework applies the same relocation to agent behavior. As of July 2026 there is still no official US government policy specifically on agentic AI (CRS IF13151), so these are crosswalks a program can defend to an AO, not compliance claims.
+Cite as: Forrester, M. R. and contributors. *The Agentic Covenants Matrix*. https://github.com/peopleforrester/agentic-covenants

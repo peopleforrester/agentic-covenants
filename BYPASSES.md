@@ -294,6 +294,14 @@ These are documented incidents and disclosures from 2025 and 2026 that defeated 
 - **What it did**: RCE via Claude Code project files; `settings.json` execution without prompt prior to patch.
 - **Lesson**: Warning dialogs are the last line of defense, not the first. Sandbox project loading by default.
 
+### Taiwan government agencies, near-autonomous agent campaign (July 2026)
+
+- **Disclosed**: Taiwan's Ministry of Digital Affairs, August 2026; initially identified by the Israeli AI firm Dream. Alerts began circulating from Taiwan's National Institute of Cyber Security around July 20, 2026.
+- **Layer affected**: All of them, from the other side.
+- **What it did**: Over roughly four days, largely autonomous agents mapped **21 government systems**, cracked **85 accounts**, and exfiltrated approximately **2,500 personnel records**, then expanded to a nuclear safety agency, supply-chain vendors, and at least seven energy companies. The operators combined conventional tradecraft with **publicly available agent tooling**, reported to include OpenClaw. Widely characterized as the first known largely autonomous attack against government agencies.
+- **Why it belongs in a defensive framework**: every other entry here describes an agent you run getting loose. This one describes the same class of tooling pointed at you. The capabilities are not different. An agent that can enumerate your infrastructure, chain credentials, and act at machine speed is the same artifact whether it is on your side of the perimeter or the other one, and the tooling is off-the-shelf and free.
+- **Lesson**: Two, and they pull in the same direction. First, **speed is the whole problem**: four days, autonomously, across 21 systems. Any control that depends on a human noticing and intervening on a human timescale has already lost. That is the argument for the client-side and server-side columns and against the in-agent one. Second, **your own agent inventory is attack surface**. The [`inventory/`](./inventory/) matrix exists because a shadow agent nobody registered is indistinguishable from an intruder's agent, and neither will appear in a registry nobody maintains.
+
 ### Trivy scanner supply-chain compromise (March 2026)
 
 - **Disclosed**: StepSecurity and Aqua Security, March 19, 2026 (a second incident after an earlier 2026 compromise).
@@ -313,6 +321,16 @@ These are documented incidents and disclosures from 2025 and 2026 that defeated 
 - **Layer affected**: Supply chain and blast radius.
 - **What it did**: Two CVSS 9.8 vulnerabilities allowing unauthenticated remote code execution against MCP installations (unvalidated user-supplied strings reaching system calls; improper allowed-command handling). Part of a wave: 30+ MCP CVEs were filed in January–February 2026 alone, and independent scans place the share of public MCP servers carrying exploitable flaws somewhere between 30% and 82%.
 - **Lesson**: The MCP ecosystem is an attack surface, not a convenience layer. Treat every MCP server as untrusted remote code: allowlist by hash ([`controls/supply-chain/client-side/mcp-allowlist.json`](./controls/supply-chain/client-side/mcp-allowlist.json)), fence egress to approved MCP domains at the network layer ([`controls/supply-chain/server-side/cilium-mcp-fqdn-egress.yaml`](./controls/supply-chain/server-side/cilium-mcp-fqdn-egress.yaml)), and never run an MCP server with more privilege than the covenant allows.
+
+### Agent-framework CVE wave (mid-2026)
+
+- **Layer affected**: Identity, authorization, and blast radius, depending on the entry.
+- **What they did**:
+  - **CVE-2026-25592** — Microsoft Semantic Kernel for .NET below 1.71.0. Fixed in 1.71.0; the remediation is a version bump, which is exactly the class of claim the currency discipline in [`CONTRIBUTING.md`](./CONTRIBUTING.md) exists to keep honest.
+  - **CVE-2026-25253** — OpenClaw token leakage, CVSS 8.8. A leaked agent token is a leaked identity, and it is indistinguishable from legitimate use on the target side unless the credential is short-lived and bound.
+  - **CVE-2026-32922** — privilege escalation to remote code execution, CVSS 9.9. The near-maximum score reflects that the escalation path ends outside the agent's intended scope entirely.
+- **Also**: Tenable tracked a cluster of **seven distinct agentic-AI incidents between November 2025 and August 2026**, including JADEPUFFER (exploiting CVE-2025-3248 in Langflow) and the knaithe/KnYuan activity documented by Unit 42. The interesting property of the cluster is not any single entry, it is the rate.
+- **Lesson**: Agent frameworks are now a routine CVE surface with a normal patch cadence, and they should be inventoried and patched like any other production dependency. That is an [`inventory/`](./inventory/) problem before it is a [`controls/`](./controls/) problem: you cannot patch the agent framework you did not know was running. The blast-radius controls are what buy you time between disclosure and patch.
 
 ### MCP `2026-07-28` protocol revision (new surface, and a stronger identity floor)
 
