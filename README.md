@@ -136,7 +136,7 @@ Covenants is one of six. Each maps to a NIST CSF 2.0 function, and each is five 
 | [Interventions](./INTERVENTIONS_MATRIX.md) | Respond (RS) | How do I stop the bleeding now? | [`interventions/`](./interventions/), kill-switch runbooks |
 | [Restorations](./RESTORATIONS_MATRIX.md) | Recover (RC) | How do I get back to known-good? | [`restorations/`](./restorations/), rebuild runbooks |
 
-**All six are populated.** Artifact counts, as of the last commit: charter 24, inventory 25, controls 70, sentinels 57, interventions 42, restorations 33.
+**All six are populated.** Artifact counts, as of the last commit: charter 24, inventory 25, controls 79, sentinels 57, interventions 42, restorations 33. Ninety-three cells across the six matrices.
 
 A defensible *adoption order* is Charter, Inventory, and Covenants first, then Sentinels, then the two response matrices when you can carry the runbook complexity. That is a sequencing recommendation, not a statement about what is written here.
 
