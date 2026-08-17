@@ -95,8 +95,11 @@ def iter_files(patterns: Iterable[str], staged: bool) -> list[Path]:
         )
         candidates = [REPO_ROOT / line for line in result.stdout.splitlines() if line]
     else:
+        # --others --exclude-standard adds untracked files that are not
+        # gitignored. Without it a full run silently skips every new file,
+        # which is the opposite of useful.
         result = subprocess.run(
-            ["git", "ls-files"],
+            ["git", "ls-files", "--cached", "--others", "--exclude-standard"],
             cwd=REPO_ROOT,
             capture_output=True,
             text=True,
@@ -255,6 +258,15 @@ SECRET_PATTERNS: list[tuple[str, str]] = [
 # Documented placeholder account id. Any *other* 12-digit account id in an ARN
 # is a real one that leaked.
 PLACEHOLDER_ACCOUNTS = {"123456789012", "000000000000", "111122223333"}
+
+# Credential-shaped strings that are published, documented, non-functional
+# examples. AWS uses these throughout its own docs precisely so they can appear
+# in sample code. Flagging them is a false positive that trains people to
+# ignore the check, which is worse than the check not existing.
+DOCUMENTED_EXAMPLES = {
+    "AKIAIOSFODNN7EXAMPLE",
+    "ASIAIOSFODNN7EXAMPLE",
+}
 ARN_ACCOUNT_RE = re.compile(r"arn:aws[a-z\-]*:[^:]*:[^:]*:(\d{12}):")
 
 
@@ -269,7 +281,8 @@ def check_placeholders(staged: bool) -> Findings:
             path.read_text(encoding="utf-8", errors="replace").splitlines(), start=1
         ):
             for regex, label in patterns:
-                if regex.search(line):
+                match = regex.search(line)
+                if match and match.group(0) not in DOCUMENTED_EXAMPLES:
                     findings.add(path, lineno, f"possible {label} in a template")
             for account in ARN_ACCOUNT_RE.findall(line):
                 if account not in PLACEHOLDER_ACCOUNTS:

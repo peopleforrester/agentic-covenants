@@ -2,11 +2,11 @@
 
 **Governance for autonomous agents, enforced by infrastructure instead of by prompt.**
 
-Six matrices mapped to the six NIST CSF 2.0 functions. Ninety cells. Working Kyverno policies, RBAC, seccomp profiles, PreToolUse hooks, Falco rules, Sigma detections, and kill-switch runbooks in every populated cell.
+Six matrices mapped to the six NIST CSF 2.0 functions. Ninety-three cells. Working Kyverno policies, RBAC, seccomp profiles, PreToolUse hooks, Falco rules, Sigma detections, and kill-switch runbooks in every populated cell.
 
 [![License: dual](https://img.shields.io/badge/license-Apache--2.0%20(code)%20%2F%20CC--BY--SA--4.0%20(content)-blue)](./LICENSE)
 [![Dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen)](#what-this-is-not)
-[![Cells: 90](https://img.shields.io/badge/cells-90-informational)](#the-six-matrices)
+[![Cells: 93](https://img.shields.io/badge/cells-93-informational)](#the-six-matrices)
 
 ---
 
@@ -49,11 +49,11 @@ Three layers, ordered by how hard they are for an agent to get around.
                  └──────────────────────────────────────────────────────┘
 ```
 
-Crossed with five things that go wrong:
+Crossed with the things that go wrong:
 
-**Identity** · **Authorization** · **Blast radius** · **Approval gating** · **Supply chain**
+**Identity** · **Authorization** · **Blast radius** · **Approval gating** · **Supply chain** · **Content integrity**
 
-Fifteen cells. Walk a row left to right and ask one question at each layer:
+Eighteen cells in Covenants, fifteen in each of the other five matrices. Walk a row left to right and ask one question at each layer:
 
 > **If the agent decides to violate this concern, what stops it *here*?**
 
@@ -68,8 +68,33 @@ Three outcomes. All three cells populated is defense in depth. Only the in-agent
 | **Blast radius** | *Empty by design.* Refusal is a verified failure mode | Sandbox at launch with inheritance, seccomp/AppArmor, egress proxy, read-only mounts | Gated IaC apply, NetworkPolicy default-deny, ResourceQuota, immutable backups |
 | **Approval gating** | "Are you sure?" Measured at a **93% approval rate** | Tiered gating, typed verbatim confirmation, out-of-band for tier-4, judgment-query escalation | Branch protection with `enforce_admins`, CODEOWNERS, plan/apply split, deployment freeze |
 | **Supply chain** | *Empty by design.* Model provenance judgment is unreliable | MCP allowlist with hash pinning, tool-description hashing, lockfile pinning | cosign verification, SBOM admission, egress allowlist, SLSA provenance gates |
+| **Content integrity** | System-prompt hardening, instruction hierarchy. Advisory, and the attack targets exactly this | Input scanning before the model sees it, output scanning before it leaves, tool-result sanitization. **Probabilistic: evadable** | Egress policy so exfiltration has nowhere to go, DLP at the boundary, audit of what was sent. **Catches the consequence, not the manipulation** |
 
 Two cells are deliberately empty. That is the argument, not a gap: for blast radius and supply chain, the in-agent layer enforces nothing at all.
+
+## Scope: what this framework covers, and what it does not
+
+**Every control above is deterministic.** A Kyverno policy admits or denies. A NetworkPolicy permits or drops. An IAM policy grants or refuses. All binary, all decidable, all enforced by something that is not the model.
+
+That is the framework's thesis and its boundary. A whole class of agentic failure is **not decidable by a policy engine**, because the input is natural language and the failure is semantic: prompt injection arriving inside a document or a tool result, jailbreaks, exfiltration where every individual action is authorized and only the aggregate is a leak, output that is confidently wrong rather than unauthorized, context poisoning, and drift over a long session.
+
+No admission controller catches any of those. They need scoring and classification, which are **probabilistic** controls with false positives, false negatives, and an evasion surface.
+
+The uncomfortable corollary is worth stating plainly: the framework's argument is "use deterministic controls to bound probabilistic agents," and some agentic failures are only detectable probabilistically, so the thesis cannot cover them by construction. That is a boundary rather than a flaw, but an unstated boundary reads as a claim to completeness.
+
+So the boundary is stated, and the sixth concern is where the two meet:
+
+| | Deterministic (this framework) | Probabilistic (the complementary layer) |
+|---|---|---|
+| **Decides** | Admit or deny | Score and threshold |
+| **Fails** | Closed, loudly | Both directions, quietly |
+| **Evadable** | Only by finding a gap in the rule | Yes, by an adversary who is trying |
+| **Is** | Prevention | Detection |
+| **Answers** | What is the agent *able* to do | What is *reaching* the agent, and what is leaving |
+
+**Neither substitutes for the other.** Deterministic controls bound the blast radius. Probabilistic controls narrow what reaches them and flag what got through. An honest posture has both, and treats only the first as enforcement.
+
+The sixth concern, [**Content integrity**](./controls/content-integrity/), carries this layer, and it is the one row in the matrix whose server-side column is deliberately weak.
 
 Full essay: **[`MATRIX.md`](./MATRIX.md)** · Bypass surface for every control: **[`BYPASSES.md`](./BYPASSES.md)**
 
@@ -81,6 +106,7 @@ Full essay: **[`MATRIX.md`](./MATRIX.md)** · Bypass surface for every control: 
 | **A platform engineer with agents in production** | [`checklists/`](./checklists/), five audit sheets, print and walk, about an hour per agent |
 | **Standing up your first agent** | [`MATRIX.md`](./MATRIX.md), then [`controls/`](./controls/), copy a cell, run its verification block |
 | **A security lead sizing the problem** | [`BYPASSES.md`](./BYPASSES.md), every control and how it is defeated, plus the 2026 incident corpus |
+| **Asking "have you actually run these?"** | [`ASSURANCE.md`](./ASSURANCE.md), the coverage map with an honest tally, and [`tests/`](./tests/) for what executes |
 | **In a US federal or DoD program** | [`CITATIONS.md`](./CITATIONS.md#us-dod--federal-crosswalk), 800-53 families, DoD ZT pillars, RMF/cATO/CSRMC, RAI. Then [`examples/dod-air-gapped/`](./examples/dod-air-gapped/) |
 | **Briefing a CISO, CIO, or authorizing official** | [`EXECUTIVE-BRIEF.md`](./EXECUTIVE-BRIEF.md), one page, no YAML. Cost model in [`ECONOMICS.md`](./ECONOMICS.md) |
 | **Responsible for governance or audit** | [`CHARTER_MATRIX.md`](./CHARTER_MATRIX.md) and [`charter/templates/`](./charter/templates/) |

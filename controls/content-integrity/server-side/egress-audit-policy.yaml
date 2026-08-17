@@ -1,0 +1,59 @@
+# ABOUTME: Kyverno policy requiring agent workloads to carry egress audit annotations.
+# ABOUTME: Ensures what left the boundary is recorded outside the agent's reach.
+#
+# Evidence, not prevention. The EU AI Act Article 73 reporting clocks (2 days
+# for serious disruption of critical infrastructure, 15 days generally, from
+# 2 August 2026) are unmeetable without a record that survives the agent.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: agents-require-egress-audit
+  annotations:
+    policies.kyverno.io/title: Agent workloads must be egress-audited
+    policies.kyverno.io/category: Content integrity
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      An agent that can be prompt-injected will eventually be prompt-injected.
+      This policy does not prevent that. It requires that whatever the agent
+      sent is recorded somewhere the agent cannot edit, so an incident has an
+      evidence trail and a reporting clock can be met.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+
+  - name: require-egress-audit-annotation
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+          namespaces:
+          - "agent-*"
+    validate:
+      message: >-
+        Agent pods must declare an egress audit sink via the
+        covenants.io/egress-audit-sink annotation. Exfiltration you cannot
+        evidence is exfiltration you cannot report.
+      pattern:
+        metadata:
+          annotations:
+            covenants.io/egress-audit-sink: "?*"
+
+  - name: audit-sink-must-be-external
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+          namespaces:
+          - "agent-*"
+    validate:
+      message: >-
+        The egress audit sink must not resolve into the agent's own namespace.
+        A log the agent can delete is not evidence.
+      deny:
+        conditions:
+          any:
+          - key: "{{ request.object.metadata.annotations.\"covenants.io/egress-audit-sink\" }}"
+            operator: AnyIn
+            value:
+            - "*.agent-claude-prod.svc.cluster.local*"

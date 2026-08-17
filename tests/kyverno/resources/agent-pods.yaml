@@ -1,0 +1,23 @@
+# ABOUTME: Pod fixtures for the agents-require-egress-audit policy tests.
+# ABOUTME: Covers missing annotation, in-namespace sink, and a compliant pod.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: agent-no-audit-sink
+  namespace: agent-claude-prod
+spec:
+  containers:
+  - name: agent
+    image: registry.example.com/agent@sha256:0000000000000000000000000000000000000000000000000000000000000000
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: agent-audited
+  namespace: agent-claude-prod
+  annotations:
+    covenants.io/egress-audit-sink: "https://audit.security.example.com/ingest"
+spec:
+  containers:
+  - name: agent
+    image: registry.example.com/agent@sha256:0000000000000000000000000000000000000000000000000000000000000000

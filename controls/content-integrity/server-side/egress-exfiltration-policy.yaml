@@ -1,0 +1,63 @@
+# ABOUTME: Cilium egress policy bounding where an injected agent can send data.
+# ABOUTME: The real anti-exfiltration control: injection succeeds, and has nowhere to post.
+#
+# This is the server-side answer to prompt injection, and it is not a content
+# control. It does not detect the manipulation. It removes the payoff.
+#
+# Substitute the FQDNs for your own approved set. Every host listed here is a
+# host an injected agent may exfiltrate to, so the list is a threat-model
+# decision and belongs in the agent's charter, not in a platform default.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: agent-egress-exfiltration-bound
+  namespace: agent-claude-prod
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: agent
+
+  egress:
+
+  # DNS is required for FQDN policy to function. Restricted to the cluster
+  # resolver so the agent cannot use an external resolver as a covert channel.
+  - toEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: kube-system
+        k8s-app: kube-dns
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: UDP
+      rules:
+        dns:
+        - matchPattern: "*"
+
+  # Model API. The one destination the agent genuinely needs.
+  - toFQDNs:
+    - matchName: "api.anthropic.com"
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+
+  # Approved internal services, by FQDN rather than CIDR so the intent is
+  # readable and so a re-IP does not silently widen the policy.
+  - toFQDNs:
+    - matchName: "artifacts.internal.example.com"
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+
+  # NOTE ON WHAT THIS DOES NOT STOP.
+  #
+  # Any allowlisted host is an exfiltration path if it accepts writes. If you
+  # allow a code-hosting domain, a Gist is permitted traffic. Narrow by method
+  # and path where the proxy supports it, and treat a write-capable allowlisted
+  # host as a residual risk you have accepted rather than one you have closed.
+  #
+  # DNS tunnelling survives this policy. The matchPattern "*" above is required
+  # for FQDN enforcement to work at all, and it is a covert channel. Detect it
+  # at the resolver rather than pretending the policy closes it. See
+  # sentinels/blast-radius/server-side/.
