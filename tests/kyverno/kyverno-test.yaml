@@ -1,0 +1,54 @@
+# ABOUTME: Kyverno CLI test declaring what the authorization policy must admit and deny.
+# ABOUTME: Runs without a cluster: kyverno test tests/kyverno/
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: agents-no-cluster-roles
+policies:
+- ../../controls/authorization/server-side/kyverno-no-cluster-roles.yaml
+resources:
+- resources/roles.yaml
+- resources/clusterrolebindings.yaml
+results:
+
+# --- must be DENIED ---
+
+- policy: agents-no-cluster-roles
+  rule: deny-wildcard-verbs-in-roles
+  resources: [agent-wildcard-verbs]
+  kind: Role
+  result: fail
+
+- policy: agents-no-cluster-roles
+  rule: deny-wildcard-resources-in-roles
+  resources: [agent-wildcard-resources]
+  kind: Role
+  result: fail
+
+- policy: agents-no-cluster-roles
+  rule: deny-clusterrolebinding-for-agent-sa
+  resources: [agent-cluster-admin]
+  kind: ClusterRoleBinding
+  result: fail
+
+# --- must be ADMITTED ---
+# A policy that denies everything is not a control, it is an outage. The pass
+# cases are what prove the policy discriminates rather than blocks.
+
+- policy: agents-no-cluster-roles
+  rule: deny-wildcard-verbs-in-roles
+  resources: [agent-explicit-scope]
+  kind: Role
+  result: pass
+
+- policy: agents-no-cluster-roles
+  rule: deny-wildcard-resources-in-roles
+  resources: [agent-explicit-scope]
+  kind: Role
+  result: pass
+
+- policy: agents-no-cluster-roles
+  rule: deny-clusterrolebinding-for-agent-sa
+  resources: [platform-controller]
+  kind: ClusterRoleBinding
+  result: pass

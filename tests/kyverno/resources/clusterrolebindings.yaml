@@ -1,0 +1,27 @@
+# ABOUTME: ClusterRoleBinding fixtures for the agents-no-cluster-roles policy tests.
+# ABOUTME: One binding an agent ServiceAccount must be denied, one for a non-agent SA that passes.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: agent-cluster-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: agent-claude-prod
+  namespace: agent-claude-prod
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: platform-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: platform-controller
+subjects:
+- kind: ServiceAccount
+  name: platform-controller
+  namespace: platform-system

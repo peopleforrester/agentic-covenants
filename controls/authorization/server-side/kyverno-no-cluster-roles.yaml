@@ -1,5 +1,5 @@
 # ABOUTME: Kyverno ClusterPolicy denying ClusterRoleBindings, wildcard verbs, and prod-namespace bindings on agent SAs.
-# ABOUTME: Requires Kyverno 1.18+ for the policy syntax used here. validationFailureAction must be Enforce, not Audit.
+# ABOUTME: Verified against Kyverno CLI 1.17.1 on 2026-08-17 by tests/kyverno/. validationFailureAction must be Enforce, not Audit.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -42,10 +42,17 @@ spec:
     validate:
       message: >-
         Wildcard verbs are not permitted. List the verbs explicitly: get, list, watch, etc.
-      pattern:
-        rules:
-        - verbs:
-            X(verbs): "!*"
+      # foreach/deny rather than a pattern anchor: verbs is a list of strings,
+      # so a nested map pattern never matches and denies every Role including
+      # correctly-scoped ones. Verified by tests/kyverno/.
+      foreach:
+      - list: "request.object.rules[]"
+        deny:
+          conditions:
+            any:
+            - key: "{{ contains(element.verbs, '*') }}"
+              operator: Equals
+              value: true
 
   - name: deny-wildcard-resources-in-roles
     match:
@@ -56,10 +63,14 @@ spec:
       message: >-
         Wildcard resources are not permitted. List resources explicitly, including subresources
         such as pods/exec where access must be explicit.
-      pattern:
-        rules:
-        - resources:
-            X(resources): "!*"
+      foreach:
+      - list: "request.object.rules[]"
+        deny:
+          conditions:
+            any:
+            - key: "{{ contains(element.resources, '*') }}"
+              operator: Equals
+              value: true
 
   - name: deny-agent-sa-binding-into-prod-namespaces
     match:

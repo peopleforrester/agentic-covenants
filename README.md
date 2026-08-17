@@ -110,7 +110,9 @@ Covenants is one of six. Each maps to a NIST CSF 2.0 function, and each is five 
 | [Interventions](./INTERVENTIONS_MATRIX.md) | Respond (RS) | How do I stop the bleeding now? | [`interventions/`](./interventions/), kill-switch runbooks |
 | [Restorations](./RESTORATIONS_MATRIX.md) | Recover (RC) | How do I get back to known-good? | [`restorations/`](./restorations/), rebuild runbooks |
 
-A defensible minimum is Charter, Inventory, and Covenants populated with Sentinels in flight. Interventions and Restorations come online when you can carry the runbook complexity.
+**All six are populated.** Artifact counts, as of the last commit: charter 24, inventory 25, controls 70, sentinels 57, interventions 42, restorations 33.
+
+A defensible *adoption order* is Charter, Inventory, and Covenants first, then Sentinels, then the two response matrices when you can carry the runbook complexity. That is a sequencing recommendation, not a statement about what is written here.
 
 In Interventions and Restorations **every** in-agent cell is empty. An agent that is misbehaving cannot be told to stop, and it does not participate in its own recovery.
 

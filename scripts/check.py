@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -315,6 +316,96 @@ def check_shell(staged: bool) -> Findings:
     return findings
 
 
+# --------------------------------------------------------------------------
+# Check: shell scripts pass shellcheck
+# --------------------------------------------------------------------------
+
+
+def check_shellcheck(staged: bool) -> Findings:
+    """Runbooks must pass shellcheck at error severity.
+
+    Warnings and style notes are not enforced: these are illustrative templates
+    that an adopter edits, and style-linting somebody else's starting point is
+    noise. Errors are real defects.
+    """
+    findings = Findings("shellcheck")
+
+    if not _have("shellcheck"):
+        findings.problems.append(
+            "shellcheck not installed; install it to verify runbooks "
+            "(brew install shellcheck / apt install shellcheck)"
+        )
+        return findings
+
+    files = iter_files((".sh",), staged) + [
+        p for p in iter_files(("",), staged) if p.name in {"agent-bwrap", "mcp-launch", "launch-agent"}
+    ]
+    for path in files:
+        result = subprocess.run(
+            ["shellcheck", "--severity=error", "--format=gcc", str(path)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        for line in result.stdout.splitlines():
+            parts = line.split(":", 3)
+            if len(parts) >= 4:
+                findings.add(path, int(parts[1]) if parts[1].isdigit() else None, parts[3].strip())
+
+    return findings
+
+
+# --------------------------------------------------------------------------
+# Check: Kyverno policies load and enforce what they claim
+# --------------------------------------------------------------------------
+
+
+def check_policies(staged: bool) -> Findings:
+    """Run the Kyverno CLI test suite in tests/kyverno/.
+
+    This is the check that distinguishes a verified control from an asserted
+    one. It needs no cluster: the Kyverno CLI evaluates policies against
+    fixture resources offline, and the suite asserts both that bad manifests
+    are denied and that good ones are admitted. The second half matters more.
+    A policy that denies everything is an outage, not a control, and that is
+    exactly the defect this suite found on its first run.
+    """
+    findings = Findings("policies")
+    suite = REPO_ROOT / "tests" / "kyverno"
+
+    if not suite.is_dir():
+        findings.add(REPO_ROOT, None, "tests/kyverno/ is missing")
+        return findings
+
+    if not _have("kyverno"):
+        findings.problems.append(
+            "kyverno CLI not installed; policies are unverified. "
+            "Install: https://kyverno.io/docs/kyverno-cli/"
+        )
+        return findings
+
+    result = subprocess.run(
+        ["kyverno", "test", str(suite)],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        for line in result.stdout.splitlines():
+            if "Want " in line or "Test Summary" in line:
+                findings.add(suite, None, line.strip().strip("│").strip())
+        if not findings.problems:
+            findings.add(suite, None, f"kyverno test failed: {result.stderr.strip()[:200]}")
+
+    return findings
+
+
+def _have(tool: str) -> bool:
+    """True if `tool` is on PATH."""
+    return shutil.which(tool) is not None
+
+
 CHECKS: dict[str, Callable[[bool], Findings]] = {
     "links": check_links,
     "yaml": check_yaml,
@@ -322,6 +413,8 @@ CHECKS: dict[str, Callable[[bool], Findings]] = {
     "prose": check_prose,
     "placeholders": check_placeholders,
     "shell": check_shell,
+    "shellcheck": check_shellcheck,
+    "policies": check_policies,
 }
 
 
