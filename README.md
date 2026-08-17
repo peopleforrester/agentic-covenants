@@ -27,6 +27,7 @@ The threat is no longer hypothetical on either side of the wire.
 - **You govern agents.** In July 2026, near-autonomous agents built from publicly available tooling mapped 21 Taiwanese government systems, cracked 85 accounts, and exfiltrated roughly 2,500 personnel records in four days, then expanded to a nuclear safety agency and seven energy companies. Widely reported as the first known largely autonomous attack on government agencies.
 - **Agents are also the attacker.** The same class of tooling that runs inside your perimeter is being pointed at perimeters. Defensive posture and offensive capability are converging on identical technology.
 - **Regulators started counting.** EU AI Act Article 73 serious-incident reporting is expected to apply from 2 August 2026, with a two-day clock for serious and irreversible disruption of critical infrastructure. You cannot report in two days what you cannot detect.
+- **The gap is measured, and it is infrastructure.** Of organizations that reported a security incident involving an AI model or application, **92% were missing role-based access, MFA, and similar controls** on it (IBM Cost of a Data Breach 2026, 29 July 2026). Those are not exotic controls. The same organizations apply them to their databases. They did not apply them to the agent.
 
 ## The core idea
 
@@ -81,6 +82,7 @@ Full essay: **[`MATRIX.md`](./MATRIX.md)** · Bypass surface for every control: 
 | **Standing up your first agent** | [`MATRIX.md`](./MATRIX.md), then [`controls/`](./controls/), copy a cell, run its verification block |
 | **A security lead sizing the problem** | [`BYPASSES.md`](./BYPASSES.md), every control and how it is defeated, plus the 2026 incident corpus |
 | **In a US federal or DoD program** | [`CITATIONS.md`](./CITATIONS.md#us-dod--federal-crosswalk), 800-53 families, DoD ZT pillars, RMF/cATO/CSRMC, RAI. Then [`examples/dod-air-gapped/`](./examples/dod-air-gapped/) |
+| **Briefing a CISO, CIO, or authorizing official** | [`EXECUTIVE-BRIEF.md`](./EXECUTIVE-BRIEF.md), one page, no YAML. Cost model in [`ECONOMICS.md`](./ECONOMICS.md) |
 | **Responsible for governance or audit** | [`CHARTER_MATRIX.md`](./CHARTER_MATRIX.md) and [`charter/templates/`](./charter/templates/) |
 | **Wondering whether you even have agents** | [`INVENTORY_MATRIX.md`](./INVENTORY_MATRIX.md), shadow-agent discovery |
 | **Already breached** | [`interventions/`](./interventions/), kill-switch runbooks, five-second blast-radius target |
