@@ -124,7 +124,7 @@ echo &quot;Server-side blast-radius restore complete for $AGENT_NAME (snapshot $
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-restore-blast-radius-server"><code>agent-restore-blast-radius-server</code></a>, runbook script. Removes emergency NetworkPolicy, reapplies operational NetworkPolicies + ResourceQuota + LimitRange from source, runs <code>terraform apply</code> against fresh state, optionally re-creates the namespace, restores data from a specified pre-incident backup snapshot.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/restorations/blast-radius/server-side/agent-restore-blast-radius-server"><code>agent-restore-blast-radius-server</code></a>, runbook script. Removes emergency NetworkPolicy, reapplies operational NetworkPolicies + ResourceQuota + LimitRange from source, runs <code>terraform apply</code> against fresh state, optionally re-creates the namespace, restores data from a specified pre-incident backup snapshot.</li>
 </ul>
 <h3>Verification</h3>
 <pre><code>

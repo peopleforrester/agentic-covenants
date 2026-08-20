@@ -137,9 +137,9 @@ exit 2
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-deny-all-local"><code>agent-deny-all-local</code></a>, runbook script. Replaces the hook with the deny-all template, sets <code>chattr +i</code>, replaces <code>settings.json</code> with the deny-all version, kills any in-flight agent so the new state applies.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/deny-all-hook.sh"><code>deny-all-hook.sh</code></a>, pre-staged hook template. Always returns exit code 2 with a &quot;BLOCKED: agent in emergency lockdown&quot; message. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/deny-all-hook.sh</code>.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/settings-deny-all.json"><code>settings-deny-all.json</code></a>, pre-staged Claude Code settings with <code>defaultMode: deny</code>, empty allow/ask, deny <code>*</code>. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/settings-deny-all.json</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/authorization/client-side/agent-deny-all-local"><code>agent-deny-all-local</code></a>, runbook script. Replaces the hook with the deny-all template, sets <code>chattr +i</code>, replaces <code>settings.json</code> with the deny-all version, kills any in-flight agent so the new state applies.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/authorization/client-side/deny-all-hook.sh"><code>deny-all-hook.sh</code></a>, pre-staged hook template. Always returns exit code 2 with a &quot;BLOCKED: agent in emergency lockdown&quot; message. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/deny-all-hook.sh</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/authorization/client-side/settings-deny-all.json"><code>settings-deny-all.json</code></a>, pre-staged Claude Code settings with <code>defaultMode: deny</code>, empty allow/ask, deny <code>*</code>. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/settings-deny-all.json</code>.</li>
 </ul>
 <h3>Verification</h3>
 <pre><code>

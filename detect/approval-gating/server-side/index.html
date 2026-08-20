@@ -208,9 +208,9 @@ def handler(event: dict, _context=None) -&gt; dict:
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/webhook-receiver.py"><code>webhook-receiver.py</code></a>, Lambda-style handler that verifies the webhook signature, then ships filtered events (<code>branch_protection_rule.deleted|edited</code>, force-pushes, branch deletions on protected branches) to the SIEM.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/audit-branch-protection.yml"><code>audit-branch-protection.yml</code></a>, hourly GitHub Actions workflow that fetches the live branch protection and diffs against <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/approval-gating/server-side/branch-protection-expected.json"><code>../../../controls/approval-gating/server-side/branch-protection-expected.json</code></a>. Drift fires a SIEM event.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/freeze-breach-step.yml"><code>freeze-breach-step.yml</code></a>, drop-in workflow step (snippet) for the IaC apply job that posts a SIEM event when an apply attempts to run while <code>DEPLOY_FREEZE=true</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/approval-gating/server-side/webhook-receiver.py"><code>webhook-receiver.py</code></a>, Lambda-style handler that verifies the webhook signature, then ships filtered events (<code>branch_protection_rule.deleted|edited</code>, force-pushes, branch deletions on protected branches) to the SIEM.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/approval-gating/server-side/audit-branch-protection.yml"><code>audit-branch-protection.yml</code></a>, hourly GitHub Actions workflow that fetches the live branch protection and diffs against <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/approval-gating/server-side/branch-protection-expected.json"><code>../../../controls/approval-gating/server-side/branch-protection-expected.json</code></a>. Drift fires a SIEM event.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/approval-gating/server-side/freeze-breach-step.yml"><code>freeze-breach-step.yml</code></a>, drop-in workflow step (snippet) for the IaC apply job that posts a SIEM event when an apply attempts to run while <code>DEPLOY_FREEZE=true</code>.</li>
 </ul>
 <h3>Verification</h3>
 <pre><code>

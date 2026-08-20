@@ -134,15 +134,15 @@ tags:
 <p><strong>Strength.</strong> Deterministic when shipped. Failure modes: decision events not correlated with tool input (counts denies, doesn&#x27;t reconstruct intent); auditd rule format errors silently disable the rule (verify with <code>auditctl -l</code>); <code>--no-verify</code> rule misses <code>git commit -n</code> short form.</p>
 <h3>Tooling</h3>
 <ul>
-<li>- The PreToolUse hook chain (extends <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/identity/client-side/identity-log-hook.sh"><code>../../identity/client-side/identity-log-hook.sh</code></a>).</li>
+<li>- The PreToolUse hook chain (extends <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/identity/client-side/identity-log-hook.sh"><code>../../identity/client-side/identity-log-hook.sh</code></a>).</li>
 <li>- <code>auditd</code> (Linux).</li>
 <li>- A SIEM with KQL/Sigma-style query support.</li>
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/hook-decision-emit.sh"><code>hook-decision-emit.sh</code></a>, appendable snippet that extends the deny-then-ask-then-allow hook from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/client-side/pre_tool_use.sh"><code>../../../controls/authorization/client-side/pre_tool_use.sh</code></a> to emit a structured decision event before exiting.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/auditd-auth.rules"><code>auditd-auth.rules</code></a>, auditd rules for hook config edits, allowlist edits, Claude Code settings edits, and <code>--no-verify</code> execve.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sigma-multi-deny.yaml"><code>sigma-multi-deny.yaml</code></a>, SIEM rule that fires when a single session accumulates more than 5 deny events; this is a probing pattern indicator.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/authorization/client-side/hook-decision-emit.sh"><code>hook-decision-emit.sh</code></a>, appendable snippet that extends the deny-then-ask-then-allow hook from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/client-side/pre_tool_use.sh"><code>../../../controls/authorization/client-side/pre_tool_use.sh</code></a> to emit a structured decision event before exiting.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/authorization/client-side/auditd-auth.rules"><code>auditd-auth.rules</code></a>, auditd rules for hook config edits, allowlist edits, Claude Code settings edits, and <code>--no-verify</code> execve.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/authorization/client-side/sigma-multi-deny.yaml"><code>sigma-multi-deny.yaml</code></a>, SIEM rule that fires when a single session accumulates more than 5 deny events; this is a probing pattern indicator.</li>
 </ul>
 <h3>Verification</h3>
 <pre><code>

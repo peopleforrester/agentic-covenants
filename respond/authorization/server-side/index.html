@@ -155,11 +155,11 @@ spec:
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-deny-all-server"><code>agent-deny-all-server</code></a>, runbook script. Applies the emergency Kyverno ClusterPolicy, overwrites the agent&#x27;s Role with empty rules, attaches IAM <code>Deny *</code> policy.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/kyverno-deny-all-agents.yaml"><code>kyverno-deny-all-agents.yaml</code></a>, pre-staged ClusterPolicy denying every operation from any <code>system:serviceaccount:agent-*</code>. Excludes the break-glass operator. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/kyverno-deny-all-agents.yaml</code>.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/empty-role.yaml"><code>empty-role.yaml</code></a>, pre-staged Role with <code>rules: []</code> and the same name as the original agent Role. Overwriting it removes every permission. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/empty-role.yaml</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/authorization/server-side/agent-deny-all-server"><code>agent-deny-all-server</code></a>, runbook script. Applies the emergency Kyverno ClusterPolicy, overwrites the agent&#x27;s Role with empty rules, attaches IAM <code>Deny *</code> policy.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/authorization/server-side/kyverno-deny-all-agents.yaml"><code>kyverno-deny-all-agents.yaml</code></a>, pre-staged ClusterPolicy denying every operation from any <code>system:serviceaccount:agent-*</code>. Excludes the break-glass operator. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/kyverno-deny-all-agents.yaml</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/authorization/server-side/empty-role.yaml"><code>empty-role.yaml</code></a>, pre-staged Role with <code>rules: []</code> and the same name as the original agent Role. Overwriting it removes every permission. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/empty-role.yaml</code>.</li>
 </ul>
-<p>The IAM <code>Deny *</code> policy is at <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/identity/server-side/iam-deny-all.json"><code>../../identity/server-side/iam-deny-all.json</code></a> (shared with identity revocation).</p>
+<p>The IAM <code>Deny *</code> policy is at <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/identity/server-side/iam-deny-all.json"><code>../../identity/server-side/iam-deny-all.json</code></a> (shared with identity revocation).</p>
 <h3>Verification</h3>
 <pre><code>
 # 1. Kyverno deny-all in effect

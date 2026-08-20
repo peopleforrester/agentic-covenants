@@ -162,9 +162,9 @@ echo &quot;Server-side approval gating locked down for $AGENT_NAME on $REPO (inc
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-approval-lockdown-server"><code>agent-approval-lockdown-server</code></a>, runbook script. Locks branch protection to require 4 reviewers, <code>enforce_admins: true</code>, <code>lock_branch: true</code>. Disables every workflow in the repo. Sets <code>DEPLOY_FREEZE=true</code>. Locks every GitHub environment to require the <code>incident-response</code> team.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/branch-protection-locked.json"><code>branch-protection-locked.json</code></a>, pre-staged branch-protection config applied during the lockdown. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/branch-protection-locked.json</code>.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/environment-locked.json"><code>environment-locked.json</code></a>, pre-staged GitHub Environment config restricting deployments to the incident-response team. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/environment-locked.json</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/approval-gating/server-side/agent-approval-lockdown-server"><code>agent-approval-lockdown-server</code></a>, runbook script. Locks branch protection to require 4 reviewers, <code>enforce_admins: true</code>, <code>lock_branch: true</code>. Disables every workflow in the repo. Sets <code>DEPLOY_FREEZE=true</code>. Locks every GitHub environment to require the <code>incident-response</code> team.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/approval-gating/server-side/branch-protection-locked.json"><code>branch-protection-locked.json</code></a>, pre-staged branch-protection config applied during the lockdown. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/branch-protection-locked.json</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/approval-gating/server-side/environment-locked.json"><code>environment-locked.json</code></a>, pre-staged GitHub Environment config restricting deployments to the incident-response team. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/environment-locked.json</code>.</li>
 </ul>
 <h3>Verification</h3>
 <pre><code>

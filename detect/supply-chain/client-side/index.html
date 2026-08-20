@@ -141,9 +141,9 @@ def _emit_tool_desc_mismatch(server_name: str, expected_hash: str, actual_hash: 
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/mcp-launch-emit.sh"><code>mcp-launch-emit.sh</code></a>, append-only snippet that the mcp-launch wrapper sources to emit a structured per-connection event including status and hash.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/tool-desc-mismatch-emit.py"><code>tool-desc-mismatch-emit.py</code></a>, patch fragment for <code>mcp-verify-tools.py</code> that emits a structured event on hash mismatch (the rug-pull alert).</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/ci-lockfile-diff.yml"><code>ci-lockfile-diff.yml</code></a>, workflow extension that ships the truncated lockfile diff to SIEM on every PR that touches a lockfile.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/supply-chain/client-side/mcp-launch-emit.sh"><code>mcp-launch-emit.sh</code></a>, append-only snippet that the mcp-launch wrapper sources to emit a structured per-connection event including status and hash.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/supply-chain/client-side/tool-desc-mismatch-emit.py"><code>tool-desc-mismatch-emit.py</code></a>, patch fragment for <code>mcp-verify-tools.py</code> that emits a structured event on hash mismatch (the rug-pull alert).</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/supply-chain/client-side/ci-lockfile-diff.yml"><code>ci-lockfile-diff.yml</code></a>, workflow extension that ships the truncated lockfile diff to SIEM on every PR that touches a lockfile.</li>
 </ul>
 <h3>Verification</h3>
 <pre><code>
