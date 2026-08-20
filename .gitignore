@@ -46,3 +46,6 @@ _INBOX.md
 
 # Generated site output; published to the gh-pages branch, not tracked on main.
 site/dist/
+
+# Deploy worktree; transient, never committed.
+.gh-pages-worktree/
