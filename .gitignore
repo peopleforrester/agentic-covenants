@@ -31,8 +31,9 @@ npm-debug.log*
 # Build / output
 dist/
 build/
-site/
 *.tar.gz
+# NOTE: `site/` is deliberately NOT ignored. It holds the site generator source
+# (build.py, deploy.sh), which is tracked. Only its output is ignored, below.
 
 # Local Claude Code session history (do not push)
 .claude-history/
