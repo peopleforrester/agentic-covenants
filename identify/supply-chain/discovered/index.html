@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supply chain at the discovered layer | Identify | Agentic Covenants</title>
+<meta name="description" content="Image-registry pull events, package-manager logs, runtime introspection of loaded models and connected MCP servers, SBOM scanning. Drift between actual and authorized = alert.">
+<link rel="canonical" href="https://agenticcovenants.com/identify/supply-chain/discovered/">
+<meta property="og:title" content="Supply chain at the discovered layer | Identify | Agentic Covenants">
+<meta property="og:description" content="Image-registry pull events, package-manager logs, runtime introspection of loaded models and connected MCP servers, SBOM scanning. Drift between actual and authorized = alert.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/identify/supply-chain/discovered/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Identify</a> ›
+  <span>Supply chain</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Identify (ID) · Supply chain</p>
+  <h1>Supply chain <span class="at">at the</span> discovered <span class="at">layer</span></h1>
+  <p class="strength strength-discovered"><strong></strong> · </p>
+  <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Image-registry pull events, package-manager logs, runtime introspection of loaded models and connected MCP servers, SBOM scanning. Drift between actual and authorized = alert.</p></section>
+  
+  <section class="readme"><h2>Cell notes</h2><h2>Inventory, Supply chain / Discovered</h2>
+<p><strong>What this cell records.</strong> Independent observation of what the agent actually loads, regardless of declared dependencies.</p>
+<h3>Sources</h3>
+<ul>
+<li>- Image registry pull events with signature verification status (from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/supply-chain/server-side/kyverno-log-image-pulls.yaml"><code>sentinels/supply-chain/server-side/kyverno-log-image-pulls.yaml</code></a>).</li>
+<li>- Package-manager logs: <code>npm</code> postinstall scripts, <code>pip install</code> runtime tracking, <code>cargo</code> install logs.</li>
+<li>- Runtime introspection: which foundation model the agent&#x27;s wrapper actually points at; which MCP servers it has connected to in this session.</li>
+<li>- SBOM scanning (<a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/supply-chain/server-side/sbom-diff-cronjob.yaml"><code>sentinels/supply-chain/server-side/sbom-diff-cronjob.yaml</code></a> is the daily SBOM-diff job).</li>
+</ul>
+<h3>Cross-layer</h3>
+<ul>
+<li>- Discovered MCP server with hash that does not appear in operator-declared <code>mcp-allowlist.json</code> = unauthorized MCP. Mitigation: tighten Cilium FQDN policy + remove allowlist tolerance.</li>
+<li>- Discovered base image SHA different from operator-declared = tag mutation or unsigned-image admission. Audit Kyverno verification.</li>
+</ul>
+<h3>Common failure mode</h3>
+<p>MCP over unix socket leaves no network trace. Discovery via process introspection only. The agent runtime should emit a structured event on every MCP server attach (the Sentinels mcp-launch wrapper does this).</p>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 ID.RA-09, ID.AM-04. NIST AI RMF MAP 4.1. CSA MAESTRO Layer 1, Layer 3, Layer 7. OWASP MCP Top 10 beta. NIST SP 800-161 Rev. 1.</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>MCP over unix socket leaves no network trace</li><li>SBOM scan misses transitive dependency changes</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>ID.RA-09, ID.AM-04</td></tr><tr><th>NIST AI RMF</th><td>MAP 4.1</td></tr><tr><th>CSA MAESTRO</th><td>Layer 1, Layer 3, Layer 7</td></tr><tr><th>OWASP MCP</th><td>beta</td></tr><tr><th>OTHER</th><td>NIST SP 800-161 Rev. 1</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/identify/supply-chain/discovered/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

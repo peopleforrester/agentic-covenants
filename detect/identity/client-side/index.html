@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identity at the client side layer | Detect | Agentic Covenants</title>
+<meta name="description" content="PreToolUse hook emits structured identity events; auditd watches agent process startup; Vector/Fluent Bit ships to SIEM.">
+<link rel="canonical" href="https://agenticcovenants.com/detect/identity/client-side/">
+<meta property="og:title" content="Identity at the client side layer | Detect | Agentic Covenants">
+<meta property="og:description" content="PreToolUse hook emits structured identity events; auditd watches agent process startup; Vector/Fluent Bit ships to SIEM.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/detect/identity/client-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Detect</a> ›
+  <span>Identity</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Detect (DE) · Identity</p>
+  <h1>Identity <span class="at">at the</span> client side <span class="at">layer</span></h1>
+  <p class="strength strength-client-side"><strong>deterministic</strong> · Outside the model&#x27;s reasoning</p>
+  <blockquote class="q">If this concern is breached, how do we know?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="here" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>PreToolUse hook emits structured identity events; auditd watches agent process startup; Vector/Fluent Bit ships to SIEM.</p></section>
+  <section class="artifacts"><h2>Artifacts (3)</h2><figure class="artifact"><figcaption><code>auditd-agent.rules</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/identity/client-side/auditd-agent.rules">view on GitHub</a></figcaption><pre><code># ABOUTME: auditd rules for agent process startup. Drop in /etc/audit/rules.d/ and reload with augenrules --load.
+# ABOUTME: Watches by absolute path; if the agent binary is moved or symlinked elsewhere the rule misses, so re-audit periodically.
+
+# Watch for execve of any agent binary. The -k tag is what audit search uses.
+-a always,exit -F arch=b64 -S execve -F path=/usr/local/bin/claude -k agent_exec
+-a always,exit -F arch=b64 -S execve -F path=/usr/local/bin/agent-bwrap -k agent_exec
+-a always,exit -F arch=b64 -S execve -F path=/usr/local/bin/mcp-launch -k agent_exec
+
+# Watch for credential file reads (ACL should already deny these to the agent
+# user, but a rule on the file detects attempts).
+-w /etc/agents/ -p ra -k agent_credential_access
+
+# Watch for hook config edits.
+-w /etc/agents/hooks/ -p wa -k hook_config_edit
+-w /etc/agents/mcp-allowlist.json -p wa -k allowlist_edit
+
+# Watch for --no-verify in any process arg (the agent attempting to bypass
+# pre-commit). The short form -n is also caught by the second rule.
+-a always,exit -F arch=b64 -S execve -F a1=*--no-verify* -k git_no_verify
+-a always,exit -F arch=b64 -S execve -F a1=*-n* -k git_short_no_verify
+</code></pre></figure><figure class="artifact"><figcaption><code>identity-log-hook.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/identity/client-side/identity-log-hook.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: PreToolUse hook that emits a structured JSON identity event to local syslog. Designed to chain ahead of pre_tool_use.sh.
+# ABOUTME: Hashes the credential before logging; never logs the raw token.
+
+set -euo pipefail
+
+INPUT=&quot;$(cat)&quot;
+SESSION_ID=&quot;$(echo &quot;$INPUT&quot; | jq -r &#x27;.session_id // &quot;unknown&quot;&#x27;)&quot;
+TOOL_NAME=&quot;$(echo &quot;$INPUT&quot; | jq -r &#x27;.tool_name // &quot;unknown&quot;&#x27;)&quot;
+TOOL_INPUT=&quot;$(echo &quot;$INPUT&quot; | jq -r &#x27;.tool_input.command // &quot;&quot;&#x27;)&quot;
+
+# Hash the credential. Truncate to 16 hex chars (64 bits) -- long enough that
+# collisions across the agent population are negligible, short enough not to
+# reveal the full hash in logs.
+CRED_HASH=&quot;$(printf &#x27;%s&#x27; &quot;${ANTHROPIC_API_KEY:-}&quot; | sha256sum | cut -d&#x27; &#x27; -f1 | head -c 16)&quot;
+EFFECTIVE_UID=&quot;$(id -u)&quot;
+HOSTNAME=&quot;$(hostname -f 2&gt;/dev/null || hostname)&quot;
+TIMESTAMP=&quot;$(date -Iseconds)&quot;
+
+EVENT=&quot;$(jq -n \
+  --arg session &quot;$SESSION_ID&quot; \
+  --arg tool &quot;$TOOL_NAME&quot; \
+  --arg input &quot;$TOOL_INPUT&quot; \
+  --arg cred &quot;$CRED_HASH&quot; \
+  --argjson uid &quot;$EFFECTIVE_UID&quot; \
+  --arg host &quot;$HOSTNAME&quot; \
+  --arg ts &quot;$TIMESTAMP&quot; \
+  &#x27;{event: &quot;identity&quot;, session: $session, tool: $tool, input: $input, cred_fingerprint: $cred, uid: $uid, host: $host, ts: $ts}&#x27;)&quot;
+
+logger -t agent-sentinel -p user.info &quot;$EVENT&quot;
+
+# Pass the original input through to the next hook in the chain. PreToolUse
+# hooks are expected to echo the input for downstream consumers.
+echo &quot;$INPUT&quot;
+exit 0
+</code></pre></figure><figure class="artifact"><figcaption><code>vector.toml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/identity/client-side/vector.toml">view on GitHub</a></figcaption><pre><code># ABOUTME: Vector config that ingests local syslog and ships parsed agent-sentinel events to Elasticsearch.
+# ABOUTME: Substitute siem.example.com and SIEM_TOKEN. Vector 0.40+ required for the parse_json! built-in used here.
+
+[sources.syslog_local]
+type = &quot;syslog&quot;
+mode = &quot;tcp&quot;
+address = &quot;127.0.0.1:6514&quot;
+max_length = 102400
+
+[transforms.parse_agent]
+type = &quot;remap&quot;
+inputs = [&quot;syslog_local&quot;]
+source = &#x27;&#x27;&#x27;
+  # Only process events tagged &quot;agent-sentinel&quot;.
+  if .appname != &quot;agent-sentinel&quot; {
+    abort
+  }
+  parsed, err = parse_json(.message)
+  if err != null {
+    .parse_error = err
+  } else {
+    . = merge(., parsed)
+  }
+  .source = &quot;agent-sentinel&quot;
+  .ingested_at = now()
+&#x27;&#x27;&#x27;
+
+# Drop events that failed to parse so we don&#x27;t pollute the index. The parse
+# error is logged at WARN by Vector&#x27;s internal stats.
+[transforms.drop_unparsed]
+type = &quot;filter&quot;
+inputs = [&quot;parse_agent&quot;]
+condition = &#x27;&#x27;&#x27;
+  exists(.event)
+&#x27;&#x27;&#x27;
+
+[sinks.siem]
+type = &quot;elasticsearch&quot;
+inputs = [&quot;drop_unparsed&quot;]
+endpoints = [&quot;https://siem.example.com:9200&quot;]
+mode = &quot;bulk&quot;
+bulk.index = &quot;agent-sentinel-%Y.%m.%d&quot;
+
+[sinks.siem.auth]
+strategy = &quot;bearer&quot;
+token = &quot;${SIEM_TOKEN}&quot;
+
+# Ship to a local file as a backstop in case the SIEM is unreachable.
+# Vector buffers and replays automatically, but this gives us a last-resort
+# audit trail on the operator host itself.
+[sinks.local_archive]
+type = &quot;file&quot;
+inputs = [&quot;drop_unparsed&quot;]
+path = &quot;/var/log/agent-sentinel/%Y-%m-%d.jsonl&quot;
+encoding.codec = &quot;json&quot;
+compression = &quot;gzip&quot;
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Sentinels, Identity / Client-side</h2>
+<p><strong>Control.</strong> PreToolUse hook emits structured identity events; auditd watches agent process startup; Vector or Fluent Bit ships to SIEM.</p>
+<p><strong>Strength.</strong> Deterministic when ships actually happen. Tamper-evident only if the SIEM endpoint is owned by the operator account, not the agent&#x27;s.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- <code>auditd</code> (Linux) or <code>audit_pipe</code> (macOS).</li>
+<li>- Vector 0.40+ or Fluent Bit 3.0+.</li>
+<li>- A SIEM (Splunk, Elastic, Loki, Datadog, Sumo Logic).</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/identity-log-hook.sh"><code>identity-log-hook.sh</code></a>, PreToolUse hook that emits a structured JSON event with session ID, tool name, credential fingerprint (hash, never the token), effective UID, hostname, timestamp.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/auditd-agent.rules"><code>auditd-agent.rules</code></a>, auditd watch rules for agent process startup. Drop in <code>/etc/audit/rules.d/</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/vector.toml"><code>vector.toml</code></a>, Vector config that parses syslog, enriches, and ships to Elasticsearch (substitute your SIEM endpoint).</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Hook emits log on tool call
+echo &#x27;{&quot;session_id&quot;:&quot;test&quot;,&quot;tool_name&quot;:&quot;Read&quot;}&#x27; | ./identity-log-hook.sh
+journalctl -t agent-sentinel --since &quot;1 minute ago&quot;
+# expected: structured JSON event with credential fingerprint, no raw token
+
+# 2. Audit rule fires on agent start
+sudo -u agent-runner /usr/local/bin/claude --version
+ausearch -k agent_exec --start recent
+# expected: execve event with UID and command line
+
+# 3. Vector ships to SIEM
+curl -sS https://siem.example.com:9200/agent-sentinel-*/_search?q=event:identity \
+  -H &quot;Authorization: Bearer $SIEM_TOKEN&quot; | jq &#x27;.hits.total.value&#x27;
+# expected: non-zero count
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- Logging the raw token instead of a hash. Anyone with SIEM access can replay the agent.</li>
+<li>- Hook ships logs to local file only. Agent with filesystem access edits the log.</li>
+<li>- Auditd rule on the binary path; if the agent moves the binary or runs from a different path, the rule misses. Use <code>auditctl -l</code> to confirm rules are loaded.</li>
+<li>- Credential fingerprint hash too short and collides across agents. Use at least 16 hex chars.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 DE.CM-01, DE.CM-09. NIST SP 800-92. NIST NCCoE Concept Paper on Software and AI Agent Identity and Authorization (Feb 5, 2026).</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>logging the raw token instead of a hash</li><li>hook ships only to local file</li><li>auditd rule on binary path defeated by binary move</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>DE.CM-01, DE.CM-09</td></tr><tr><th>OTHER</th><td>NIST SP 800-92, NIST NCCoE Concept Paper on AI Agent Identity (Feb 5, 2026)</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/detect/identity/client-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Approval gating at the server side layer | Respond | Agentic Covenants</title>
+<meta name="description" content="Lock branch protection (revoke bypass perms, raise required reviewers), pause CI/CD, engage deployment freeze, lock GitHub environments.">
+<link rel="canonical" href="https://agenticcovenants.com/respond/approval-gating/server-side/">
+<meta property="og:title" content="Approval gating at the server side layer | Respond | Agentic Covenants">
+<meta property="og:description" content="Lock branch protection (revoke bypass perms, raise required reviewers), pause CI/CD, engage deployment freeze, lock GitHub environments.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/respond/approval-gating/server-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Respond</a> ›
+  <span>Approval gating</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Respond (RS) · Approval gating</p>
+  <h1>Approval gating <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
+  <blockquote class="q">How do I stop the bleeding now?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Lock branch protection (revoke bypass perms, raise required reviewers), pause CI/CD, engage deployment freeze, lock GitHub environments.</p></section>
+  <section class="artifacts"><h2>Artifacts (3)</h2><figure class="artifact"><figcaption><code>agent-approval-lockdown-server</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/approval-gating/server-side/agent-approval-lockdown-server">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Server-side approval-gating lockdown runbook. Branch protection lock, workflows disabled, freeze engaged.
+# ABOUTME: Pre-stage branch-protection-locked.json and environment-locked.json. gh CLI must be authenticated as break-glass.
+
+set -euo pipefail
+
+if [[ $# -lt 1 ]]; then
+  echo &quot;Usage: agent-approval-lockdown-server &lt;AGENT_NAME&gt;&quot; &gt;&amp;2
+  echo &quot;  REPO=org/repo agent-approval-lockdown-server &lt;AGENT_NAME&gt;&quot; &gt;&amp;2
+  exit 64
+fi
+
+AGENT_NAME=&quot;$1&quot;
+REPO=&quot;${REPO:?REPO must be set to the GitHub owner/repo}&quot;
+INCIDENT_ID=&quot;$(uuidgen 2&gt;/dev/null || python3 -c &#x27;import uuid; print(uuid.uuid4())&#x27;)&quot;
+EMERGENCY_DIR=&quot;${EMERGENCY_DIR:-/etc/agents/emergency}&quot;
+
+for src in \
+    &quot;$EMERGENCY_DIR/branch-protection-locked.json&quot; \
+    &quot;$EMERGENCY_DIR/environment-locked.json&quot;; do
+  if [[ ! -r &quot;$src&quot; ]]; then
+    echo &quot;REFUSING: pre-staged artifact missing: $src&quot; &gt;&amp;2
+    exit 1
+  fi
+done
+
+# 1. Lock branch protection. Sets enforce_admins=true, lock_branch=true,
+# required_approving_review_count=4, restrictions to incident-response team.
+gh api -X PUT &quot;repos/$REPO/branches/main/protection&quot; \
+  --input &quot;$EMERGENCY_DIR/branch-protection-locked.json&quot; &gt;/dev/null
+
+# 2. Disable every workflow in the repo. This stops new pipeline runs but
+# does NOT cancel in-flight runs; cancel them explicitly below.
+mapfile -t WORKFLOW_IDS &lt; &lt;(
+  gh api &quot;repos/$REPO/actions/workflows&quot; --jq &#x27;.workflows[].id&#x27;
+)
+for wid in &quot;${WORKFLOW_IDS[@]}&quot;; do
+  gh api -X PUT &quot;repos/$REPO/actions/workflows/$wid/disable&quot; &gt;/dev/null 2&gt;&amp;1 || true
+done
+
+# 3. Cancel in-flight runs.
+mapfile -t RUN_IDS &lt; &lt;(
+  gh api &quot;repos/$REPO/actions/runs?status=in_progress&quot; --jq &#x27;.workflow_runs[].id&#x27; 2&gt;/dev/null
+)
+for rid in &quot;${RUN_IDS[@]}&quot;; do
+  gh api -X POST &quot;repos/$REPO/actions/runs/$rid/cancel&quot; &gt;/dev/null 2&gt;&amp;1 || true
+done
+
+# 4. Engage deployment freeze.
+gh variable set DEPLOY_FREEZE -b true -R &quot;$REPO&quot; &gt;/dev/null
+
+# 5. Lock all GitHub environments.
+mapfile -t ENV_NAMES &lt; &lt;(
+  gh api &quot;repos/$REPO/environments&quot; --jq &#x27;.environments[].name&#x27; 2&gt;/dev/null
+)
+for env in &quot;${ENV_NAMES[@]}&quot;; do
+  gh api -X PUT &quot;repos/$REPO/environments/$env&quot; \
+    --input &quot;$EMERGENCY_DIR/environment-locked.json&quot; &gt;/dev/null 2&gt;&amp;1 || true
+done
+
+# 6. Notify on-call.
+if [[ -n &quot;${PAGERDUTY_WEBHOOK:-}&quot; ]]; then
+  curl -sS -X POST &quot;$PAGERDUTY_WEBHOOK&quot; \
+    -H &quot;Content-Type: application/json&quot; \
+    -d &quot;$(jq -n --arg agent &quot;$AGENT_NAME&quot; --arg incident &quot;$INCIDENT_ID&quot; \
+            &#x27;{incident:{title:(&quot;Agent approval lockdown: &quot; + $agent), urgency:&quot;high&quot;, incident_key:$incident}}&#x27;)&quot; \
+    &gt;/dev/null || true
+fi
+
+logger -t agent-incident -p user.warning \
+  &quot;$(jq -n \
+      --arg event &quot;approval_locked_server&quot; \
+      --arg agent &quot;$AGENT_NAME&quot; \
+      --arg repo &quot;$REPO&quot; \
+      --arg incident &quot;$INCIDENT_ID&quot; \
+      --arg actor &quot;$(whoami)&quot; \
+      --arg ts &quot;$(date -Iseconds)&quot; \
+      &#x27;{event:$event, agent:$agent, repo:$repo, incident:$incident, actor:$actor, ts:$ts}&#x27;)&quot;
+
+echo &quot;Server-side approval gating locked down for $AGENT_NAME on $REPO (incident $INCIDENT_ID)&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>branch-protection-locked.json</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/approval-gating/server-side/branch-protection-locked.json">view on GitHub</a></figcaption><pre><code>{
+  &quot;required_status_checks&quot;: {
+    &quot;strict&quot;: true,
+    &quot;contexts&quot;: [&quot;ci/build&quot;, &quot;ci/test&quot;, &quot;ci/security&quot;]
+  },
+  &quot;enforce_admins&quot;: true,
+  &quot;required_pull_request_reviews&quot;: {
+    &quot;required_approving_review_count&quot;: 4,
+    &quot;dismiss_stale_reviews&quot;: true,
+    &quot;require_code_owner_reviews&quot;: true,
+    &quot;require_last_push_approval&quot;: true
+  },
+  &quot;required_linear_history&quot;: true,
+  &quot;allow_force_pushes&quot;: false,
+  &quot;allow_deletions&quot;: false,
+  &quot;required_conversation_resolution&quot;: true,
+  &quot;lock_branch&quot;: true,
+  &quot;restrictions&quot;: {
+    &quot;users&quot;: [],
+    &quot;teams&quot;: [&quot;incident-response&quot;],
+    &quot;apps&quot;: []
+  }
+}
+</code></pre></figure><figure class="artifact"><figcaption><code>environment-locked.json</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/approval-gating/server-side/environment-locked.json">view on GitHub</a></figcaption><pre><code>{
+  &quot;wait_timer&quot;: 0,
+  &quot;deployment_branch_policy&quot;: null,
+  &quot;reviewers&quot;: [
+    {
+      &quot;type&quot;: &quot;Team&quot;,
+      &quot;id&quot;: 0
+    }
+  ],
+  &quot;_comment&quot;: &quot;Substitute reviewers[].id with the GitHub team ID of incident-response. Use: gh api orgs/&lt;org&gt;/teams/incident-response --jq .id&quot;
+}
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Interventions, Approval gating / Server-side</h2>
+<p><strong>Trigger.</strong> Branch protection bypass detected, deployment freeze breach, CODEOWNERS bypass, force-push to a protected branch.</p>
+<p><strong>Authority.</strong> On-call plus security review (changes to approval surfaces themselves are sensitive).</p>
+<p><strong>Speed target.</strong> Under 60 seconds.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- <code>gh</code> CLI authenticated as a break-glass identity with <code>repo_admin</code> permission.</li>
+<li>- A PagerDuty webhook (or equivalent) configured for the <code>incident-response</code> team.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-approval-lockdown-server"><code>agent-approval-lockdown-server</code></a>, runbook script. Locks branch protection to require 4 reviewers, <code>enforce_admins: true</code>, <code>lock_branch: true</code>. Disables every workflow in the repo. Sets <code>DEPLOY_FREEZE=true</code>. Locks every GitHub environment to require the <code>incident-response</code> team.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/branch-protection-locked.json"><code>branch-protection-locked.json</code></a>, pre-staged branch-protection config applied during the lockdown. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/branch-protection-locked.json</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/environment-locked.json"><code>environment-locked.json</code></a>, pre-staged GitHub Environment config restricting deployments to the incident-response team. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/environment-locked.json</code>.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Branch protection locked
+gh api repos/example-org/agent-config/branches/main/protection \
+  --jq &#x27;{enforce_admins: .enforce_admins.enabled, lock: .lock_branch.enabled, reviews: .required_pull_request_reviews.required_approving_review_count}&#x27;
+# expected: enforce_admins: true, lock: true, reviews: 4
+
+# 2. Workflows disabled
+gh api repos/example-org/agent-config/actions/workflows --jq &#x27;.workflows[] | {name, state}&#x27;
+# expected: all state: disabled_manually
+
+# 3. Freeze active
+gh variable list -R example-org/agent-config | grep DEPLOY_FREEZE
+# expected: DEPLOY_FREEZE=true
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- <code>enforce_admins</code> set to false in the locked config, the lockdown does not lock admins out.</li>
+<li>- Workflow disable applied to wrong repo, emergency triage requires double-checking the <code>-R</code> flag.</li>
+<li>- Freeze variable set but the apply job does not check it. Verify the workflow reads <code>vars.DEPLOY_FREEZE</code>.</li>
+<li>- Locking out the incident-response team itself by removing them from the restrictions list.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 RS.MI-01, RS.CO-02; GV.RR-02 (response dimension). EU AI Act Art. 14, Art. 26. NIST AI RMF GOVERN 4.1, MANAGE 4.1. OWASP ASI02, ASI09.</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>enforce_admins false in locked config</li><li>workflow disable does not cancel in-flight runs</li><li>locking out incident-response team itself</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RS.MI-01, RS.CO-02, GV.RR-02</td></tr><tr><th>NIST AI RMF</th><td>GOVERN 4.1, MANAGE 4.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI02, ASI09</td></tr><tr><th>OTHER</th><td>EU AI Act Art. 14, Art. 26</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/respond/approval-gating/server-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

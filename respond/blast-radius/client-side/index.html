@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blast radius at the client side layer | Respond | Agentic Covenants</title>
+<meta name="description" content="kill -KILL the agent process tree, tear down sandbox, optionally network-isolate operator host, docker stop or kubectl delete pod.">
+<link rel="canonical" href="https://agenticcovenants.com/respond/blast-radius/client-side/">
+<meta property="og:title" content="Blast radius at the client side layer | Respond | Agentic Covenants">
+<meta property="og:description" content="kill -KILL the agent process tree, tear down sandbox, optionally network-isolate operator host, docker stop or kubectl delete pod.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/respond/blast-radius/client-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Respond</a> ›
+  <span>Blast radius</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Respond (RS) · Blast radius</p>
+  <h1>Blast radius <span class="at">at the</span> client side <span class="at">layer</span></h1>
+  <p class="strength strength-client-side"><strong>deterministic</strong> · Outside the model&#x27;s reasoning</p>
+  <blockquote class="q">How do I stop the bleeding now?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="here" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>kill -KILL the agent process tree, tear down sandbox, optionally network-isolate operator host, docker stop or kubectl delete pod.</p></section>
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>agent-isolate-host</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/blast-radius/client-side/agent-isolate-host">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Local blast-radius containment runbook. Process-group kill of the agent tree, sandbox teardown, container stop.
+# ABOUTME: Pre-authorized at on-call. Highest-urgency runbook in the matrix; speed target 5 seconds.
+
+set -euo pipefail
+
+if [[ $# -lt 1 ]]; then
+  echo &quot;Usage: agent-isolate-host &lt;AGENT_NAME&gt;&quot; &gt;&amp;2
+  exit 64
+fi
+
+AGENT_NAME=&quot;$1&quot;
+INCIDENT_ID=&quot;$(uuidgen 2&gt;/dev/null || python3 -c &#x27;import uuid; print(uuid.uuid4())&#x27;)&quot;
+NETWORK_ISOLATE=&quot;${NETWORK_ISOLATE:-0}&quot;   # set to 1 for last-resort host-side network cut
+
+# 1. Kill the agent process tree by process group. -f matches the full
+# command line so wrapped invocations are caught.
+mapfile -t AGENT_PIDS &lt; &lt;(pgrep -f &quot;claude.*$AGENT_NAME&quot; 2&gt;/dev/null || true)
+for pid in &quot;${AGENT_PIDS[@]}&quot;; do
+  PGID=&quot;$(ps -o pgid= -p &quot;$pid&quot; 2&gt;/dev/null | tr -d &#x27; &#x27;)&quot;
+  if [[ -n &quot;$PGID&quot; ]]; then
+    kill -KILL -- &quot;-$PGID&quot; 2&gt;/dev/null || true
+  fi
+done
+sleep 1
+
+# 2. Tear down sandbox. bubblewrap should exit when its parent dies if
+# --die-with-parent was set; if it survives, kill explicitly.
+pkill -KILL -f &quot;bwrap.*$AGENT_NAME&quot; 2&gt;/dev/null || true
+
+# 3. Containerized agents (Docker).
+if command -v docker &gt;/dev/null 2&gt;&amp;1; then
+  mapfile -t DOCKER_IDS &lt; &lt;(docker ps --filter &quot;label=agent=$AGENT_NAME&quot; -q 2&gt;/dev/null || true)
+  if [[ ${#DOCKER_IDS[@]} -gt 0 ]]; then
+    docker stop -t 0 &quot;${DOCKER_IDS[@]}&quot; 2&gt;/dev/null || true
+  fi
+fi
+
+# 4. Containerized agents (Kubernetes).
+if command -v kubectl &gt;/dev/null 2&gt;&amp;1; then
+  kubectl delete pods -n &quot;agent-$AGENT_NAME&quot; --all --force --grace-period=0 2&gt;/dev/null &amp;
+fi
+
+# 5. Last-resort host network isolation. Only fire if NETWORK_ISOLATE=1.
+# This also cuts off the operator&#x27;s ability to ship more interventions.
+# Only use if you have an out-of-band channel (phone, separate device).
+if [[ &quot;$NETWORK_ISOLATE&quot; == &quot;1&quot; ]]; then
+  echo &quot;WARN: severing host network at operator request&quot; &gt;&amp;2
+  if command -v nmcli &gt;/dev/null 2&gt;&amp;1; then
+    ACTIVE=$(nmcli -t -f NAME connection show --active 2&gt;/dev/null | head -1)
+    [[ -n &quot;$ACTIVE&quot; ]] &amp;&amp; nmcli connection down &quot;$ACTIVE&quot; 2&gt;/dev/null || true
+  fi
+fi
+
+wait
+
+logger -t agent-incident -p user.warning \
+  &quot;$(jq -n \
+      --arg event &quot;blast_radius_contained_local&quot; \
+      --arg agent &quot;$AGENT_NAME&quot; \
+      --arg incident &quot;$INCIDENT_ID&quot; \
+      --arg actor &quot;$(whoami)&quot; \
+      --arg ts &quot;$(date -Iseconds)&quot; \
+      &#x27;{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}&#x27;)&quot;
+
+echo &quot;Local blast radius contained for $AGENT_NAME (incident $INCIDENT_ID)&quot;
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Interventions, Blast radius / Client-side</h2>
+<p><strong>Trigger.</strong> Falco alert from operator host, network attempt from <code>--network none</code> agent, sandbox boundary EPERM spike, unsandboxed-child detection.</p>
+<p><strong>Authority.</strong> On-call, no second approval. <strong>Highest urgency.</strong></p>
+<p><strong>Speed target.</strong> Under 5 seconds.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- <code>pkill</code>, <code>pgrep</code>, <code>ps</code> for process-tree kill.</li>
+<li>- Optionally <code>nmcli</code>, <code>ip link</code> for last-resort host network isolation.</li>
+<li>- <code>docker</code> and <code>kubectl</code> for containerized agents.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-isolate-host"><code>agent-isolate-host</code></a>, runbook script. Process-group kill of the agent tree, kills bubblewrap parents, optionally severs host network, stops Docker/Kubernetes containers labeled with the agent.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. No agent processes
+pgrep -f &quot;claude.*claude-code-prod&quot;
+# expected: no output
+
+# 2. No sandbox processes
+pgrep -f &quot;bwrap.*claude-code-prod&quot;
+# expected: no output
+
+# 3. Containerized agents stopped
+docker ps --filter &quot;label=agent=claude-code-prod&quot;
+# expected: empty list
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- <code>pkill -f</code> matches partial commands; if the agent is invoked through a wrapper, the wrapper survives. The runbook uses process-group kill (<code>kill -- -PGID</code>) to take the whole tree.</li>
+<li>- Sandbox <code>--die-with-parent</code> flag was not set at launch. The sandbox does not exit when its parent dies. Verify <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/blast-radius/client-side/agent-bwrap">Covenants L2-C3 launch flags</a>.</li>
+<li>- Network isolation cuts off the operator&#x27;s ability to remediate. Use only as last resort, and have an out-of-band channel (phone, separate device) to maintain command.</li>
+<li>- Forgetting the containerized-agent step, operator host is clean but Kubernetes pods keep running.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 RS.MI-01, RS.MI-02. NIST SP 800-160 Vol. 1. OWASP ASI05, ASI08. NIST AI RMF MANAGE 4.1.</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>pkill -f matches partials; wrapper survives</li><li>sandbox without --die-with-parent leaves children</li><li>network isolation also cuts off remediation channel</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RS.MI-01, RS.MI-02</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 4.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI05, ASI08</td></tr><tr><th>OTHER</th><td>NIST SP 800-160 Vol. 1</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/respond/blast-radius/client-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

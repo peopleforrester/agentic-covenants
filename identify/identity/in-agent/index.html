@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identity at the in agent layer | Identify | Agentic Covenants</title>
+<meta name="description" content="Agent registers on startup with name, charter ref, owner email, instance ID. Heartbeats. Deregister on shutdown. Dead-mans-switch alerts on heartbeat lapse.">
+<link rel="canonical" href="https://agenticcovenants.com/identify/identity/in-agent/">
+<meta property="og:title" content="Identity at the in agent layer | Identify | Agentic Covenants">
+<meta property="og:description" content="Agent registers on startup with name, charter ref, owner email, instance ID. Heartbeats. Deregister on shutdown. Dead-mans-switch alerts on heartbeat lapse.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/identify/identity/in-agent/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Identify</a> ›
+  <span>Identity</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Identify (ID) · Identity</p>
+  <h1>Identity <span class="at">at the</span> in agent <span class="at">layer</span></h1>
+  <p class="strength strength-in-agent"><strong>advisory</strong> · Bypassable by language alone</p>
+  <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="here" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Agent registers on startup with name, charter ref, owner email, instance ID. Heartbeats. Deregister on shutdown. Dead-mans-switch alerts on heartbeat lapse.</p></section>
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>agent-register.py</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/self-declared/agent-register.py">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env python3
+# ABOUTME: Minimal agent self-registration daemon. POSTs registration on start, heartbeats every N sec, deregisters on shutdown.
+# ABOUTME: Refuses to start if the agent&#x27;s charter is missing or expired. Wrap your agent process so this runs alongside.
+
+import argparse
+import datetime as dt
+import json
+import os
+import signal
+import socket
+import sys
+import time
+import urllib.error
+import urllib.request
+from pathlib import Path
+from typing import Optional
+
+
+REGISTRY_URL = os.environ.get(&quot;INVENTORY_REGISTRY_URL&quot;, &quot;https://inventory.example.com&quot;)
+HEARTBEAT_INTERVAL = int(os.environ.get(&quot;INVENTORY_HEARTBEAT_SEC&quot;, &quot;60&quot;))
+INSTANCE_ID = os.environ.get(&quot;INVENTORY_INSTANCE_ID&quot;, f&quot;{socket.gethostname()}-{os.getpid()}&quot;)
+
+
+class RegistrationError(Exception):
+    pass
+
+
+def load_charter(charter_path: Path) -&gt; dict:
+    &quot;&quot;&quot;Load and minimally validate the charter file. Refuse to register if charter is expired.&quot;&quot;&quot;
+    if not charter_path.exists():
+        raise RegistrationError(f&quot;Charter not found: {charter_path}&quot;)
+
+    import yaml  # local import so the rest of this script does not require pyyaml unless a charter exists
+    charter = yaml.safe_load(charter_path.read_text())
+
+    next_review = charter.get(&quot;next_review_due&quot;)
+    if next_review:
+        # next_review is a date string YYYY-MM-DD per agent-charter.yaml
+        if dt.date.fromisoformat(str(next_review)) &lt; dt.date.today():
+            raise RegistrationError(
+                f&quot;Charter review is overdue ({next_review}). Refusing to start agent.&quot;
+            )
+
+    return charter
+
+
+def http_post(path: str, body: dict, token: str) -&gt; dict:
+    req = urllib.request.Request(
+        f&quot;{REGISTRY_URL}{path}&quot;,
+        data=json.dumps(body).encode(),
+        headers={
+            &quot;Authorization&quot;: f&quot;Bearer {token}&quot;,
+            &quot;Content-Type&quot;: &quot;application/json&quot;,
+        },
+        method=&quot;POST&quot;,
+    )
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        return json.loads(resp.read().decode())
+
+
+def register(charter: dict, charter_ref: str, token: str) -&gt; dict:
+    body = {
+        &quot;agent_identifier&quot;: charter[&quot;agent&quot;][&quot;identifier&quot;],
+        &quot;charter_ref&quot;: charter_ref,
+        &quot;charter_version&quot;: charter[&quot;charter_version&quot;],
+        &quot;owner_email&quot;: charter[&quot;ownership&quot;][&quot;owner_email&quot;],
+        &quot;instance_id&quot;: INSTANCE_ID,
+        &quot;hostname&quot;: socket.gethostname(),
+        &quot;pid&quot;: os.getpid(),
+        &quot;started_at&quot;: dt.datetime.now(dt.timezone.utc).isoformat(),
+        &quot;heartbeat_interval_seconds&quot;: HEARTBEAT_INTERVAL,
+    }
+    return http_post(&quot;/api/v1/agents/register&quot;, body, token)
+
+
+def heartbeat(agent_identifier: str, token: str) -&gt; None:
+    body = {
+        &quot;agent_identifier&quot;: agent_identifier,
+        &quot;instance_id&quot;: INSTANCE_ID,
+        &quot;ts&quot;: dt.datetime.now(dt.timezone.utc).isoformat(),
+    }
+    try:
+        http_post(&quot;/api/v1/agents/heartbeat&quot;, body, token)
+    except urllib.error.URLError as exc:
+        # Backoff is the caller&#x27;s responsibility; log and keep going.
+        print(f&quot;agent-register: heartbeat failed: {exc}&quot;, file=sys.stderr, flush=True)
+
+
+def deregister(agent_identifier: str, token: str) -&gt; None:
+    body = {
+        &quot;agent_identifier&quot;: agent_identifier,
+        &quot;instance_id&quot;: INSTANCE_ID,
+        &quot;ts&quot;: dt.datetime.now(dt.timezone.utc).isoformat(),
+    }
+    try:
+        http_post(&quot;/api/v1/agents/deregister&quot;, body, token)
+    except urllib.error.URLError as exc:
+        print(f&quot;agent-register: deregister failed: {exc}&quot;, file=sys.stderr, flush=True)
+
+
+def main() -&gt; int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(&quot;--charter&quot;, required=True, type=Path, help=&quot;Path to the agent charter YAML.&quot;)
+    parser.add_argument(&quot;--charter-ref&quot;, required=True, help=&quot;Source-of-truth path of the charter (e.g., charters/claude-code-prod.yaml).&quot;)
+    args = parser.parse_args()
+
+    token = os.environ.get(&quot;INVENTORY_TOKEN&quot;)
+    if not token:
+        print(&quot;INVENTORY_TOKEN not set. Refusing to start.&quot;, file=sys.stderr)
+        return 2
+
+    try:
+        charter = load_charter(args.charter)
+    except RegistrationError as exc:
+        print(f&quot;REFUSING: {exc}&quot;, file=sys.stderr)
+        return 3
+
+    register(charter, args.charter_ref, token)
+    agent_identifier = charter[&quot;agent&quot;][&quot;identifier&quot;]
+
+    stop = False
+    def _shutdown(_signo, _frame):
+        nonlocal stop
+        stop = True
+    signal.signal(signal.SIGTERM, _shutdown)
+    signal.signal(signal.SIGINT, _shutdown)
+
+    try:
+        while not stop:
+            heartbeat(agent_identifier, token)
+            for _ in range(HEARTBEAT_INTERVAL):
+                if stop:
+                    break
+                time.sleep(1)
+    finally:
+        deregister(agent_identifier, token)
+
+    return 0
+
+
+if __name__ == &quot;__main__&quot;:
+    sys.exit(main())
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Inventory, Identity / Self-declared</h2>
+<p><strong>What this cell records.</strong> The agent&#x27;s own report of its identity, charter binding, and liveness.</p>
+<h3>Fields captured at registration</h3>
+<ul>
+<li>- <code>agent_identifier</code> (must match the Charter <code>agent.identifier</code>)</li>
+<li>- <code>charter_ref</code> (path to the charter file in source control)</li>
+<li>- <code>charter_version</code> (version on the charter at startup)</li>
+<li>- <code>owner_email</code> (named owner from the charter)</li>
+<li>- <code>instance_id</code> (per-process or per-pod identifier)</li>
+<li>- <code>pid</code>, <code>hostname</code>, <code>started_at</code></li>
+<li>- <code>heartbeat_interval_seconds</code></li>
+</ul>
+<h3>Reference tooling</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-register.py"><code>agent-register.py</code></a>, minimal registration daemon. Sends a <code>POST /api/v1/agents/register</code> on startup, then heartbeats every N seconds, then <code>POST /api/v1/agents/deregister</code> on shutdown. Refuses to start if <code>charter_ref</code> is missing or charter is expired.</li>
+</ul>
+<h3>Cross-layer cross-references</h3>
+<ul>
+<li>- Should appear in operator-declared (<code>inventory/identity/operator-declared/</code>). Mismatch = charter-integrity failure.</li>
+<li>- Should match a discovered identity (<code>inventory/identity/discovered/</code>). Heartbeat lapse without deregister = dead-mans-switch alert.</li>
+</ul>
+<h3>Common failure modes</h3>
+<ul>
+<li>- Agent never implements the registration protocol. Treat as a runtime requirement, not optional.</li>
+<li>- Heartbeat dropped silently on network failure. Use exponential backoff with explicit logging.</li>
+<li>- Registration is best-effort and the agent runs even if registration fails. Refuse to start without a successful registration ack.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 ID.AM-01, ID.AM-02. NIST AI RMF MAP 1.1, MAP 4.1. CSA MAESTRO Layer 7. NIST NCCoE Concept Paper on AI Agent Identity (Feb 5, 2026).</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>agent never implements registration protocol</li><li>registers once, never heartbeats</li><li>registration silently drops on network failure</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>ID.AM-01, ID.AM-02</td></tr><tr><th>NIST AI RMF</th><td>MAP 1.1, MAP 4.1</td></tr><tr><th>CSA MAESTRO</th><td>Layer 7</td></tr><tr><th>OTHER</th><td>NIST NCCoE Concept Paper on AI Agent Identity (Feb 5, 2026)</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/identify/identity/in-agent/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

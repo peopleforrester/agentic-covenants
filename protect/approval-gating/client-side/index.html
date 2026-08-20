@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Approval gating at the client side layer | Protect | Agentic Covenants</title>
+<meta name="description" content="PreToolUse pattern hooks, tiered config, typed confirmation for tier-3, out-of-band for highest tier, judgment-query escalation.">
+<link rel="canonical" href="https://agenticcovenants.com/protect/approval-gating/client-side/">
+<meta property="og:title" content="Approval gating at the client side layer | Protect | Agentic Covenants">
+<meta property="og:description" content="PreToolUse pattern hooks, tiered config, typed confirmation for tier-3, out-of-band for highest tier, judgment-query escalation.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/protect/approval-gating/client-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Protect</a> ›
+  <span>Approval gating</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Protect (PR) · Approval gating</p>
+  <h1>Approval gating <span class="at">at the</span> client side <span class="at">layer</span></h1>
+  <p class="strength strength-client-side"><strong>deterministic</strong> · Outside the model&#x27;s reasoning</p>
+  <blockquote class="q">If the agent decides to violate this concern, what stops it at this layer?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="here" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>PreToolUse pattern hooks, tiered config, typed confirmation for tier-3, out-of-band for highest tier, judgment-query escalation.</p></section>
+  <section class="artifacts"><h2>Artifacts (3)</h2><figure class="artifact"><figcaption><code>escalate.py</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/approval-gating/client-side/escalate.py">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env python3
+# ABOUTME: Judgment-query escalation tool. The agent calls this when it hits a value-laden decision it cannot make alone.
+# ABOUTME: Distinct from yes/no approval: the operator supplies the missing input, not a binary answer.
+
+import argparse
+import json
+import os
+import sys
+import urllib.error
+import urllib.request
+
+
+ESCALATE_URL = os.environ.get(
+    &quot;ESCALATE_URL&quot;,
+    &quot;https://escalate.example.com/api/queries&quot;,
+)
+ESCALATE_TIMEOUT_SEC = int(os.environ.get(&quot;ESCALATE_TIMEOUT_SEC&quot;, &quot;600&quot;))
+
+
+def escalate(question: str, context: dict, tier: str = &quot;judgment&quot;) -&gt; str:
+    &quot;&quot;&quot;Send a judgment query to the operator and return the operator&#x27;s input.
+
+    The operator is expected to provide a free-form response, not a yes/no.
+    This is the load-bearing distinction from `approve()`: an approval is
+    bypassable through alert fatigue; a judgment query is not, because the
+    response is not on a small set of values the operator can rubber-stamp.
+    &quot;&quot;&quot;
+    token = os.environ.get(&quot;ESCALATE_TOKEN&quot;)
+    if not token:
+        print(&quot;ESCALATE_TOKEN not set; refusing to escalate without auth.&quot;, file=sys.stderr)
+        sys.exit(2)
+
+    payload = json.dumps(
+        {
+            &quot;question&quot;: question,
+            &quot;context&quot;: context,
+            &quot;tier&quot;: tier,
+            &quot;session_id&quot;: context.get(&quot;session_id&quot;),
+        }
+    ).encode()
+
+    req = urllib.request.Request(
+        ESCALATE_URL,
+        data=payload,
+        headers={
+            &quot;Content-Type&quot;: &quot;application/json&quot;,
+            &quot;Authorization&quot;: f&quot;Bearer {token}&quot;,
+        },
+        method=&quot;POST&quot;,
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=ESCALATE_TIMEOUT_SEC) as resp:
+            body = json.loads(resp.read().decode())
+    except urllib.error.URLError as exc:
+        print(f&quot;escalate.py: transport error: {exc}&quot;, file=sys.stderr)
+        sys.exit(2)
+    except json.JSONDecodeError:
+        print(&quot;escalate.py: malformed response from escalation service&quot;, file=sys.stderr)
+        sys.exit(2)
+
+    operator_input = body.get(&quot;operator_input&quot;)
+    if not operator_input:
+        print(&quot;escalate.py: operator did not supply input; default deny&quot;, file=sys.stderr)
+        sys.exit(2)
+    return operator_input
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description=&quot;Send a judgment query to the operator. The operator supplies the missing input, not yes/no.&quot;,
+    )
+    parser.add_argument(
+        &quot;--from-stdin&quot;,
+        action=&quot;store_true&quot;,
+        help=&quot;Read a JSON blob from stdin with keys: question, context, tier (optional).&quot;,
+    )
+    parser.add_argument(&quot;--question&quot;, help=&quot;The question to ask. Used when --from-stdin is not set.&quot;)
+    parser.add_argument(&quot;--session-id&quot;, help=&quot;Session ID for correlation.&quot;)
+    parser.add_argument(&quot;--tier&quot;, default=&quot;judgment&quot;, help=&quot;Tier label for the dashboard.&quot;)
+    args = parser.parse_args()
+
+    if args.from_stdin:
+        payload = json.loads(sys.stdin.read())
+        response = escalate(
+            question=payload[&quot;question&quot;],
+            context=payload[&quot;context&quot;],
+            tier=payload.get(&quot;tier&quot;, &quot;judgment&quot;),
+        )
+    else:
+        if not args.question:
+            parser.error(&quot;--question is required when --from-stdin is not set.&quot;)
+        response = escalate(
+            question=args.question,
+            context={&quot;session_id&quot;: args.session_id or &quot;default&quot;},
+            tier=args.tier,
+        )
+    print(json.dumps({&quot;operator_input&quot;: response}))
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre></figure><figure class="artifact"><figcaption><code>pre_tool_use_tiered.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/approval-gating/client-side/pre_tool_use_tiered.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Tiered PreToolUse hook. Tier 1 auto-allow; tier 2 quick confirm; tier 3 typed verbatim; tier 4 out-of-band approval.
+# ABOUTME: Pairs with pre_tool_use.sh from controls/authorization/client-side/ — that one denies; this one gates.
+
+set -euo pipefail
+
+LOG_DIR=&quot;${LOG_DIR:-/var/log/agents/claude-code}&quot;
+COUNTER_BASE=&quot;${COUNTER_BASE:-/var/lib/agents/sessions}&quot;
+SESSION_DESTRUCTIVE_LIMIT=&quot;${SESSION_DESTRUCTIVE_LIMIT:-10}&quot;
+APPROVAL_URL=&quot;${APPROVAL_URL:-https://approvals.example.com}&quot;
+APPROVAL_TIMEOUT_SEC=&quot;${APPROVAL_TIMEOUT_SEC:-600}&quot;
+
+mkdir -p &quot;$LOG_DIR&quot; &quot;$COUNTER_BASE&quot; 2&gt;/dev/null || true
+
+INPUT=&quot;$(cat)&quot;
+TOOL_NAME=&quot;$(echo &quot;$INPUT&quot; | jq -r &#x27;.tool_name // empty&#x27;)&quot;
+TOOL_INPUT=&quot;$(echo &quot;$INPUT&quot; | jq -r &#x27;.tool_input.command // empty&#x27;)&quot;
+SESSION_ID=&quot;$(echo &quot;$INPUT&quot; | jq -r &#x27;.session_id // &quot;default&quot;&#x27;)&quot;
+COUNTER_FILE=&quot;${COUNTER_BASE}/${SESSION_ID}.destructive&quot;
+
+log() {
+  local decision=&quot;$1&quot; tier=&quot;$2&quot; message=&quot;${3:-}&quot;
+  echo &quot;$(date -Iseconds) ${decision} session=${SESSION_ID} tier=${tier} tool=${TOOL_NAME} input=${TOOL_INPUT} ${message}&quot; \
+    &gt;&gt; &quot;$LOG_DIR/pre_tool_use_tiered.log&quot; 2&gt;/dev/null || true
+}
+
+# ----- Tier 1: read-only — allow silently -----
+TIER1_PATTERNS=(
+  &#x27;^(ls|cat|grep|find|head|tail|wc|stat|file|pwd|whoami|date|hostname)\b&#x27;
+  &#x27;^kubectl\s+(get|describe|logs|version|api-resources|api-versions)\b&#x27;
+  &#x27;^aws\s+[a-z0-9-]+\s+(get|list|describe|head)-&#x27;
+  &#x27;^git\s+(status|diff|log|show|branch|rev-parse|rev-list)\b&#x27;
+  &#x27;^docker\s+(ps|images|inspect|version|info)\b&#x27;
+  &#x27;^helm\s+(list|status|history|version|repo|search)\b&#x27;
+  &#x27;^terraform\s+(plan|show|state\s+list|state\s+show|version)\b&#x27;
+)
+for p in &quot;${TIER1_PATTERNS[@]}&quot;; do
+  if echo &quot;$TOOL_INPUT&quot; | grep -qE &quot;$p&quot;; then
+    log ALLOW 1
+    exit 0
+  fi
+done
+
+# ----- Tier 4: out-of-band approval (production-touching) -----
+TIER4_PATTERNS=(
+  &#x27;\bterraform\s+apply\b.*-auto-approve&#x27;
+  &#x27;\bkubectl\s+apply\b.*--server[ =]\S*prod&#x27;
+  &#x27;\baws\s+ec2\s+terminate-instances\b&#x27;
+  &#x27;\baws\s+rds\s+delete-db-instance\b&#x27;
+  &#x27;\bhelm\s+install\b.*--namespace[ =]?prod&#x27;
+)
+for p in &quot;${TIER4_PATTERNS[@]}&quot;; do
+  if echo &quot;$TOOL_INPUT&quot; | grep -qE &quot;$p&quot;; then
+    REQ_ID=&quot;$(uuidgen)&quot;
+    echo &quot;TIER-4 ACTION: $TOOL_INPUT&quot; &gt;&amp;2
+    echo &quot;Out-of-band approval required at: ${APPROVAL_URL}/${REQ_ID}&quot; &gt;&amp;2
+    echo &quot;$INPUT&quot; | curl -sS -X POST \
+      -H &quot;Authorization: Bearer ${APPROVAL_TOKEN:-}&quot; \
+      -H &quot;Content-Type: application/json&quot; \
+      &quot;${APPROVAL_URL}/api/requests/${REQ_ID}&quot; \
+      -d @- &gt;/dev/null || {
+        log ERROR 4 &quot;approval-service-unreachable&quot;
+        echo &quot;ERROR: approval service unreachable; defaulting to deny.&quot; &gt;&amp;2
+        exit 2
+      }
+    DEADLINE=$(( $(date +%s) + APPROVAL_TIMEOUT_SEC ))
+    while [[ &quot;$(date +%s)&quot; -lt &quot;$DEADLINE&quot; ]]; do
+      STATUS=&quot;$(curl -sS &quot;${APPROVAL_URL}/api/requests/${REQ_ID}/status&quot; | jq -r .status)&quot;
+      case &quot;$STATUS&quot; in
+        approved)
+          log ALLOW 4 &quot;approver=$(curl -sS &quot;${APPROVAL_URL}/api/requests/${REQ_ID}/status&quot; | jq -r .approver)&quot;
+          exit 0 ;;
+        denied)
+          log DENY 4 &quot;denied-by-approver&quot;
+          echo &quot;DENIED by out-of-band approver&quot; &gt;&amp;2
+          exit 2 ;;
+      esac
+      sleep 10
+    done
+    log DENY 4 &quot;timeout&quot;
+    echo &quot;TIMEOUT waiting for out-of-band approval (default: deny)&quot; &gt;&amp;2
+    exit 2
+  fi
+done
+
+# ----- Tier 3: typed verbatim confirmation -----
+TIER3_PATTERNS=(
+  &#x27;\bkubectl\s+delete\b&#x27;
+  &#x27;\baws\s+s3\s+rb\b&#x27;
+  &#x27;\bgh\s+repo\s+delete\b&#x27;
+  &#x27;\bdocker\s+system\s+prune\b&#x27;
+  &#x27;\bhelm\s+uninstall\b&#x27;
+  &#x27;\bkubectl\s+scale\b.*--replicas[= ]0\b&#x27;
+)
+for p in &quot;${TIER3_PATTERNS[@]}&quot;; do
+  if echo &quot;$TOOL_INPUT&quot; | grep -qE &quot;$p&quot;; then
+    COUNT=&quot;$(cat &quot;$COUNTER_FILE&quot; 2&gt;/dev/null || echo 0)&quot;
+    if [[ &quot;$COUNT&quot; -ge &quot;$SESSION_DESTRUCTIVE_LIMIT&quot; ]]; then
+      log DENY 3 &quot;session-limit-${COUNT}&quot;
+      echo &quot;BLOCKED: session destructive-action limit reached (${SESSION_DESTRUCTIVE_LIMIT})&quot; &gt;&amp;2
+      exit 2
+    fi
+    echo &quot;TIER-3 ACTION: $TOOL_INPUT&quot; &gt;&amp;2
+    echo &quot;Type the command verbatim to confirm:&quot; &gt;&amp;2
+    if ! IFS= read -r -t 60 confirmation &lt; /dev/tty; then
+      log DENY 3 &quot;confirmation-timeout&quot;
+      echo &quot;BLOCKED: confirmation timed out (60s)&quot; &gt;&amp;2
+      exit 2
+    fi
+    if [[ &quot;$confirmation&quot; != &quot;$TOOL_INPUT&quot; ]]; then
+      log DENY 3 &quot;confirmation-mismatch&quot;
+      echo &quot;BLOCKED: confirmation did not match&quot; &gt;&amp;2
+      exit 2
+    fi
+    echo &quot;$((COUNT + 1))&quot; &gt; &quot;$COUNTER_FILE&quot;
+    log ALLOW 3
+    exit 0
+  fi
+done
+
+# ----- Tier 2: quick confirm (default for unrecognized commands) -----
+# In practice, anything reaching this point is allowed silently, on the
+# assumption that tier-4 hard-deny patterns from controls/authorization/client-side/pre_tool_use.sh
+# already ran upstream and rejected truly dangerous commands.
+log ALLOW 2 &quot;default-allow-after-tiers&quot;
+exit 0
+</code></pre></figure><figure class="artifact"><figcaption><code>tier-config.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/approval-gating/client-side/tier-config.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Declarative tier definitions consumed by pre_tool_use_tiered.sh. Edit here to update tiers without touching the script.
+# ABOUTME: Patterns are POSIX extended regular expressions, applied to the tool_input.command field.
+schema_version: 1
+
+session_destructive_limit: 10
+approval_timeout_sec: 600
+confirmation_timeout_sec: 60
+
+# Default: deny-on-timeout. Never set to &quot;allow&quot;; out-of-band channels exist
+# precisely so the operator&#x27;s absence is treated as a no.
+out_of_band_default: deny
+
+tiers:
+
+  # Tier 1: read-only operations. Auto-allow without prompt.
+  tier_1:
+    description: &quot;Read-only; no operator confirmation&quot;
+    patterns:
+      - &#x27;^(ls|cat|grep|find|head|tail|wc|stat|file|pwd|whoami|date|hostname)\b&#x27;
+      - &#x27;^kubectl\s+(get|describe|logs|version|api-resources|api-versions)\b&#x27;
+      - &#x27;^aws\s+[a-z0-9-]+\s+(get|list|describe|head)-&#x27;
+      - &#x27;^git\s+(status|diff|log|show|branch|rev-parse|rev-list)\b&#x27;
+      - &#x27;^docker\s+(ps|images|inspect|version|info)\b&#x27;
+      - &#x27;^helm\s+(list|status|history|version|repo|search)\b&#x27;
+      - &#x27;^terraform\s+(plan|show|state\s+list|state\s+show|version)\b&#x27;
+
+  # Tier 2: routine mutations. The hook does not gate these directly; the
+  # Claude Code permissions.ask block does (per controls/authorization/client-side/settings.json).
+  tier_2:
+    description: &quot;Routine mutations; Claude Code ask-prompt&quot;
+    patterns:
+      - &#x27;^git\s+(add|commit)\b&#x27;
+      - &#x27;^npm\s+install\b&#x27;
+      - &#x27;^pip\s+install\b&#x27;
+
+  # Tier 3: destructive but recoverable. Typed verbatim confirmation.
+  # Counts against session_destructive_limit.
+  tier_3:
+    description: &quot;Destructive; typed verbatim confirmation; session-limit&quot;
+    patterns:
+      - &#x27;\bkubectl\s+delete\b&#x27;
+      - &#x27;\baws\s+s3\s+rb\b&#x27;
+      - &#x27;\bgh\s+repo\s+delete\b&#x27;
+      - &#x27;\bdocker\s+system\s+prune\b&#x27;
+      - &#x27;\bhelm\s+uninstall\b&#x27;
+      - &#x27;\bkubectl\s+scale\b.*--replicas[= ]0\b&#x27;
+
+  # Tier 4: production-touching. Out-of-band approval channel.
+  # No session-limit because these always require explicit human approval.
+  tier_4:
+    description: &quot;Production-touching; out-of-band approval; deny on timeout&quot;
+    patterns:
+      - &#x27;\bterraform\s+apply\b.*-auto-approve&#x27;
+      - &#x27;\bkubectl\s+apply\b.*--server[ =]\S*prod&#x27;
+      - &#x27;\baws\s+ec2\s+terminate-instances\b&#x27;
+      - &#x27;\baws\s+rds\s+delete-db-instance\b&#x27;
+      - &#x27;\bhelm\s+install\b.*--namespace[ =]?prod&#x27;
+
+# Out-of-band channel configuration
+approval_service:
+  url: https://approvals.example.com
+  # Token must be readable by the operator account that runs the hook,
+  # NOT by the agent&#x27;s own user. Store in /etc/agents/approvals/token with
+  # mode 0640 owner root group operators.
+  token_path: /etc/agents/approvals/token
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Approval gating / Client-side</h2>
+<p><strong>Control.</strong> PreToolUse hooks gating destructive command patterns. Tiered approval matching friction to blast radius. Typed confirmation required for tier-3 commands. Session limits on consecutive destructive ops. Out-of-band confirmation channel for highest-tier actions. Judgment-query escalation for value-laden decisions.</p>
+<p><strong>Strength.</strong> Deterministic for actions that match the tier patterns. The dominant failure mode is <strong>alert fatigue</strong>: reviewers approve reflexively after enough repetitions. Tiering and judgment-query escalation reduce but do not eliminate the failure mode. Equivalent commands not in the pattern list (<code>kubectl scale --replicas=0</code>) defeat the gating; document and move to server-side.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- The PreToolUse hook from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/authorization/client-side/"><code>../../authorization/client-side/</code></a> extended with tiering.</li>
+<li>- A counter or sqlite-backed counter for session limits.</li>
+<li>- An out-of-band channel: signed Slack approval, second-terminal confirmation, FIDO2 hardware key prompt, or a phone-side app.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/pre_tool_use_tiered.sh"><code>pre_tool_use_tiered.sh</code></a>, the deny-then-ask-then-allow hook from Authorization, plus tier-3 typed verbatim confirmation, tier-4 out-of-band approval flow with timeout-deny default, session destructive-action counter (default cap: 10 per session).</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/tier-config.yaml"><code>tier-config.yaml</code></a>, declarative tier definitions consumed by the hook. The hook reads pattern lists from here so operators can update tiers without editing the script.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/escalate.py"><code>escalate.py</code></a>, judgment-query escalation tool. Distinct from approval: the operator supplies the missing input rather than a yes/no.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Tier 3 typed confirmation
+echo &#x27;{&quot;tool_name&quot;:&quot;Bash&quot;,&quot;tool_input&quot;:{&quot;command&quot;:&quot;kubectl delete pod foo&quot;},&quot;session_id&quot;:&quot;test&quot;}&#x27; \
+  | /etc/agents/hooks/pre_tool_use_tiered.sh
+# expected: prompt for typed confirmation; mismatched input fails
+
+# 2. Session limit
+for i in {1..11}; do
+  echo &quot;{\&quot;tool_name\&quot;:\&quot;Bash\&quot;,\&quot;tool_input\&quot;:{\&quot;command\&quot;:\&quot;kubectl delete pod foo$i\&quot;},\&quot;session_id\&quot;:\&quot;test2\&quot;}&quot; \
+    | /etc/agents/hooks/pre_tool_use_tiered.sh &lt; &lt;(echo &quot;kubectl delete pod foo$i&quot;)
+done
+# expected: the 11th fails with &quot;session destructive-action limit reached&quot;
+
+# 3. Out-of-band approval flow end-to-end
+# Issue a tier-4 command. Confirm approval URL appears in Slack. Approve.
+# Confirm command runs. Re-issue. Deny. Confirm command does not run.
+
+# 4. Judgment query
+echo &#x27;{&quot;question&quot;:&quot;This action affects 40% of ARR. Should we proceed?&quot;,&quot;context&quot;:{&quot;session_id&quot;:&quot;test3&quot;,&quot;token&quot;:&quot;...&quot;}}&#x27; \
+  | python3 /etc/agents/tools/escalate.py
+# expected: round-trips through the operator and returns the operator&#x27;s input
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- Flat approval workflow with one tier. Approval rate degrades to the 93% Anthropic measured.</li>
+<li>- Tier-3 typed confirmation that accepts <code>y</code> or <code>yes</code> instead of the literal command. The point is friction proportional to risk.</li>
+<li>- No session counter, so the agent loops on destructive actions and the operator clicks through.</li>
+<li>- Out-of-band channel that defaults to &quot;approve on timeout.&quot; Must default to deny.</li>
+<li>- Treating judgment-query escalation as the same thing as approval. They are different controls. Approval is yes/no. Escalation is &quot;supply the input I cannot generate.&quot;</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 PR.AA-05 (separation of duties), PR.PS-01. NIST AI RMF MANAGE 4.1 (post-deployment monitoring, appeal and override mechanisms). OWASP LLM06 (Excessive Agency). OWASP ASI02, ASI09 (Human-Agent Trust Exploitation). OWASP Agentic Least Agency principle. Assistance-games framing (Russell, 2019). EU AI Act Art. 14 (human oversight). Singapore IMDA &quot;meaningful human accountability.&quot;</p></section>
+  <section class="risks"><h2>Primary bypasses</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>alert fatigue</li><li>pattern evasion (kubectl scale --replicas=0)</li><li>flat workflows degrade fastest</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>PR.AA-05, PR.PS-01</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 4.1</td></tr><tr><th>OWASP LLM</th><td>LLM06</td></tr><tr><th>OWASP AGENTIC</th><td>ASI02, ASI09</td></tr><tr><th>OTHER</th><td>OWASP Agentic Least Agency, Russell 2019 (assistance games)</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/protect/approval-gating/client-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

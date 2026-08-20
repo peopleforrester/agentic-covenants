@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recover · Agentic Restorations Matrix | Agentic Covenants</title>
+<meta name="description" content="How do I get back to a known-good state and not repeat this?">
+<link rel="canonical" href="https://agenticcovenants.com/recover/">
+<meta property="og:title" content="Recover · Agentic Restorations Matrix | Agentic Covenants">
+<meta property="og:description" content="How do I get back to a known-good state and not repeat this?">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/recover/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../govern/index.html">Govern</a> <a href="../identify/index.html">Identify</a> <a href="../protect/index.html">Protect</a> <a href="../detect/index.html">Detect</a> <a href="../respond/index.html">Respond</a> <a href="../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a> › <span>Recover</span></nav>
+<h1>Agentic Restorations Matrix</h1>
+<p class="eyebrow">NIST CSF 2.0 · Recover (RC) · 5 concerns × 3 layers</p>
+<blockquote class="q big">How do I get back to a known-good state and not repeat this?</blockquote>
+<div class="tw">
+<table class="matrix">
+  <thead><tr><th>Concern</th>
+    <th>In-agent <em>advisory</em></th>
+    <th>Client-side <em>deterministic</em></th>
+    <th>Server-side <em>external</em></th></tr></thead>
+  <tbody><tr><th scope="row"><a href="identity/client-side/index.html">Identity</a><span class="intent">Rotate credentials, re-issue per-agent identities, regenerate trust relationships.</span></th><td><a href="identity/in-agent/index.html"><span class="badge empty">empty by design</span><span class="sn">(no enforcement)</span></a></td><td><a href="identity/client-side/index.html"><span class="badge">1 artifact</span><span class="sn">Regenerate credential file with strict ACLs, rotate OIDC client secret, re-authenticate operator host to SSO, verify ACLs survived.</span></a></td><td><a href="identity/server-side/index.html"><span class="badge">1 artifact</span><span class="sn">Disable old ServiceAccount, recreate from declarative source, rotate IAM keys, re-establish OIDC trust policy, re-issue SPIFFE identity, verify no inherited permissions.</span></a></td></tr><tr><th scope="row"><a href="authorization/client-side/index.html">Authorization</a><span class="intent">Rebuild RBAC and IAM from declarative source. Audit for drift introduced during the incident.</span></th><td><a href="authorization/in-agent/index.html"><span class="badge empty">empty by design</span><span class="sn">(no enforcement)</span></a></td><td><a href="authorization/client-side/index.html"><span class="badge">1 artifact</span><span class="sn">Restore local hook config from VCS, verify file ownership and ACLs, reinstall pre-commit hooks, verify Claude Code is on the patched version.</span></a></td><td><a href="authorization/server-side/index.html"><span class="badge">2 artifacts</span><span class="sn">Reapply RBAC, Kyverno, IAM from declarative source; audit for drift between cluster state and source.</span></a></td></tr><tr><th scope="row"><a href="blast-radius/client-side/index.html">Blast radius</a><span class="intent">Restore data, redeploy infrastructure, rebuild from clean state.</span></th><td><a href="blast-radius/in-agent/index.html"><span class="badge empty">empty by design</span><span class="sn">(no enforcement)</span></a></td><td><a href="blast-radius/client-side/index.html"><span class="badge">1 artifact</span><span class="sn">Rebuild operator host from known-good image if untrusted, reinstall agent runtime with signature verification, re-derive sandbox profiles.</span></a></td><td><a href="blast-radius/server-side/index.html"><span class="badge">1 artifact</span><span class="sn">Restore data from immutable backups verified pre-incident, redeploy IaC, reapply NetworkPolicy and ResourceQuota.</span></a></td></tr><tr><th scope="row"><a href="approval-gating/client-side/index.html">Approval gating</a><span class="intent">Re-enable branch protection, audit bypass events, harden gates that were exploited.</span></th><td><a href="approval-gating/in-agent/index.html"><span class="badge empty">empty by design</span><span class="sn">(no enforcement)</span></a></td><td><a href="approval-gating/client-side/index.html"><span class="badge">1 artifact</span><span class="sn">Restore PreToolUse config from VCS, reapply tier definitions, re-enable Auto Mode, re-establish out-of-band channel.</span></a></td><td><a href="approval-gating/server-side/index.html"><span class="badge">2 artifacts</span><span class="sn">Re-enable branch protection (enforce_admins true), re-add CODEOWNERS, audit bypass events from incident, unfreeze deployments only after rest of recovery is verified.</span></a></td></tr><tr><th scope="row"><a href="supply-chain/client-side/index.html">Supply chain</a><span class="intent">Re-pin dependencies, regenerate SBOMs, re-verify signatures, rebuild from clean source.</span></th><td><a href="supply-chain/in-agent/index.html"><span class="badge empty">empty by design</span><span class="sn">(no enforcement)</span></a></td><td><a href="supply-chain/client-side/index.html"><span class="badge">1 artifact</span><span class="sn">Reinstall agent runtime with signature verification, re-pin MCP hashes from clean source, regenerate lockfiles from declared deps.</span></a></td><td><a href="supply-chain/server-side/index.html"><span class="badge">1 artifact</span><span class="sn">Rebuild and re-sign images, regenerate SBOMs, rotate signing key if exposed, force redeploy with new SHA pins.</span></a></td></tr></tbody>
+</table>
+</div>
+<p class="note">Walk a row left to right and ask one question at each layer: if the agent decides to
+violate this concern, what stops it <em>here</em>? All three populated is defense in depth. Only the
+in-agent cell populated is an audit finding, because the model can be talked out of it.</p>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supply chain at the client side layer | Recover | Agentic Covenants</title>
+<meta name="description" content="Reinstall agent runtime with signature verification, re-pin MCP hashes from clean source, regenerate lockfiles from declared deps.">
+<link rel="canonical" href="https://agenticcovenants.com/recover/supply-chain/client-side/">
+<meta property="og:title" content="Supply chain at the client side layer | Recover | Agentic Covenants">
+<meta property="og:description" content="Reinstall agent runtime with signature verification, re-pin MCP hashes from clean source, regenerate lockfiles from declared deps.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/recover/supply-chain/client-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Recover</a> ›
+  <span>Supply chain</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Recover (RC) · Supply chain</p>
+  <h1>Supply chain <span class="at">at the</span> client side <span class="at">layer</span></h1>
+  <p class="strength strength-client-side"><strong>deterministic</strong> · Outside the model&#x27;s reasoning</p>
+  <blockquote class="q">How do I get back to a known-good state and not repeat this?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="here" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Reinstall agent runtime with signature verification, re-pin MCP hashes from clean source, regenerate lockfiles from declared deps.</p></section>
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>agent-restore-supply-chain-local</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/restorations/supply-chain/client-side/agent-restore-supply-chain-local">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Local supply-chain rebuild. Reinstall runtime with sig verification, restore MCP allowlist from clean source, regen lockfiles.
+# ABOUTME: Caller must pass a verified-clean clone path; local files in /etc/agents/ are treated as possibly-tainted.
+
+set -euo pipefail
+
+if [[ $# -lt 3 ]]; then
+  echo &quot;Usage: agent-restore-supply-chain-local &lt;AGENT_NAME&gt; &lt;INCIDENT_ID&gt; &lt;CLEAN_REPO_PATH&gt;&quot; &gt;&amp;2
+  echo &quot;  CLEAN_REPO_PATH must be a freshly cloned repo on a known-clean machine.&quot; &gt;&amp;2
+  exit 64
+fi
+
+AGENT_NAME=&quot;$1&quot;
+INCIDENT_ID=&quot;$2&quot;
+CLEAN_REPO=&quot;$3&quot;
+
+if [[ ! -d &quot;$CLEAN_REPO/controls/supply-chain/client-side&quot; ]]; then
+  echo &quot;REFUSING: $CLEAN_REPO does not contain controls/supply-chain/client-side/&quot; &gt;&amp;2
+  exit 1
+fi
+
+SOURCE_DIR=&quot;$CLEAN_REPO/controls/supply-chain/client-side&quot;
+
+# 1. Restore MCP allowlist from clean source. Replace, do not merge — a
+# merge could keep tainted entries from the local copy.
+install -m 0644 &quot;$SOURCE_DIR/mcp-allowlist.json&quot; /etc/agents/mcp-allowlist.json
+
+# 2. Restore mcp-launch and mcp-verify-tools from clean source.
+install -m 0755 &quot;$SOURCE_DIR/mcp-launch&quot; /usr/local/bin/mcp-launch
+install -m 0755 &quot;$SOURCE_DIR/mcp-verify-tools.py&quot; /usr/local/bin/mcp-verify-tools.py
+
+# 3. Clear chattr +i on lockfiles so the operator can regenerate them.
+for lockfile in \
+    &quot;/etc/agents/$AGENT_NAME/package-lock.json&quot; \
+    &quot;/etc/agents/$AGENT_NAME/requirements.txt&quot; \
+    &quot;/etc/agents/$AGENT_NAME/Pipfile.lock&quot; \
+    &quot;/etc/agents/$AGENT_NAME/poetry.lock&quot; \
+    &quot;/etc/agents/$AGENT_NAME/go.sum&quot; \
+    &quot;/etc/agents/$AGENT_NAME/Cargo.lock&quot;; do
+  [[ -f &quot;$lockfile&quot; ]] &amp;&amp; chattr -i &quot;$lockfile&quot; 2&gt;/dev/null || true
+done
+
+# 4. Run vulnerability scans on the rebuilt environment.
+if [[ -f &quot;/etc/agents/$AGENT_NAME/requirements.txt&quot; ]] &amp;&amp; command -v pip-audit &gt;/dev/null 2&gt;&amp;1; then
+  pip-audit --requirement &quot;/etc/agents/$AGENT_NAME/requirements.txt&quot; --strict || \
+    echo &quot;WARN: pip-audit reported findings — review before restoring agent traffic&quot; &gt;&amp;2
+fi
+
+if [[ -f &quot;/etc/agents/$AGENT_NAME/package.json&quot; ]] &amp;&amp; command -v npm &gt;/dev/null 2&gt;&amp;1; then
+  ( cd &quot;/etc/agents/$AGENT_NAME&quot; &amp;&amp; npm audit --audit-level=high ) || \
+    echo &quot;WARN: npm audit reported findings — review before restoring agent traffic&quot; &gt;&amp;2
+fi
+
+logger -t agent-recovery -p user.notice \
+  &quot;$(jq -n \
+      --arg event &quot;supply_chain_restored_local&quot; \
+      --arg agent &quot;$AGENT_NAME&quot; \
+      --arg incident &quot;$INCIDENT_ID&quot; \
+      --arg actor &quot;$(whoami)&quot; \
+      --arg ts &quot;$(date -Iseconds)&quot; \
+      &#x27;{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}&#x27;)&quot;
+
+echo &quot;Local supply-chain restore complete for $AGENT_NAME&quot;
+echo &quot;Verify pip-audit / npm audit output before restoring agent traffic.&quot;
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Restorations, Supply chain / Client-side</h2>
+<p><strong>Precondition.</strong> Interventions L2-C5 has fired (suspect MCP removed from allowlist, packages quarantined, lockfiles locked). Restorations identity, authorization, blast-radius, and approval-gating rows complete. <strong>A clean MCP allowlist source has been verified</strong> (signed commits, off-cluster mirror, not the possibly-tainted local copy).</p>
+<p><strong>Authority.</strong> On-call.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- <code>cosign</code> for signature verification on the agent runtime install.</li>
+<li>- <code>pip-audit</code>, <code>npm audit</code>, <code>trivy</code>, <code>cargo audit</code>, <code>go vuln</code>, whichever apply.</li>
+<li>- A repo with the canonical <code>mcp-allowlist.json</code> under signed-commit branch protection.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-restore-supply-chain-local"><code>agent-restore-supply-chain-local</code></a>, runbook script. Reinstalls agent runtime with cosign verification, copies a fresh <code>mcp-allowlist.json</code> from clean source (overwriting the post-incident local copy), removes <code>chattr +i</code> from lockfiles, regenerates lockfiles from manifest, runs vulnerability scan.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Agent runtime signature verifies
+cosign verify-blob --signature /usr/local/bin/claude.sig /usr/local/bin/claude
+
+# 2. MCP allowlist matches clean source
+md5sum /etc/agents/mcp-allowlist.json controls/supply-chain/client-side/mcp-allowlist.json
+
+# 3. Lockfiles editable (chattr +i removed)
+lsattr /etc/agents/claude-code-prod/package-lock.json
+# expected: &#x27;i&#x27; attribute absent
+
+# 4. Vulnerability scan clean
+pip-audit --requirement requirements.txt --strict
+npm audit --audit-level=high
+</code></pre>
+<h3>Common failure modes</h3>
+<ul>
+<li>- Re-pin to &quot;current&quot; pins to a poisoned current. Pin to a hash from before the earliest indicator of compromise, even if a newer version exists.</li>
+<li>- Lockfile regenerated against a still-tainted manifest. Verify manifest before regen.</li>
+<li>- Signature verification accepts the same compromised key, if there&#x27;s any chance the signing identity itself was exposed, the server-side row&#x27;s key-rotation step must run first.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 RC.RP-01. NIST AI RMF MANAGE 3.1. OWASP ASI04, ASI06. OWASP MCP04, MCP09.</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>re-pin to &quot;current&quot; pins to a poisoned current</li><li>lockfile regenerated against possibly-tainted manifest</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RC.RP-01</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 3.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI04, ASI06</td></tr><tr><th>OWASP MCP</th><td>MCP04, MCP09</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/recover/supply-chain/client-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

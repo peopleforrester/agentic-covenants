@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supply chain at the server side layer | Respond | Agentic Covenants</title>
+<meta name="description" content="Remove poisoned image from registry, deploy emergency Kyverno deny rule on signature, block compromised registry/MCP domain at network/DNS, force redeploy with last-known-good imag">
+<link rel="canonical" href="https://agenticcovenants.com/respond/supply-chain/server-side/">
+<meta property="og:title" content="Supply chain at the server side layer | Respond | Agentic Covenants">
+<meta property="og:description" content="Remove poisoned image from registry, deploy emergency Kyverno deny rule on signature, block compromised registry/MCP domain at network/DNS, force redeploy with last-known-good imag">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/respond/supply-chain/server-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Respond</a> ›
+  <span>Supply chain</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Respond (RS) · Supply chain</p>
+  <h1>Supply chain <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
+  <blockquote class="q">How do I stop the bleeding now?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Remove poisoned image from registry, deploy emergency Kyverno deny rule on signature, block compromised registry/MCP domain at network/DNS, force redeploy with last-known-good image SHA pinned.</p></section>
+  <section class="artifacts"><h2>Artifacts (3)</h2><figure class="artifact"><figcaption><code>agent-quarantine-supply-chain-server</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/supply-chain/server-side/agent-quarantine-supply-chain-server">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Server-side supply-chain quarantine runbook. crane delete, Kyverno deny on digest, Cilium FQDN deny, force redeploy.
+# ABOUTME: Pre-stage cilium-deny-suspect-fqdns.yaml and last-known-good-image-sha.txt under /etc/agents/emergency/.
+
+set -euo pipefail
+
+if [[ $# -lt 2 ]]; then
+  echo &quot;Usage: agent-quarantine-supply-chain-server &lt;AGENT_NAME&gt; &lt;SUSPECT_IMAGE&gt;&quot; &gt;&amp;2
+  echo &quot;  SUSPECT_IMAGE format: registry/org/name@sha256:DIGEST&quot; &gt;&amp;2
+  exit 64
+fi
+
+AGENT_NAME=&quot;$1&quot;
+SUSPECT_IMAGE=&quot;$2&quot;
+NAMESPACE=&quot;agent-${AGENT_NAME}&quot;
+INCIDENT_ID=&quot;$(uuidgen 2&gt;/dev/null || python3 -c &#x27;import uuid; print(uuid.uuid4())&#x27;)&quot;
+EMERGENCY_DIR=&quot;${EMERGENCY_DIR:-/etc/agents/emergency}&quot;
+
+if [[ ! -r &quot;$EMERGENCY_DIR/last-known-good-image-sha.txt&quot; ]]; then
+  echo &quot;REFUSING: $EMERGENCY_DIR/last-known-good-image-sha.txt not pre-staged&quot; &gt;&amp;2
+  exit 1
+fi
+
+# Extract digest portion of the suspect image. Used for the Kyverno deny rule
+# so an attacker re-tagging the same digest does not bypass.
+DIGEST=&quot;${SUSPECT_IMAGE##*@}&quot;
+if [[ &quot;$DIGEST&quot; == &quot;$SUSPECT_IMAGE&quot; || ! &quot;$DIGEST&quot; =~ ^sha256:[0-9a-f]+$ ]]; then
+  echo &quot;REFUSING: SUSPECT_IMAGE must be a digest reference (registry/name@sha256:...)&quot; &gt;&amp;2
+  exit 64
+fi
+
+# 1. Remove poisoned image from registry. May fail if registry permissions
+# do not allow delete; warn rather than abort so the rest of the runbook runs.
+if command -v crane &gt;/dev/null 2&gt;&amp;1; then
+  crane delete &quot;$SUSPECT_IMAGE&quot; 2&gt;/dev/null || \
+    echo &quot;WARN: image deletion failed; manual registry intervention may be needed&quot; &gt;&amp;2
+else
+  echo &quot;WARN: crane not installed; skipping registry deletion&quot; &gt;&amp;2
+fi
+
+# 2. Apply emergency Kyverno deny rule on the suspect digest.
+SAFE_INCIDENT=&quot;${INCIDENT_ID//-/}&quot;
+kubectl apply -f - &lt;&lt;EOF
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: emergency-deny-image-${SAFE_INCIDENT:0:16}
+  annotations:
+    incident: &quot;true&quot;
+    policies.kyverno.io/severity: critical
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+  - name: deny-suspect-digest
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+    validate:
+      message: &quot;Image quarantined under incident ${INCIDENT_ID}&quot;
+      pattern:
+        spec:
+          containers:
+          - image: &quot;!*${DIGEST}*&quot;
+EOF
+
+# 3. Block egress to compromised MCP domain. The pre-staged CNP must list the
+# domain. For dynamic blocking, edit the pre-staged file before applying.
+if [[ -r &quot;$EMERGENCY_DIR/cilium-deny-suspect-fqdns.yaml&quot; ]]; then
+  kubectl apply -f &quot;$EMERGENCY_DIR/cilium-deny-suspect-fqdns.yaml&quot; 2&gt;/dev/null || \
+    echo &quot;WARN: Cilium policy apply failed (Cilium may not be the CNI here)&quot; &gt;&amp;2
+fi
+
+# 4. Force redeploy workloads with last-known-good image SHA pinned.
+LAST_GOOD_SHA=&quot;$(tr -d &#x27;[:space:]&#x27; &lt; &quot;$EMERGENCY_DIR/last-known-good-image-sha.txt&quot;)&quot;
+LAST_GOOD_IMAGE=&quot;${SUSPECT_IMAGE%%@*}@$LAST_GOOD_SHA&quot;
+
+kubectl set image -n &quot;$NAMESPACE&quot; \
+  deployment/claude-code \
+  &quot;claude=$LAST_GOOD_IMAGE&quot; 2&gt;/dev/null || \
+  echo &quot;WARN: deployment image update failed (deployment may be named differently)&quot; &gt;&amp;2
+
+kubectl rollout restart -n &quot;$NAMESPACE&quot; deployment/claude-code 2&gt;/dev/null || true
+
+logger -t agent-incident -p user.warning \
+  &quot;$(jq -n \
+      --arg event &quot;supply_chain_quarantined_server&quot; \
+      --arg agent &quot;$AGENT_NAME&quot; \
+      --arg suspect &quot;$SUSPECT_IMAGE&quot; \
+      --arg digest &quot;$DIGEST&quot; \
+      --arg incident &quot;$INCIDENT_ID&quot; \
+      --arg actor &quot;$(whoami)&quot; \
+      --arg ts &quot;$(date -Iseconds)&quot; \
+      &#x27;{event:$event, agent:$agent, suspect:$suspect, digest:$digest, incident:$incident, actor:$actor, ts:$ts}&#x27;)&quot;
+
+echo &quot;Server-side supply chain quarantined for $AGENT_NAME (suspect: $SUSPECT_IMAGE, incident: $INCIDENT_ID)&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>cilium-deny-suspect-fqdns.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/supply-chain/server-side/cilium-deny-suspect-fqdns.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Pre-staged CiliumNetworkPolicy denying egress to known-suspect FQDNs. Edit before applying or pre-populate at incident start.
+# ABOUTME: Requires Cilium with enable-l7-proxy: true. The toFQDNs list is the deny mechanism — DNS resolution to these names returns NXDOMAIN.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: emergency-deny-suspect-fqdns
+  namespace: kube-system
+  annotations:
+    incident: &quot;true&quot;
+spec:
+  endpointSelector: {}
+  egressDeny:
+  - toFQDNs:
+    # Substitute these entries with the known-malicious FQDNs from the
+    # incident. The runbook expects the file to be edited (or the list to
+    # be maintained as a known-bad inventory) before apply.
+    - matchName: &quot;suspect-mcp.example.com&quot;
+    - matchName: &quot;evil-registry.example.com&quot;
+    - matchPattern: &quot;*.attacker-tld.example&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>last-known-good-image-sha.txt</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/supply-chain/server-side/last-known-good-image-sha.txt">view on GitHub</a></figcaption><p class="note">55 bytes. Too large to inline; open it on GitHub.</p></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Interventions, Supply chain / Server-side</h2>
+<p><strong>Trigger.</strong> Cosign verification failure, SBOM diff with unauthorized package, image registry pull of unsigned image, FQDN egress denial spike to a suspect MCP domain.</p>
+<p><strong>Authority.</strong> On-call plus security review (registry-level changes affect other workloads).</p>
+<p><strong>Speed target.</strong> Under 5 minutes.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- <code>crane</code> (or registry-specific CLI) for image deletion.</li>
+<li>- <code>kubectl</code> with permission to apply emergency ClusterPolicies and CiliumNetworkPolicies.</li>
+<li>- Cilium with Hubble for FQDN-deny logging.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-quarantine-supply-chain-server"><code>agent-quarantine-supply-chain-server</code></a>, runbook script. Removes the poisoned image via <code>crane delete</code>, deploys an emergency Kyverno deny rule on the bad digest, applies the pre-staged Cilium FQDN deny policy, force-rolls workloads to the last-known-good image SHA.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/cilium-deny-suspect-fqdns.yaml"><code>cilium-deny-suspect-fqdns.yaml</code></a>, pre-staged CiliumNetworkPolicy denying egress to a list of suspect FQDNs. Substitute the <code>matchName</code> entries during the incident or pre-stage with a known-malicious list. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/cilium-deny-suspect-fqdns.yaml</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/last-known-good-image-sha.txt"><code>last-known-good-image-sha.txt</code></a>, pre-staged digest of the last-known-good agent image. <strong>Audit periodically</strong> (the pre-staged value should not itself be contaminated). <strong>Pre-stage</strong> at <code>/etc/agents/emergency/last-known-good-image-sha.txt</code>.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Image removed from registry
+crane manifest &quot;$SUSPECT_IMAGE&quot; 2&gt;&amp;1 | grep -i &quot;not found&quot; || echo &quot;FAIL: image still in registry&quot;
+
+# 2. Kyverno deny in effect
+kubectl run test --image=&quot;$SUSPECT_IMAGE&quot; -n agent-claude-code-prod 2&gt;&amp;1 | grep -i &quot;quarantined&quot; || echo &quot;FAIL: deny did not fire&quot;
+
+# 3. Egress to suspect domain blocked
+kubectl exec -n agent-claude-code-prod $(kubectl get pods -n agent-claude-code-prod -o name | head -1) -- \
+  curl -sS --max-time 3 https://suspect-mcp.example.com 2&gt;&amp;1 | grep -iE &quot;couldn.t resolve|connection refused&quot;
+
+# 4. Workloads on last-known-good image
+kubectl get deployment -n agent-claude-code-prod claude-code -o jsonpath=&#x27;{.spec.template.spec.containers[0].image}&#x27;
+# expected: matches last-known-good
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- Image deletion does not affect already-pulled cached images on nodes. The force-rollout step is mandatory.</li>
+<li>- Cosign deny rule by tag instead of digest, attacker pushes a new tag pointing at the same digest.</li>
+<li>- DNS block applied at one level (cluster CNP) but not at corporate DNS, agents on operator hosts still resolve.</li>
+<li>- Last-known-good SHA file is stale or itself contaminated. Audit the pre-staged value periodically.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 RS.MI-01, RS.MI-02; ID.RA-09 (response dimension); GV.SC-07 (response dimension). NIST SP 800-218A. SLSA framework. OWASP ASI04. NIST AI RMF MANAGE 3.1.</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>cached images on nodes keep running after registry deletion</li><li>cosign deny by tag instead of digest</li><li>DNS block at one level but not corporate resolver</li><li>last-known-good SHA itself contaminated</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RS.MI-01, RS.MI-02, ID.RA-09, GV.SC-07</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 3.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI04</td></tr><tr><th>OTHER</th><td>NIST SP 800-218A, SLSA framework</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/respond/supply-chain/server-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

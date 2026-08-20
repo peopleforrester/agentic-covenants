@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identity at the server side layer | Protect | Agentic Covenants</title>
+<meta name="description" content="Dedicated ServiceAccount or IAM principal per agent. OIDC federation. Short-TTL bound tokens.">
+<link rel="canonical" href="https://agenticcovenants.com/protect/identity/server-side/">
+<meta property="og:title" content="Identity at the server side layer | Protect | Agentic Covenants">
+<meta property="og:description" content="Dedicated ServiceAccount or IAM principal per agent. OIDC federation. Short-TTL bound tokens.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/protect/identity/server-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Protect</a> ›
+  <span>Identity</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Protect (PR) · Identity</p>
+  <h1>Identity <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
+  <blockquote class="q">If the agent decides to violate this concern, what stops it at this layer?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Dedicated ServiceAccount or IAM principal per agent. OIDC federation. Short-TTL bound tokens.</p></section>
+  <section class="artifacts"><h2>Artifacts (7)</h2><figure class="artifact"><figcaption><code>aws-iam-trust-policy.json</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/identity/server-side/aws-iam-trust-policy.json">view on GitHub</a></figcaption><pre><code>{
+  &quot;Version&quot;: &quot;2012-10-17&quot;,
+  &quot;Statement&quot;: [
+    {
+      &quot;Sid&quot;: &quot;AllowAssumeRoleByOneSpecificAgentSA&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Principal&quot;: {
+        &quot;Federated&quot;: &quot;arn:aws:iam::123456789012:oidc-provider/oidc.eks.us-east-1.amazonaws.com/id/EXAMPLE_OIDC_ID&quot;
+      },
+      &quot;Action&quot;: &quot;sts:AssumeRoleWithWebIdentity&quot;,
+      &quot;Condition&quot;: {
+        &quot;StringEquals&quot;: {
+          &quot;oidc.eks.us-east-1.amazonaws.com/id/EXAMPLE_OIDC_ID:sub&quot;: &quot;system:serviceaccount:agent-claude-prod:claude-code&quot;,
+          &quot;oidc.eks.us-east-1.amazonaws.com/id/EXAMPLE_OIDC_ID:aud&quot;: &quot;sts.amazonaws.com&quot;
+        }
+      }
+    }
+  ]
+}
+</code></pre></figure><figure class="artifact"><figcaption><code>namespace.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/identity/server-side/namespace.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Dedicated namespace for one agent with restricted Pod Security Standards enforced at admission.
+# ABOUTME: Substitute agent-claude-prod with your agent name; one namespace per agent, never shared.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: agent-claude-prod
+  labels:
+    # Pod Security Standards: enforce restricted at admission. This blocks
+    # pods that request privileged capabilities, host networking, host paths,
+    # or run as root.
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+    # Tag identifying this as an agent namespace; consumed by Kyverno policies
+    # in controls/authorization/server-side/ and NetworkPolicy selectors in
+    # controls/blast-radius/server-side/.
+    agentic-covenants.io/role: agent
+    agentic-covenants.io/agent-name: claude-code-prod
+</code></pre></figure><figure class="artifact"><figcaption><code>pod-with-projected-token.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/identity/server-side/pod-with-projected-token.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Agent Pod that mounts a projected ServiceAccount token with 15-minute TTL and audience binding.
+# ABOUTME: Image is pinned by digest; substitute with your registry. The 900s TTL is the load-bearing line.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: claude-code
+  namespace: agent-claude-prod
+  labels:
+    app: claude-code
+    agentic-covenants.io/agent-name: claude-code-prod
+spec:
+  serviceAccountName: claude-code
+  automountServiceAccountToken: false   # using projected token volume below
+
+  # Restricted Pod Security Standards compliance.
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+
+  containers:
+  - name: claude
+    # Pin the agent image by digest. Resolve current digest with:
+    #   crane digest registry.example.com/claude-agent:v1
+    image: registry.example.com/claude-agent@sha256:REPLACE_WITH_DIGEST_FROM_CRANE
+    imagePullPolicy: IfNotPresent
+    securityContext:
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 1000
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: [&quot;ALL&quot;]
+      seccompProfile:
+        type: RuntimeDefault
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 1
+        memory: 1Gi
+        ephemeral-storage: 1Gi
+    volumeMounts:
+    - name: agent-token
+      mountPath: /var/run/secrets/agents
+      readOnly: true
+    - name: workdir
+      mountPath: /workspace
+
+  volumes:
+  - name: agent-token
+    projected:
+      sources:
+      - serviceAccountToken:
+          path: token
+          # 15 minutes. The kubelet rotates the token automatically before
+          # expiration. The agent process must re-read the file periodically;
+          # most Kubernetes client libraries do this transparently.
+          expirationSeconds: 900
+          # Audience scopes the token to a specific consumer. A token with
+          # audience=agent-claude-prod cannot be replayed against any other
+          # API. Auth providers MUST verify the audience claim.
+          audience: agent-claude-prod
+  - name: workdir
+    emptyDir:
+      sizeLimit: 500Mi
+</code></pre></figure><figure class="artifact"><figcaption><code>role-and-binding.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/identity/server-side/role-and-binding.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Namespace-scoped Role and RoleBinding for one agent. Never a ClusterRole. Never wildcard verbs.
+# ABOUTME: Lists every API group, resource, and verb explicitly. Add lines as needed; do not collapse to &quot;*&quot;.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: claude-code
+  namespace: agent-claude-prod
+rules:
+# Read-only on workload state in this namespace. The agent diagnoses but does
+# not mutate.
+- apiGroups: [&quot;&quot;]
+  resources: [&quot;pods&quot;, &quot;configmaps&quot;, &quot;services&quot;, &quot;endpoints&quot;]
+  verbs: [&quot;get&quot;, &quot;list&quot;, &quot;watch&quot;]
+- apiGroups: [&quot;apps&quot;]
+  resources: [&quot;deployments&quot;, &quot;replicasets&quot;, &quot;statefulsets&quot;, &quot;daemonsets&quot;]
+  verbs: [&quot;get&quot;, &quot;list&quot;, &quot;watch&quot;]
+- apiGroups: [&quot;batch&quot;]
+  resources: [&quot;jobs&quot;, &quot;cronjobs&quot;]
+  verbs: [&quot;get&quot;, &quot;list&quot;, &quot;watch&quot;]
+# Pod logs and exec. Note: pods/exec is a separate resource from pods.
+# Denying pods does not deny pods/exec; subresources must be enumerated.
+- apiGroups: [&quot;&quot;]
+  resources: [&quot;pods/log&quot;]
+  verbs: [&quot;get&quot;]
+# Deliberately omitted: pods/exec, pods/portforward, secrets, serviceaccounts,
+# rolebindings, anything that would let the agent escalate or read credentials.
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: claude-code
+  namespace: agent-claude-prod
+subjects:
+- kind: ServiceAccount
+  name: claude-code
+  namespace: agent-claude-prod
+roleRef:
+  kind: Role
+  name: claude-code
+  apiGroup: rbac.authorization.k8s.io
+</code></pre></figure><figure class="artifact"><figcaption><code>serviceaccount.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/identity/server-side/serviceaccount.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Per-agent ServiceAccount with IRSA annotation linking to the AWS IAM role for the agent.
+# ABOUTME: One ServiceAccount per agent; never shared. The IRSA annotation must match aws-iam-trust-policy.json.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: claude-code
+  namespace: agent-claude-prod
+  annotations:
+    # IRSA: this annotation tells the EKS pod-identity webhook to project an
+    # OIDC token that the AWS IAM role&#x27;s trust policy can verify. The role
+    # ARN here MUST match the role whose trust policy is in
+    # aws-iam-trust-policy.json.
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/claude-code-prod
+    # GCP Workload Identity equivalent; uncomment if on GKE.
+    # iam.gke.io/gcp-service-account: claude-code-prod@PROJECT.iam.gserviceaccount.com
+    # Azure Workload Identity equivalent; uncomment if on AKS.
+    # azure.workload.identity/client-id: 00000000-0000-0000-0000-000000000000
+automountServiceAccountToken: false   # we use projected tokens via the Pod spec instead
+</code></pre></figure><figure class="artifact"><figcaption><code>spire-entry.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/identity/server-side/spire-entry.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Registers an agent&#x27;s SPIFFE identity for cross-cluster workload attestation via SPIRE.
+# ABOUTME: Optional. Use only when the agent operates across more than one cluster or off-cluster components.
+
+set -euo pipefail
+
+TRUST_DOMAIN=&quot;${TRUST_DOMAIN:-example.com}&quot;
+AGENT_NAME=&quot;${1:-claude-code-prod}&quot;
+NAMESPACE=&quot;${NAMESPACE:-agent-${AGENT_NAME}}&quot;
+SERVICE_ACCOUNT=&quot;${SERVICE_ACCOUNT:-claude-code}&quot;
+TTL_SECONDS=&quot;${TTL_SECONDS:-900}&quot;
+
+if ! command -v spire-server &gt;/dev/null 2&gt;&amp;1; then
+  echo &quot;spire-server CLI not found in PATH.&quot; &gt;&amp;2
+  echo &quot;Install: https://spiffe.io/docs/latest/spire-about/getting-started/&quot; &gt;&amp;2
+  exit 1
+fi
+
+# Register the agent&#x27;s SPIFFE ID. The selectors pin the identity to a
+# specific Kubernetes ServiceAccount in a specific namespace; SPIRE will only
+# issue an SVID to a workload that matches every selector.
+spire-server entry create \
+  -spiffeID &quot;spiffe://${TRUST_DOMAIN}/agent/${AGENT_NAME}&quot; \
+  -parentID &quot;spiffe://${TRUST_DOMAIN}/k8s_workload/${NAMESPACE}&quot; \
+  -selector &quot;k8s:ns:${NAMESPACE}&quot; \
+  -selector &quot;k8s:sa:${SERVICE_ACCOUNT}&quot; \
+  -selector &quot;k8s:pod-label:app:${SERVICE_ACCOUNT}&quot; \
+  -ttl &quot;$TTL_SECONDS&quot;
+
+echo &quot;Registered spiffe://${TRUST_DOMAIN}/agent/${AGENT_NAME}&quot;
+echo &quot;TTL: ${TTL_SECONDS}s. The agent must request fresh SVIDs from the SPIRE Workload API.&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>verify.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/identity/server-side/verify.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Verifies server-side identity controls: dedicated SA, short TTL, identity-bound IAM, cross-agent isolation.
+# ABOUTME: Run with kubectl context targeting the cluster. Exits non-zero on any failed check.
+
+set -euo pipefail
+
+NAMESPACE=&quot;${1:-agent-claude-prod}&quot;
+SA_NAME=&quot;${2:-claude-code}&quot;
+PASS=0
+FAIL=0
+
+check() {
+  local name=&quot;$1&quot; result=&quot;$2&quot;
+  if [[ &quot;$result&quot; == &quot;ok&quot; ]]; then
+    echo &quot;PASS: $name&quot;
+    PASS=$((PASS + 1))
+  else
+    echo &quot;FAIL: $name -- $result&quot;
+    FAIL=$((FAIL + 1))
+  fi
+}
+
+# 1. Dedicated identity per agent
+SA_COUNT=$(kubectl get sa -A -o jsonpath=&#x27;{.items[*].metadata.name}&#x27; \
+  | tr &#x27; &#x27; &#x27;\n&#x27; | grep -cx &quot;$SA_NAME&quot; || true)
+if [[ &quot;$SA_COUNT&quot; -eq 1 ]]; then
+  check &quot;ServiceAccount $SA_NAME exists exactly once cluster-wide&quot; &quot;ok&quot;
+else
+  check &quot;ServiceAccount $SA_NAME exists exactly once cluster-wide&quot; &quot;found in $SA_COUNT namespaces (must be 1)&quot;
+fi
+
+# 2. Token TTL is 15 minutes (900s) or shorter
+POD=$(kubectl get pod -n &quot;$NAMESPACE&quot; -l app=&quot;$SA_NAME&quot; -o jsonpath=&#x27;{.items[0].metadata.name}&#x27; 2&gt;/dev/null || true)
+if [[ -z &quot;$POD&quot; ]]; then
+  check &quot;agent Pod found in $NAMESPACE&quot; &quot;no Pod with label app=$SA_NAME&quot;
+else
+  TTL=$(kubectl get pod -n &quot;$NAMESPACE&quot; &quot;$POD&quot; -o jsonpath=&#x27;{.spec.volumes[?(@.projected)].projected.sources[?(@.serviceAccountToken)].serviceAccountToken.expirationSeconds}&#x27;)
+  if [[ -z &quot;$TTL&quot; ]]; then
+    check &quot;projected token TTL is set&quot; &quot;no expirationSeconds on the projected ServiceAccountToken&quot;
+  elif [[ &quot;$TTL&quot; -le 900 ]]; then
+    check &quot;projected token TTL is &lt;= 900s ($TTL)&quot; &quot;ok&quot;
+  else
+    check &quot;projected token TTL is &lt;= 900s&quot; &quot;TTL is ${TTL}s (must be &lt;= 900)&quot;
+  fi
+fi
+
+# 3. AWS role assumption is identity-bound (only runs if AWS_PROFILE is set)
+if [[ -n &quot;${AWS_PROFILE:-}&quot; ]] &amp;&amp; command -v aws &gt;/dev/null 2&gt;&amp;1; then
+  ROLE_ARN=$(aws --profile &quot;$AWS_PROFILE&quot; sts get-caller-identity --query Arn --output text 2&gt;/dev/null || true)
+  if [[ &quot;$ROLE_ARN&quot; == *&quot;:role/${SA_NAME}-&quot;* || &quot;$ROLE_ARN&quot; == *&quot;:role/${SA_NAME}/&quot;* || &quot;$ROLE_ARN&quot; == *&quot;:assumed-role/${SA_NAME}-&quot;* ]]; then
+    check &quot;AWS role assumption returns dedicated role ($ROLE_ARN)&quot; &quot;ok&quot;
+  else
+    check &quot;AWS role assumption returns dedicated role&quot; &quot;got $ROLE_ARN&quot;
+  fi
+fi
+
+# 4. Cross-agent isolation: this agent&#x27;s pod cannot read another agent&#x27;s token
+OTHER_NS=$(kubectl get ns -l agentic-covenants.io/role=agent -o jsonpath=&#x27;{.items[*].metadata.name}&#x27; \
+  | tr &#x27; &#x27; &#x27;\n&#x27; | grep -vx &quot;$NAMESPACE&quot; | head -1 || true)
+if [[ -n &quot;$OTHER_NS&quot; &amp;&amp; -n &quot;$POD&quot; ]]; then
+  if kubectl exec -n &quot;$NAMESPACE&quot; &quot;$POD&quot; -- ls &quot;/var/run/secrets/${OTHER_NS}/&quot; 2&gt;/dev/null | grep -q .; then
+    check &quot;agent cannot see another agent&#x27;s token volume&quot; &quot;found another agent&#x27;s token mount&quot;
+  else
+    check &quot;agent cannot see another agent&#x27;s token volume&quot; &quot;ok&quot;
+  fi
+fi
+
+echo &quot;&quot;
+echo &quot;Summary: $PASS passed, $FAIL failed&quot;
+exit &quot;$FAIL&quot;
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Identity / Server-side</h2>
+<p><strong>Control.</strong> Dedicated ServiceAccount or IAM principal per agent. OIDC federation with workload identity. Short-lived bound tokens (15-minute TTL). Auth provider rejects requests where agent identity is missing or stale. SPIFFE/SPIRE for cross-cluster identity.</p>
+<p><strong>Strength.</strong> Deterministic and external to the agent. Bypass requires IdP compromise, token replay within the TTL window, or a misconfigured trust policy that accepts tokens from unintended issuers.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- Kubernetes 1.34+ (for <code>expirationSeconds</code> on projected ServiceAccount tokens, restricted Pod Security Standards). Current stable is 1.36 &quot;Haru&quot; (April 2026); 1.33 reached end-of-life June 28, 2026.</li>
+<li>- AWS IAM Roles for Service Accounts (IRSA), GCP Workload Identity, or Azure Workload Identity.</li>
+<li>- SPIFFE/SPIRE if you have multiple clusters or off-cluster components that need a single identity story.</li>
+<li>- An OIDC IdP (Okta, Auth0, Keycloak, Dex).</li>
+</ul>
+<p>&gt; <strong>Direction of travel (mid-2026):</strong> the MCP <code>2026-07-28</code> protocol revision hardens authorization toward OAuth 2.0 / OpenID Connect with <code>iss</code> validation (RFC 9207) and issuer-bound credentials, and the NIST NCCoE agent-identity concept paper (Feb 5, 2026) proposes exactly this stack (OAuth 2.0 + SPIFFE/SPIRE + MCP). The covenant here, identity established by an external IdP, carried by the agent, never asserted by it, is now the ecosystem&#x27;s own direction, not a contrarian stance. See <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/BYPASSES.md"><code>../../../BYPASSES.md</code></a> for the protocol-transition caveats.</p>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/namespace.yaml"><code>namespace.yaml</code></a>, dedicated namespace per agent with restricted Pod Security Standards.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/serviceaccount.yaml"><code>serviceaccount.yaml</code></a>, per-agent ServiceAccount with the IRSA annotation linking to the AWS role.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/role-and-binding.yaml"><code>role-and-binding.yaml</code></a>, namespace-scoped Role and RoleBinding (never ClusterRole). Verbs are explicit; no wildcards.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/pod-with-projected-token.yaml"><code>pod-with-projected-token.yaml</code></a>, Pod that mounts a projected ServiceAccount token with 15-minute TTL and audience binding.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/aws-iam-trust-policy.json"><code>aws-iam-trust-policy.json</code></a>, trust policy with strict OIDC subject condition. The <code>sub</code> field pins the role to one specific <code>system:serviceaccount:&lt;ns&gt;:&lt;sa&gt;</code> pair.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/spire-entry.sh"><code>spire-entry.sh</code></a>, SPIRE registration command for cross-cluster identity. Optional but recommended if you have agents in more than one cluster.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/verify.sh"><code>verify.sh</code></a>, confirms dedicated identity per agent, short token TTL, identity-bound role assumption, cross-agent isolation.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+./verify.sh agent-claude-prod claude-code
+</code></pre>
+<p>The script runs four checks against the live cluster:</p>
+<ul>
+<li>1. Dedicated SA exists per agent and is not shared.</li>
+<li>2. Token TTL is 15 minutes (not 1-hour or unbounded default).</li>
+<li>3. AWS role assumption returns the dedicated role ARN.</li>
+<li>4. The agent&#x27;s Pod cannot read another agent&#x27;s mounted token.</li>
+</ul>
+<h3>Common mistakes</h3>
+<ul>
+<li>- ServiceAccount with cluster-wide scope (the 1.21-and-older default behavior).</li>
+<li>- Token TTL set to the default (1 hour) or unbounded.</li>
+<li>- Trust policy with <code>&quot;sub&quot;: &quot;system:serviceaccount:<em>:</em>&quot;</code>, any SA in any namespace can assume the role.</li>
+<li>- Storing the token in a regular Secret instead of a projected volume; the Secret persists past Pod lifecycle.</li>
+<li>- Multiple agents sharing one IAM role with broad permissions, defeating per-agent attribution.</li>
+<li>- Forgetting to pin the audience. Without <code>audience: agent-&lt;name&gt;</code>, the token is reusable by any service.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 PR.AA-01, PR.AA-02 (identities proofed and bound), PR.AA-03, PR.AA-04 (identity assertions protected, conveyed, verified). NIST SP 800-207 §3.4.1 (per-session authentication). NIST SP 800-63B Rev. 4. NIST NCCoE Concept Paper on Software and AI Agent Identity and Authorization (Feb 5, 2026).</p></section>
+  <section class="risks"><h2>Primary bypasses</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>IdP compromise</li><li>token replay within TTL</li><li>misconfigured trust policy accepting unintended issuers</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>PR.AA-01, PR.AA-02, PR.AA-03, PR.AA-04</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 4.1</td></tr><tr><th>OWASP LLM</th><td>LLM02, LLM06</td></tr><tr><th>OWASP AGENTIC</th><td>ASI03, ASI10</td></tr><tr><th>OTHER</th><td>NIST SP 800-207 §3.4.1, NIST SP 800-63B</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/protect/identity/server-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

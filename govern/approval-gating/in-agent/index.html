@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Approval gating at the in agent layer | Govern | Agentic Covenants</title>
+<meta name="description" content="Charter signed by owner, domain authority, and (Tier 3+) security review. Charter identifies approver of every subsequent scope change. Annual review cadence. Emergency revocation ">
+<link rel="canonical" href="https://agenticcovenants.com/govern/approval-gating/in-agent/">
+<meta property="og:title" content="Approval gating at the in agent layer | Govern | Agentic Covenants">
+<meta property="og:description" content="Charter signed by owner, domain authority, and (Tier 3+) security review. Charter identifies approver of every subsequent scope change. Annual review cadence. Emergency revocation ">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/govern/approval-gating/in-agent/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Govern</a> ›
+  <span>Approval gating</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Govern (GV) · Approval gating</p>
+  <h1>Approval gating <span class="at">at the</span> in agent <span class="at">layer</span></h1>
+  <p class="strength strength-in-agent"><strong>advisory</strong> · Bypassable by language alone</p>
+  <blockquote class="q">Who is allowed to put this agent into the world, under what authority, accountable to what policy, with what retirement criteria?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="here" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Charter signed by owner, domain authority, and (Tier 3+) security review. Charter identifies approver of every subsequent scope change. Annual review cadence. Emergency revocation conditions specified.</p></section>
+  
+  <section class="readme"><h2>Cell notes</h2><h2>Charter, Approval gating / Agent</h2>
+<p><strong>Structural question.</strong> Does the agent charter carry the required approval signatures, an annual review cadence, conditions for emergency revocation, and a clear identifier of the approver of every subsequent change?</p>
+<p><strong>Owner.</strong> Named human owner. Counter-signed by domain authority and (Tier 3+) security review.</p>
+<h3>Template fragment</h3>
+<p>The <code>approvals:</code>, <code>review_cadence:</code>, <code>next_review_due:</code>, and <code>incident_revocation:</code> blocks of <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/templates/agent-charter.yaml"><code>../../templates/agent-charter.yaml</code></a>:</p>
+<pre><code>
+approvals:
+  - approver_name: Steven Heckler
+    approver_role: Managing Director
+    approval_date: 2026-04-15
+    approval_signature: &lt;PGP signature or commit SHA of approval PR&gt;
+  - approver_name: Tapas Banerjee
+    approver_role: Security Review
+    approval_date: 2026-04-15
+    approval_signature: &lt;PGP signature or commit SHA of approval PR&gt;
+
+review_cadence: quarterly
+next_review_due: 2026-07-15
+
+incident_revocation:
+  conditions:
+    - &quot;Detected lethal-trifecta pattern in agent context&quot;
+    - &quot;Two or more Sentinels alerts at severity ERROR within 24h&quot;
+    - &quot;Owner judgment&quot;
+  authority: owner_or_domain_lead
+</code></pre>
+<h3>Audit prompts</h3>
+<ul>
+<li>- For [agent X], are all required approvers signed? Are signatures verifiable (PGP, signed-commit SHA)?</li>
+<li>- When is the next review due? Has it been scheduled?</li>
+<li>- What conditions trigger emergency revocation? Has the runbook for emergency revocation been drilled?</li>
+</ul>
+<h3>Operational tie-in</h3>
+<ul>
+<li>- The charter file lives under branch protection from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/approval-gating/server-side/"><code>../../../controls/approval-gating/server-side/</code></a>. Tampering with the charter is detected by <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/approval-gating/server-side/audit-branch-protection.yml"><code>../../../sentinels/approval-gating/server-side/audit-branch-protection.yml</code></a>.</li>
+<li>- <code>incident_revocation</code> conditions feed the on-call&#x27;s authority to invoke <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/identity/server-side/agent-revoke-server"><code>../../../interventions/identity/server-side/agent-revoke-server</code></a> without a second approval.</li>
+</ul>
+<h3>Common failure mode</h3>
+<p>Approval signatures become reflexive, alert fatigue at the governance layer. Tiered approval (more rigorous review for Tier 3+) is the same cure used in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/approval-gating/client-side/">Covenants L2-C4</a>.</p>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 GV.RR-02; GV.OV-02, GV.OV-03 (oversight reviews; organization adjusts). NIST AI RMF GOVERN 4.1, MANAGE 4.1. ISO/IEC 42001 §A.4.2, §A.9 (performance evaluation). EU AI Act Art. 14, Art. 26.</p></section>
+  
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>GV.RR-02, GV.OV-02, GV.OV-03</td></tr><tr><th>NIST AI RMF</th><td>GOVERN 4.1, MANAGE 4.1</td></tr><tr><th>ISO IEC 42001</th><td>§A.4.2, §A.9</td></tr><tr><th>EU AI ACT</th><td>Art. 14, Art. 26</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/govern/approval-gating/in-agent/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

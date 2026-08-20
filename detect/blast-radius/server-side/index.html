@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blast radius at the server side layer | Detect | Agentic Covenants</title>
+<meta name="description" content="Falco runtime rules for shells in agent containers and writes to sensitive paths; Cilium Hubble drops; ResourceQuota near-limit Prometheus alert; VPC Flow Log REJECTs.">
+<link rel="canonical" href="https://agenticcovenants.com/detect/blast-radius/server-side/">
+<meta property="og:title" content="Blast radius at the server side layer | Detect | Agentic Covenants">
+<meta property="og:description" content="Falco runtime rules for shells in agent containers and writes to sensitive paths; Cilium Hubble drops; ResourceQuota near-limit Prometheus alert; VPC Flow Log REJECTs.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/detect/blast-radius/server-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Detect</a> ›
+  <span>Blast radius</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Detect (DE) · Blast radius</p>
+  <h1>Blast radius <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
+  <blockquote class="q">If this concern is breached, how do we know?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Falco runtime rules for shells in agent containers and writes to sensitive paths; Cilium Hubble drops; ResourceQuota near-limit Prometheus alert; VPC Flow Log REJECTs.</p></section>
+  <section class="artifacts"><h2>Artifacts (4)</h2><figure class="artifact"><figcaption><code>falco-agent-container.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/blast-radius/server-side/falco-agent-container.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Falco runtime rules for agent Pods. Shell spawn, sensitive-path writes, non-allowlisted egress.
+# ABOUTME: agent_pod macro matches namespaces matching agent-*; align with the namespace label from controls/identity/server-side/namespace.yaml.
+- macro: agent_pod
+  condition: k8s.ns.name startswith &quot;agent-&quot;
+
+- list: allowed_agent_egress_ips
+  items:
+    # Populate from the FQDN allowlist in controls/supply-chain/server-side/cilium-mcp-fqdn-egress.yaml
+    # by resolving the names; refresh nightly via a CronJob.
+    - &quot;0.0.0.0&quot;   # placeholder; replace
+
+- rule: Agent Container Spawned Shell
+  desc: Agent containers should not spawn interactive shells
+  condition: &gt;
+    spawned_process and agent_pod
+    and proc.name in (sh, bash, zsh, fish, dash)
+    and proc.tty != 0
+  output: &gt;
+    Agent pod spawned shell
+    (pod=%k8s.pod.name container=%container.name cmd=%proc.cmdline)
+  priority: WARNING
+  tags: [agent, blast_radius]
+
+- rule: Agent Container Wrote to Sensitive Path
+  desc: Agent container writing to /etc, /var/lib, or /usr
+  condition: &gt;
+    open_write and agent_pod
+    and (fd.name startswith /etc
+         or fd.name startswith /var/lib
+         or fd.name startswith /usr)
+  output: &gt;
+    Agent pod wrote to sensitive path
+    (pod=%k8s.pod.name file=%fd.name)
+  priority: ERROR
+  tags: [agent, blast_radius]
+
+- rule: Agent Container Outbound to Non-Allowlisted Host
+  desc: Agent egress to a host outside the per-agent allowlist
+  condition: &gt;
+    outbound and agent_pod
+    and not fd.sip in (allowed_agent_egress_ips)
+  output: &gt;
+    Agent pod outbound to non-allowlisted
+    (pod=%k8s.pod.name dest=%fd.sip:%fd.sport)
+  priority: WARNING
+  tags: [agent, blast_radius, supply_chain]
+
+- rule: Agent Container Attempted Privilege Escalation
+  desc: Agent container called setuid, setgid, or modified capabilities
+  condition: &gt;
+    evt.type in (setuid, setgid, capset)
+    and agent_pod
+  output: &gt;
+    Agent privilege-escalation syscall
+    (pod=%k8s.pod.name syscall=%evt.type)
+  priority: ERROR
+  tags: [agent, sandbox, blast_radius]
+</code></pre></figure><figure class="artifact"><figcaption><code>hubble-export.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/blast-radius/server-side/hubble-export.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Pipes Hubble flow drops to the SIEM as JSON. Run as a long-running systemd service or DaemonSet sidecar.
+# ABOUTME: Without flow export wired up, Hubble is visible only in its own UI and provides no SIEM signal.
+
+set -euo pipefail
+
+SIEM_URL=&quot;${SIEM_URL:-https://siem.example.com:9200/agent-sentinel-network/_doc}&quot;
+SIEM_TOKEN=&quot;${SIEM_TOKEN:?Set SIEM_TOKEN in the environment.}&quot;
+NAMESPACE_FILTER=&quot;${NAMESPACE_FILTER:-agent-}&quot;
+
+# Stream drops only; allowed flows are too noisy. Add --type policy-verdict
+# if you want allow flows for forensic baselining.
+hubble observe --type drop --output json --follow --namespace &quot;${NAMESPACE_FILTER}&quot; \
+| while IFS= read -r line; do
+  curl -sS -X POST &quot;$SIEM_URL&quot; \
+    -H &quot;Authorization: Bearer ${SIEM_TOKEN}&quot; \
+    -H &quot;Content-Type: application/json&quot; \
+    -d &quot;$line&quot; \
+    &gt;/dev/null
+done
+</code></pre></figure><figure class="artifact"><figcaption><code>prometheus-quota-alert.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/blast-radius/server-side/prometheus-quota-alert.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Prometheus AlertManager rules firing when an agent namespace hits 85%/95% of its ResourceQuota.
+# ABOUTME: Pair with kube-state-metrics; the kube_resourcequota series is what these expressions read.
+groups:
+- name: agent-namespace-quota
+  rules:
+
+  - alert: AgentNamespaceQuotaApproaching
+    expr: |
+      (kube_resourcequota{namespace=~&quot;agent-.*&quot;,resource=&quot;requests.cpu&quot;,type=&quot;used&quot;}
+        / kube_resourcequota{namespace=~&quot;agent-.*&quot;,resource=&quot;requests.cpu&quot;,type=&quot;hard&quot;}) &gt; 0.85
+    for: 5m
+    labels:
+      severity: warning
+      framework: agentic-sentinels
+    annotations:
+      summary: &quot;Agent namespace {{ $labels.namespace }} CPU quota at &gt;85% for 5m&quot;
+      description: |
+        Namespace {{ $labels.namespace }} has been consuming over 85% of its
+        ResourceQuota.requests.cpu for the last 5 minutes. This is the early
+        warning. Either scale capacity or investigate runaway agent.
+      runbook: &quot;https://runbooks.example.com/agent-quota-approaching&quot;
+
+  - alert: AgentNamespaceQuotaExceeded
+    expr: |
+      (kube_resourcequota{namespace=~&quot;agent-.*&quot;,resource=&quot;requests.cpu&quot;,type=&quot;used&quot;}
+        / kube_resourcequota{namespace=~&quot;agent-.*&quot;,resource=&quot;requests.cpu&quot;,type=&quot;hard&quot;}) &gt; 0.95
+    for: 1m
+    labels:
+      severity: critical
+      framework: agentic-sentinels
+    annotations:
+      summary: &quot;Agent namespace {{ $labels.namespace }} CPU quota at &gt;95%&quot;
+      description: |
+        New Pod admissions in {{ $labels.namespace }} are likely failing.
+        Investigate immediately.
+      runbook: &quot;https://runbooks.example.com/agent-quota-exceeded&quot;
+
+  - alert: AgentNamespaceMemoryQuotaApproaching
+    expr: |
+      (kube_resourcequota{namespace=~&quot;agent-.*&quot;,resource=&quot;requests.memory&quot;,type=&quot;used&quot;}
+        / kube_resourcequota{namespace=~&quot;agent-.*&quot;,resource=&quot;requests.memory&quot;,type=&quot;hard&quot;}) &gt; 0.85
+    for: 5m
+    labels:
+      severity: warning
+      framework: agentic-sentinels
+    annotations:
+      summary: &quot;Agent namespace {{ $labels.namespace }} memory quota at &gt;85% for 5m&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>vpc-flow-rejects.sql</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/blast-radius/server-side/vpc-flow-rejects.sql">view on GitHub</a></figcaption><p class="note">501 bytes. Too large to inline; open it on GitHub.</p></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Sentinels, Blast radius / Server-side</h2>
+<p><strong>Control.</strong> Falco runtime detection in agent containers. NetworkPolicy violation events via Cilium Hubble. ResourceQuota near-limit alerts via Prometheus. VPC Flow Logs for unexpected egress.</p>
+<p><strong>Strength.</strong> Deterministic at the cluster and cloud layer. Failure modes: Falco rules tagged <code>WARNING</code> that should be <code>ERROR</code> (never page anyone); Hubble enabled but flow export not configured (alerts visible only in Hubble UI); ResourceQuota alert at 85% without auto-scale (alerts but no remediation); VPC Flow Log retention too short to see slow exfiltration.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- Falco 0.40+ deployed as a DaemonSet.</li>
+<li>- Cilium with Hubble flow export enabled.</li>
+<li>- Prometheus + AlertManager.</li>
+<li>- AWS VPC Flow Logs delivered to CloudWatch Logs.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/falco-agent-container.yaml"><code>falco-agent-container.yaml</code></a>, Falco rules for agent Pods: shell spawn, sensitive-path writes, non-allowlisted egress.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/hubble-export.sh"><code>hubble-export.sh</code></a>, pipes <code>hubble observe --type drop</code> to the SIEM.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/prometheus-quota-alert.yaml"><code>prometheus-quota-alert.yaml</code></a>, AlertManager rule firing when ResourceQuota usage exceeds 85%.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/vpc-flow-rejects.sql"><code>vpc-flow-rejects.sql</code></a>, CloudWatch Logs Insights query for VPC Flow REJECT records sourced from agent CIDRs.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Falco fires on shell spawn in agent Pod
+kubectl exec -n agent-claude-prod claude-code -- /bin/sh -i
+# expected: Falco alert &quot;Agent pod spawned shell&quot; via journalctl on Falco node
+
+# 2. Hubble surfaces drops
+kubectl exec -n agent-claude-prod claude-code -- curl -sS --max-time 3 http://blocked.example.com
+hubble observe --pod agent-claude-prod/claude-code --type drop --last 2m
+# expected: drop event
+
+# 3. Quota alert fires
+# Deploy enough Pods to hit 85% of CPU quota; confirm Prometheus alert.
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- Falco rule output not parseable. Use <code>json_output: true</code> in <code>falco.yaml</code>.</li>
+<li>- Hubble enabled but <code>hubble observe --output json</code> not piped anywhere; SIEM has no detection signal.</li>
+<li>- ResourceQuota alert at 85% with no auto-scale, alerts but no remediation. Pair with HPA or operator runbook.</li>
+<li>- VPC Flow Log retention shorter than incident discovery window.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 DE.CM-01, DE.CM-09, DE.AE-03. NISTIR 8596 (Cybersecurity for AI).</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>Falco rules tagged WARNING that should be ERROR</li><li>Hubble flow export not configured</li><li>ResourceQuota alert without auto-scale</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>DE.CM-01, DE.CM-09, DE.AE-03</td></tr><tr><th>OTHER</th><td>NISTIR 8596</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/detect/blast-radius/server-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

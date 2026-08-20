@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Approval gating at the client side layer | Detect | Agentic Covenants</title>
+<meta name="description" content="Approval-timing analysis surfaces alert-fatigue (response under 2s across more than 50 approvals); typed-confirmation mismatch events; out-of-band channel decisions joined to sessi">
+<link rel="canonical" href="https://agenticcovenants.com/detect/approval-gating/client-side/">
+<meta property="og:title" content="Approval gating at the client side layer | Detect | Agentic Covenants">
+<meta property="og:description" content="Approval-timing analysis surfaces alert-fatigue (response under 2s across more than 50 approvals); typed-confirmation mismatch events; out-of-band channel decisions joined to sessi">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/detect/approval-gating/client-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Detect</a> ›
+  <span>Approval gating</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Detect (DE) · Approval gating</p>
+  <h1>Approval gating <span class="at">at the</span> client side <span class="at">layer</span></h1>
+  <p class="strength strength-client-side"><strong>deterministic</strong> · Outside the model&#x27;s reasoning</p>
+  <blockquote class="q">If this concern is breached, how do we know?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="here" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Approval-timing analysis surfaces alert-fatigue (response under 2s across more than 50 approvals); typed-confirmation mismatch events; out-of-band channel decisions joined to session.</p></section>
+  <section class="artifacts"><h2>Artifacts (3)</h2><figure class="artifact"><figcaption><code>approval-timing-emit.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/approval-gating/client-side/approval-timing-emit.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Snippet that wraps the typed-confirmation read with timing measurement and emits a structured timing event.
+# ABOUTME: Source from pre_tool_use_tiered.sh in place of the bare `read -r confirmation &lt; /dev/tty`.
+
+emit_approval_timing() {
+  # Args:
+  #   $1 = tier (numeric: 2, 3, 4)
+  #   $2 = expected confirmation (the literal command, for typed-verbatim tiers)
+  # Reads response from /dev/tty into the global confirmation variable.
+  local tier=&quot;$1&quot;
+  local expected=&quot;$2&quot;
+
+  local start_ns end_ns response_ms matched
+  start_ns=&quot;$(date +%s%N)&quot;
+  IFS= read -r confirmation &lt; /dev/tty
+  end_ns=&quot;$(date +%s%N)&quot;
+  response_ms=$(( (end_ns - start_ns) / 1000000 ))
+
+  if [[ &quot;$confirmation&quot; == &quot;$expected&quot; ]]; then
+    matched=true
+  else
+    matched=false
+  fi
+
+  local event
+  event=&quot;$(jq -n \
+    --arg session &quot;${SESSION_ID:-default}&quot; \
+    --argjson tier &quot;$tier&quot; \
+    --argjson response_ms &quot;$response_ms&quot; \
+    --argjson matched &quot;$matched&quot; \
+    --arg ts &quot;$(date -Iseconds)&quot; \
+    &#x27;{event: &quot;approval_timing&quot;, session: $session, tier: $tier, response_ms: $response_ms, matched: $matched, ts: $ts}&#x27;)&quot;
+  logger -t agent-sentinel -p user.info &quot;$event&quot;
+}
+
+# Usage in pre_tool_use_tiered.sh:
+#
+#   . /etc/agents/hooks/approval-timing-emit.sh
+#
+#   echo &quot;TIER-3 ACTION: $TOOL_INPUT&quot; &gt;&amp;2
+#   echo &quot;Type the command verbatim to confirm:&quot; &gt;&amp;2
+#   emit_approval_timing 3 &quot;$TOOL_INPUT&quot;
+#   if [[ &quot;$confirmation&quot; != &quot;$TOOL_INPUT&quot; ]]; then
+#     ...
+#   fi
+</code></pre></figure><figure class="artifact"><figcaption><code>oob-decision-log.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/approval-gating/client-side/oob-decision-log.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Logs out-of-band approval decisions with the original request ID and session, so SIEM can reconstruct the chain.
+# ABOUTME: Called by the OOB approval workflow (Slack approver action, FIDO2 prompt result, etc.) when a decision is made.
+
+set -euo pipefail
+
+REQ_ID=&quot;${1:?Missing request ID}&quot;
+DECISION=&quot;${2:?Missing decision (approved|denied|timeout)}&quot;
+APPROVER=&quot;${3:-unknown}&quot;
+SESSION_ID=&quot;${4:-unknown}&quot;
+
+case &quot;$DECISION&quot; in
+  approved|denied|timeout) ;;
+  *)
+    echo &quot;oob-decision-log: invalid decision &#x27;$DECISION&#x27; (must be approved|denied|timeout)&quot; &gt;&amp;2
+    exit 64
+    ;;
+esac
+
+event=&quot;$(jq -n \
+  --arg req &quot;$REQ_ID&quot; \
+  --arg decision &quot;$DECISION&quot; \
+  --arg approver &quot;$APPROVER&quot; \
+  --arg session &quot;$SESSION_ID&quot; \
+  --arg ts &quot;$(date -Iseconds)&quot; \
+  &#x27;{event: &quot;oob_approval&quot;, req_id: $req, decision: $decision, approver: $approver, session: $session, ts: $ts}&#x27;)&quot;
+
+logger -t agent-sentinel -p user.info &quot;$event&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>sigma-approval-fatigue.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/approval-gating/client-side/sigma-approval-fatigue.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Sigma rule firing when a user&#x27;s mean tier-≥2 response time is &lt;2s across &gt;50 approvals.
+# ABOUTME: Calibrated against AHRQ PSNet alarm-fatigue research and Anthropic Auto Mode telemetry. Tune for your team.
+title: Operator approval fatigue pattern
+id: 5a7b8c9d-0e1f-2a3b-4c5d-6e7f8a9b0c1d
+status: experimental
+description: &gt;
+  Detects an operator whose typed-confirmation response time has dropped to
+  reflexive levels: mean response under 2 seconds across 50 or more
+  tier-≥2 approvals. Reflexive approval is the failure mode tiered approval
+  exists to fight; when this rule fires, the tiering is no longer adding
+  meaningful friction to the approval flow.
+references:
+  - https://github.com/peopleforrester/agentic-covenants/blob/main/SENTINELS_MATRIX.md
+  - https://psnet.ahrq.gov/perspective/alert-fatigue
+  - Anthropic Auto Mode (March 2026 paper)
+author: agentic-covenants
+date: 2026/05/08
+logsource:
+  category: agent_hook
+detection:
+  selection:
+    event: approval_timing
+    tier|gte: 2
+  timeframe: 1d
+  condition: |
+    selection
+    | aggregate avg(response_ms) as avg_ms, count() as n by user
+    | where avg_ms &lt; 2000 and n &gt; 50
+falsepositives:
+  - Operator running a batch script that pre-types confirmations (legitimate but indicates a scope mismatch — those operations probably don&#x27;t need tiered approval at all).
+  - Single very-long approval inflating one user&#x27;s average without other indicators (re-check; the rule uses mean, not median).
+level: medium
+tags:
+  - agent
+  - approval_gating
+  - sentinels
+  - human_factors
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Sentinels, Approval gating / Client-side</h2>
+<p><strong>Control.</strong> Approval-timing logger captures local think-time on every confirmation. OOB approval channel logger captures decisions joined to session. SIEM rule fires on response under 2s across more than 50 approvals (the alert-fatigue pattern, calibrated against AHRQ PSNet research and Anthropic Auto Mode telemetry).</p>
+<p><strong>Strength.</strong> Deterministic when timings are measured locally and shipped reliably. Failure modes: timing measurement that includes network latency to a remote approval service (measure local think-time only); threshold too aggressive (anything under 5 seconds is &quot;fatigue&quot;) yielding false positives; threshold too lenient (anything over 100ms is &quot;real consideration&quot;) so the rule never fires; OOB channel log not joined to the original request session, cannot reconstruct the chain.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- The tiered hook from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/approval-gating/client-side/pre_tool_use_tiered.sh"><code>../../../controls/approval-gating/client-side/pre_tool_use_tiered.sh</code></a>, extended to emit timing events.</li>
+<li>- A SIEM with windowed-aggregate query support.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/approval-timing-emit.sh"><code>approval-timing-emit.sh</code></a>, appendable snippet that wraps the typed-confirmation read with timing measurement (start/end nanoseconds, response_ms, matched).</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/oob-decision-log.sh"><code>oob-decision-log.sh</code></a>, script that the out-of-band approval workflow calls when an approver decides; emits a structured event keyed to the original request ID and session.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sigma-approval-fatigue.yaml"><code>sigma-approval-fatigue.yaml</code></a>, SIEM rule firing when a user&#x27;s mean tier-≥2 response time is under 2s across more than 50 approvals.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Approval timing captured
+# Run a tier-3 command, type the confirmation, check log
+journalctl -t agent-sentinel --since &quot;5 minutes ago&quot; | grep approval_timing
+# expected: response_ms field present
+
+# 2. Fatigue pattern alert fires (test environment)
+# Generate 60 approvals at &lt;1s each
+for i in {1..60}; do
+  echo &#x27;{&quot;session_id&quot;:&quot;fatigue-test&quot;,&quot;tool_name&quot;:&quot;Bash&quot;,&quot;tool_input&quot;:{&quot;command&quot;:&quot;echo test&quot;}}&#x27; \
+    | /etc/agents/hooks/pre_tool_use_tiered.sh
+done
+# Query SIEM for the fatigue rule output
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- Timing measurement that includes network latency to a remote approval service. Measure local think-time only.</li>
+<li>- Threshold too aggressive (anything under 5s): false positives on routine approvals.</li>
+<li>- Threshold too lenient (anything over 100ms is &quot;real consideration&quot;): never fires.</li>
+<li>- OOB channel log not joined to the original session. Cannot reconstruct full chain.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 DE.CM-03, DE.AE-02. AHRQ PSNet alarm-fatigue research. Anthropic Auto Mode (March 2026).</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>timing measurement includes network latency</li><li>threshold too aggressive (5s false-positives) or too lenient (100ms never fires)</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>DE.CM-03, DE.AE-02</td></tr><tr><th>OTHER</th><td>AHRQ PSNet alarm fatigue, Anthropic Auto Mode (March 2026)</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/detect/approval-gating/client-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

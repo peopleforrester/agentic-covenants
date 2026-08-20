@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identity at the client side layer | Protect | Agentic Covenants</title>
+<meta name="description" content="Per-agent credentials, no shared keys, filesystem ACLs.">
+<link rel="canonical" href="https://agenticcovenants.com/protect/identity/client-side/">
+<meta property="og:title" content="Identity at the client side layer | Protect | Agentic Covenants">
+<meta property="og:description" content="Per-agent credentials, no shared keys, filesystem ACLs.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/protect/identity/client-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Protect</a> ›
+  <span>Identity</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Protect (PR) · Identity</p>
+  <h1>Identity <span class="at">at the</span> client side <span class="at">layer</span></h1>
+  <p class="strength strength-client-side"><strong>deterministic</strong> · Outside the model&#x27;s reasoning</p>
+  <blockquote class="q">If the agent decides to violate this concern, what stops it at this layer?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="here" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Per-agent credentials, no shared keys, filesystem ACLs.</p></section>
+  <section class="artifacts"><h2>Artifacts (3)</h2><figure class="artifact"><figcaption><code>claude-code-prod.service</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/identity/client-side/claude-code-prod.service">view on GitHub</a></figcaption><pre><code># ABOUTME: systemd unit binding the Claude Code agent to a dedicated user with a per-agent credential.
+# ABOUTME: The credential file in EnvironmentFile is read by systemd as root; the agent process never reads it at rest.
+
+[Unit]
+Description=Claude Code agent (production)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=agent-runner
+Group=agent-runner
+
+# Read the per-agent credentials. systemd reads this as root before the
+# User= switch; the agent process inherits the env vars but never sees the
+# file directly (the filesystem ACL from provision-credential.sh denies the
+# agent&#x27;s own user read access).
+EnvironmentFile=/etc/agents/claude-code-prod/env
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+ReadWritePaths=/var/lib/agents/claude-code-prod /workspace
+
+# The agent gets a working directory it can write to; everything else is
+# read-only or hidden via ProtectSystem and ProtectHome.
+WorkingDirectory=/workspace
+
+ExecStart=/usr/local/bin/claude --config /etc/agents/claude-code-prod/config.json
+
+# Restart on crash, but rate-limit so a crash loop doesn&#x27;t burn API quota.
+Restart=on-failure
+RestartSec=30s
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Install]
+WantedBy=multi-user.target
+</code></pre></figure><figure class="artifact"><figcaption><code>provision-credential.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/identity/client-side/provision-credential.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Provisions a per-agent credential file with operator-owned ACLs.
+# ABOUTME: The agent&#x27;s own user cannot read the file at rest; the operator launches with it in env.
+
+set -euo pipefail
+
+AGENT_NAME=&quot;${1:-}&quot;
+AGENT_USER=&quot;${2:-agent-runner}&quot;
+OPERATOR_GROUP=&quot;${3:-operators}&quot;
+
+if [[ -z &quot;$AGENT_NAME&quot; ]]; then
+  cat &lt;&lt;&#x27;USAGE&#x27; &gt;&amp;2
+Usage: provision-credential.sh &lt;agent-name&gt; [agent-user] [operator-group]
+
+Example:
+  AGENT_TOKEN=&quot;$(vault read -field=token agents/claude-code-prod)&quot; \
+    provision-credential.sh claude-code-prod agent-runner operators
+USAGE
+  exit 64
+fi
+
+if [[ &quot;$EUID&quot; -ne 0 ]]; then
+  echo &quot;Must run as root (uses chown and setfacl).&quot; &gt;&amp;2
+  exit 1
+fi
+
+if [[ -z &quot;${AGENT_TOKEN:-}&quot; ]]; then
+  echo &quot;AGENT_TOKEN must be set in the environment.&quot; &gt;&amp;2
+  exit 1
+fi
+
+CRED_DIR=&quot;/etc/agents/${AGENT_NAME}&quot;
+CRED_FILE=&quot;${CRED_DIR}/token&quot;
+ENV_FILE=&quot;${CRED_DIR}/env&quot;
+
+mkdir -p &quot;$CRED_DIR&quot;
+chown &quot;root:${OPERATOR_GROUP}&quot; &quot;$CRED_DIR&quot;
+chmod 0750 &quot;$CRED_DIR&quot;
+
+umask 0177
+printf &#x27;%s\n&#x27; &quot;$AGENT_TOKEN&quot; &gt; &quot;$CRED_FILE&quot;
+chown &quot;root:${OPERATOR_GROUP}&quot; &quot;$CRED_FILE&quot;
+chmod 0640 &quot;$CRED_FILE&quot;
+
+# Render env file consumed by the systemd unit. The systemd unit reads this
+# at agent launch and exports ANTHROPIC_API_KEY into the agent&#x27;s environment.
+# The agent process itself cannot read /etc/agents/&lt;name&gt;/env at rest.
+cat &gt; &quot;$ENV_FILE&quot; &lt;&lt;EOF
+ANTHROPIC_API_KEY=${AGENT_TOKEN}
+AGENT_NAME=${AGENT_NAME}
+EOF
+chown &quot;root:${OPERATOR_GROUP}&quot; &quot;$ENV_FILE&quot;
+chmod 0640 &quot;$ENV_FILE&quot;
+
+# ACL: the agent&#x27;s own user is denied read on the credential file. The
+# operator (or systemd, running as root) reads it at launch. A compromised
+# agent process cannot re-read the file from disk.
+if command -v setfacl &gt;/dev/null 2&gt;&amp;1; then
+  setfacl -m &quot;u:${AGENT_USER}:---&quot; &quot;$CRED_FILE&quot;
+  setfacl -m &quot;u:${AGENT_USER}:---&quot; &quot;$ENV_FILE&quot;
+else
+  echo &quot;WARN: setfacl not available; relying on group-based denial only.&quot; &gt;&amp;2
+fi
+
+echo &quot;Provisioned ${CRED_DIR}&quot;
+echo &quot;Credential fingerprint: $(printf &#x27;%s&#x27; &quot;$AGENT_TOKEN&quot; | sha256sum | cut -d&#x27; &#x27; -f1 | head -c 16)&quot;
+unset AGENT_TOKEN
+</code></pre></figure><figure class="artifact"><figcaption><code>verify.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/identity/client-side/verify.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Verifies per-agent credential hygiene: not in process listing, not readable by agent, unique per agent.
+# ABOUTME: Run as root. Exits non-zero on any failed check.
+
+set -euo pipefail
+
+AGENT_USER=&quot;${AGENT_USER:-agent-runner}&quot;
+AGENTS_DIR=&quot;${AGENTS_DIR:-/etc/agents}&quot;
+PASS=0
+FAIL=0
+
+check() {
+  local name=&quot;$1&quot;
+  local result=&quot;$2&quot;
+  if [[ &quot;$result&quot; == &quot;ok&quot; ]]; then
+    echo &quot;PASS: $name&quot;
+    PASS=$((PASS + 1))
+  else
+    echo &quot;FAIL: $name -- $result&quot;
+    FAIL=$((FAIL + 1))
+  fi
+}
+
+# 1. Credential not in process listing
+if ps -eo args | grep -E &#x27;ANTHROPIC_API_KEY=[^ ]+&#x27; | grep -v grep &gt;/dev/null; then
+  check &quot;credential not in process listing&quot; &quot;found ANTHROPIC_API_KEY=... in args&quot;
+else
+  check &quot;credential not in process listing&quot; &quot;ok&quot;
+fi
+
+# 2. Agent cannot read its own credential file at rest
+shopt -s nullglob
+for cred in &quot;$AGENTS_DIR&quot;/*/token; do
+  if sudo -u &quot;$AGENT_USER&quot; cat &quot;$cred&quot; &gt;/dev/null 2&gt;&amp;1; then
+    check &quot;agent cannot read $cred&quot; &quot;agent user $AGENT_USER read it successfully&quot;
+  else
+    check &quot;agent cannot read $cred&quot; &quot;ok&quot;
+  fi
+done
+
+# 3. Unique credential per agent
+TOKENS=$(find &quot;$AGENTS_DIR&quot; -maxdepth 2 -name token -type f 2&gt;/dev/null)
+if [[ -z &quot;$TOKENS&quot; ]]; then
+  check &quot;per-agent credentials provisioned&quot; &quot;no tokens found in $AGENTS_DIR&quot;
+else
+  HASHES=$(echo &quot;$TOKENS&quot; | xargs -r md5sum | awk &#x27;{print $1}&#x27; | sort)
+  UNIQUE=$(echo &quot;$HASHES&quot; | uniq | wc -l)
+  TOTAL=$(echo &quot;$HASHES&quot; | wc -l)
+  if [[ &quot;$UNIQUE&quot; -eq &quot;$TOTAL&quot; ]]; then
+    check &quot;per-agent credentials are unique ($TOTAL agents)&quot; &quot;ok&quot;
+  else
+    check &quot;per-agent credentials are unique&quot; &quot;$((TOTAL - UNIQUE)) duplicate(s) detected&quot;
+  fi
+fi
+
+echo &quot;&quot;
+echo &quot;Summary: $PASS passed, $FAIL failed&quot;
+exit &quot;$FAIL&quot;
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Identity / Client-side</h2>
+<p><strong>Control.</strong> Per-agent credentials in operator-owned config; no shared keys; filesystem ACLs preventing cross-agent credential access.</p>
+<p><strong>Strength.</strong> Deterministic when the operator-owned config is uncompromised. Bypassable through token theft from logs, process listings, or world-readable env files; through credential reuse if the operator copies the config; through agent processes that run as a privileged user.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- A secrets manager (HashiCorp Vault, AWS Secrets Manager, GCP Secret Manager, 1Password CLI, or <code>pass</code> for solo work).</li>
+<li>- <code>setfacl</code> (Linux) or <code>chmod</code> plus dedicated user accounts (macOS).</li>
+<li>- An OIDC-issuing IdP (Okta, Auth0, Azure AD, Keycloak) for token-based credentials.</li>
+<li>- <code>systemd</code> (Linux) or <code>launchd</code> (macOS) to bind the credential to the agent process.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/provision-credential.sh"><code>provision-credential.sh</code></a>, creates a per-agent credential directory, locks down ownership, applies an ACL so the agent&#x27;s own user cannot read the file at rest. Run as root.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/claude-code-prod.service"><code>claude-code-prod.service</code></a>, systemd unit that loads the per-agent env file and runs the agent as a dedicated user. Drop in <code>/etc/systemd/system/</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/verify.sh"><code>verify.sh</code></a>, three checks: credential not in process listing, agent cannot read its own credential file at rest, every agent has a unique credential hash.</li>
+</ul>
+<h3>Verification</h3>
+<p>Run <code>verify.sh</code>. All three checks must pass.</p>
+<pre><code>
+sudo ./verify.sh
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- Using a single <code>~/.anthropic/credentials</code> for every agent on the box.</li>
+<li>- Putting the token in a <code>.env</code> file checked into the repo.</li>
+<li>- Setting the env var in <code>/etc/profile</code>, where every process inherits it.</li>
+<li>- Logging the credential into the agent&#x27;s own log file at startup.</li>
+<li>- Granting the agent&#x27;s own user write permission on <code>/etc/agents/</code> so the agent can rotate its own key, that ability lets the agent change its identity at will.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 PR.AA-01, PR.AA-03. NIST SP 800-207 (Zero Trust Architecture). NIST SP 800-63 Rev. 4 (Digital Identity Guidelines).</p></section>
+  <section class="risks"><h2>Primary bypasses</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>token theft</li><li>credential leakage in logs</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>PR.AA-01, PR.AA-03</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 2.4</td></tr><tr><th>OWASP LLM</th><td>LLM02</td></tr><tr><th>OWASP AGENTIC</th><td>ASI03</td></tr><tr><th>OTHER</th><td>NIST SP 800-207, NIST SP 800-63</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/protect/identity/client-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supply chain at the server side layer | Protect | Agentic Covenants</title>
+<meta name="description" content="OCI signature verification (cosign), SBOM admission, egress NetworkPolicy, OPA attestation policy, MCP domain allowlist at network layer.">
+<link rel="canonical" href="https://agenticcovenants.com/protect/supply-chain/server-side/">
+<meta property="og:title" content="Supply chain at the server side layer | Protect | Agentic Covenants">
+<meta property="og:description" content="OCI signature verification (cosign), SBOM admission, egress NetworkPolicy, OPA attestation policy, MCP domain allowlist at network layer.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/protect/supply-chain/server-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Protect</a> ›
+  <span>Supply chain</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Protect (PR) · Supply chain</p>
+  <h1>Supply chain <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
+  <blockquote class="q">If the agent decides to violate this concern, what stops it at this layer?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>OCI signature verification (cosign), SBOM admission, egress NetworkPolicy, OPA attestation policy, MCP domain allowlist at network layer.</p></section>
+  <section class="artifacts"><h2>Artifacts (5)</h2><figure class="artifact"><figcaption><code>build-and-sign.yml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/server-side/build-and-sign.yml">view on GitHub</a></figcaption><pre><code># ABOUTME: Builds the agent image, signs with cosign (keyless via GitHub OIDC), generates SPDX SBOM, attaches as attestation.
+# ABOUTME: id-token: write is required for keyless signing. Drop in .github/workflows/. Match the OIDC subject in the Kyverno verifyImages policy.
+name: Build and sign agent image
+
+on:
+  push:
+    branches: [main]
+    tags: [&#x27;v*&#x27;]
+    paths:
+      - &#x27;src/**&#x27;
+      - &#x27;Dockerfile&#x27;
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write   # required for cosign keyless signing
+  attestations: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE: ${{ github.repository }}/claude-agent
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE }}
+          tags: |
+            type=sha,format=long
+            type=ref,event=branch
+            type=ref,event=tag
+
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max
+          sbom: true
+
+      - uses: sigstore/cosign-installer@v3
+
+      - name: Cosign sign image (keyless)
+        run: |
+          cosign sign --yes \
+            &quot;${REGISTRY}/${IMAGE}@${{ steps.build.outputs.digest }}&quot;
+
+      - name: Generate SPDX SBOM with syft
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE }}@${{ steps.build.outputs.digest }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Attach SBOM as cosign attestation
+        run: |
+          cosign attest --yes \
+            --predicate sbom.spdx.json \
+            --type spdxjson \
+            &quot;${REGISTRY}/${IMAGE}@${{ steps.build.outputs.digest }}&quot;
+
+      - name: Verify signature locally before publishing
+        run: |
+          cosign verify \
+            --certificate-identity-regexp &quot;^https://github.com/${{ github.repository_owner }}/.+/.github/workflows/.+$&quot; \
+            --certificate-oidc-issuer &quot;https://token.actions.githubusercontent.com&quot; \
+            &quot;${REGISTRY}/${IMAGE}@${{ steps.build.outputs.digest }}&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>cilium-mcp-fqdn-egress.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/server-side/cilium-mcp-fqdn-egress.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: CiliumNetworkPolicy restricting agent egress to a fixed list of approved FQDNs at L7 (DNS-aware).
+# ABOUTME: Requires Cilium with enable-l7-proxy: true. On a CNI without FQDN support, layer at the egress proxy instead.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: agent-mcp-fqdn-egress
+  namespace: agent-claude-prod
+spec:
+  endpointSelector:
+    matchLabels:
+      app: claude-code
+  egress:
+
+  # Allow HTTPS to a fixed list of FQDNs. Anything not in this list is
+  # blocked at the Cilium L7 DNS proxy.
+  - toFQDNs:
+    - matchName: api.anthropic.com
+    - matchName: api.github.com
+    - matchName: registry.example.com
+    - matchName: ghcr.io
+    - matchPattern: &quot;*.s3.us-east-1.amazonaws.com&quot;   # narrow further if you can
+    toPorts:
+    - ports:
+      - port: &quot;443&quot;
+        protocol: TCP
+      rules:
+        http:
+        - method: &quot;GET|HEAD|POST|PUT&quot;
+          # Optionally constrain paths per host; left open here for breadth.
+
+  # Allow DNS to kube-dns. Without this, FQDN matching cannot resolve names
+  # and the agent cannot reach any host, including the allowed ones.
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: kube-system
+        k8s:k8s-app: kube-dns
+    toPorts:
+    - ports:
+      - port: &quot;53&quot;
+        protocol: UDP
+      - port: &quot;53&quot;
+        protocol: TCP
+      rules:
+        dns:
+        - matchPattern: &quot;*&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>kyverno-require-sbom.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/server-side/kyverno-require-sbom.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Kyverno ClusterPolicy requiring an SPDX SBOM attestation on every Pod image. Requires Kyverno 1.18+.
+# ABOUTME: The condition asserts a syft-generated SBOM; tune for your build tool. Without an SBOM, admission is rejected.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-spdx-sbom
+  annotations:
+    policies.kyverno.io/title: Require SPDX SBOM attestation on every image
+    policies.kyverno.io/category: Agentic Covenants / Supply Chain
+    policies.kyverno.io/severity: high
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+
+  - name: require-spdx-attestation
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+    verifyImages:
+    - imageReferences:
+      - &quot;*&quot;
+      attestations:
+      - type: https://spdx.dev/Document
+        conditions:
+        - all:
+          # Heuristic: assert that syft is named in the SBOM creators block.
+          # If you build SBOMs with a different tool (Trivy, cyclonedx-bom),
+          # adjust the JMESPath to match.
+          - key: &quot;{{ creationInfo.creators[?contains(@, &#x27;syft&#x27;)] }}&quot;
+            operator: NotEquals
+            value: &quot;&quot;
+        attestors:
+        - entries:
+          - keyless:
+              subject: &quot;https://github.com/example-org/*&quot;
+              issuer: &quot;https://token.actions.githubusercontent.com&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>kyverno-verify-image-signatures.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/server-side/kyverno-verify-image-signatures.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Kyverno ClusterPolicy verifying cosign keyless signatures + SPDX SBOM attestation. Requires Kyverno 1.18+.
+# ABOUTME: Substitute example-org for your GitHub org. The keyless subject regex pins signatures to your org&#x27;s workflow runs only.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-image-signatures
+  annotations:
+    policies.kyverno.io/title: Verify cosign signatures and SPDX attestations
+    policies.kyverno.io/category: Agentic Covenants / Supply Chain
+    policies.kyverno.io/severity: critical
+spec:
+  validationFailureAction: Enforce
+  background: false
+  webhookTimeoutSeconds: 30
+  failurePolicy: Fail
+  rules:
+
+  - name: verify-cosign-keyless-signature
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+          namespaces:
+          - &quot;agent-*&quot;
+          - &quot;default&quot;
+    verifyImages:
+    - imageReferences:
+      - &quot;ghcr.io/example-org/*&quot;
+      attestors:
+      - entries:
+        - keyless:
+            # Subject regex pins signatures to GitHub Actions workflows in this org.
+            # subject: &quot;*&quot; accepts anyone&#x27;s signature; that is the most common
+            # misconfiguration of cosign verification.
+            subject: &quot;https://github.com/example-org/*/.github/workflows/*&quot;
+            issuer: &quot;https://token.actions.githubusercontent.com&quot;
+            rekor:
+              url: https://rekor.sigstore.dev
+
+  - name: verify-spdx-sbom-attestation
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+          namespaces:
+          - &quot;agent-*&quot;
+          - &quot;default&quot;
+    verifyImages:
+    - imageReferences:
+      - &quot;ghcr.io/example-org/*&quot;
+      attestations:
+      - type: https://spdx.dev/Document
+        attestors:
+        - entries:
+          - keyless:
+              subject: &quot;https://github.com/example-org/*&quot;
+              issuer: &quot;https://token.actions.githubusercontent.com&quot;
+
+  - name: deny-non-allowlisted-registries
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+    validate:
+      message: &gt;-
+        Images must come from approved registries only:
+        ghcr.io/example-org/* or registry.example.com/*
+      pattern:
+        spec:
+          containers:
+          - image: &quot;ghcr.io/example-org/* | registry.example.com/*&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>lockfile-integrity.yml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/server-side/lockfile-integrity.yml">view on GitHub</a></figcaption><pre><code># ABOUTME: CI workflow that validates lockfile integrity even when pre-commit was bypassed with --no-verify.
+# ABOUTME: This is the real backstop for client-side lockfile pinning. Drop in .github/workflows/.
+name: Lockfile Integrity
+
+on:
+  pull_request:
+    paths:
+      - &#x27;package.json&#x27;
+      - &#x27;package-lock.json&#x27;
+      - &#x27;requirements*.txt&#x27;
+      - &#x27;requirements.in&#x27;
+      - &#x27;pyproject.toml&#x27;
+      - &#x27;Pipfile&#x27;
+      - &#x27;Pipfile.lock&#x27;
+      - &#x27;poetry.lock&#x27;
+      - &#x27;go.mod&#x27;
+      - &#x27;go.sum&#x27;
+      - &#x27;Cargo.toml&#x27;
+      - &#x27;Cargo.lock&#x27;
+
+jobs:
+
+  npm:
+    if: hashFiles(&#x27;package-lock.json&#x27;) != &#x27;&#x27;
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: &#x27;24&#x27;
+      - name: Verify package-lock.json matches package.json
+        # npm ci --dry-run fails if the lockfile and manifest are out of sync.
+        run: npm ci --dry-run
+
+      - name: Run npm audit (high severity, fail-on)
+        run: npm audit --audit-level=high
+
+  python-requirements:
+    if: hashFiles(&#x27;requirements.in&#x27;) != &#x27;&#x27;
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: &#x27;3.13&#x27;
+      - name: Verify requirements.txt is the compiled output of requirements.in
+        run: |
+          pip install pip-tools==7.5.3
+          pip-compile --no-header --no-emit-index-url \
+            --output-file=/tmp/requirements.lock requirements.in
+          if ! diff -q requirements.txt /tmp/requirements.lock &gt;/dev/null 2&gt;&amp;1; then
+            echo &quot;::error::requirements.txt does not match the compiled output of requirements.in.&quot;
+            echo &quot;An agent that edits requirements.txt directly bypasses pip-compile review.&quot;
+            diff -u requirements.txt /tmp/requirements.lock || true
+            exit 1
+          fi
+
+      - name: Run pip-audit
+        run: |
+          pip install pip-audit==2.10.1
+          pip-audit --requirement requirements.txt --strict
+
+  poetry:
+    if: hashFiles(&#x27;poetry.lock&#x27;) != &#x27;&#x27;
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: &#x27;3.13&#x27;
+      - run: pip install poetry==2.4.1
+      - name: Verify poetry.lock is in sync with pyproject.toml
+        run: poetry check --lock
+
+  go:
+    if: hashFiles(&#x27;go.mod&#x27;) != &#x27;&#x27;
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: &#x27;stable&#x27;
+      - name: Verify go.sum matches go.mod
+        run: |
+          go mod verify
+          go mod tidy -diff
+
+  cargo:
+    if: hashFiles(&#x27;Cargo.lock&#x27;) != &#x27;&#x27;
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - name: cargo audit
+        run: |
+          cargo install cargo-audit --locked
+          cargo audit --deny warnings
+      - name: Verify Cargo.lock is up to date
+        run: cargo update --workspace --locked
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Supply chain / Server-side</h2>
+<p><strong>Control.</strong> Image registry restrictions in admission policy. OCI signature verification (cosign). SBOM admission requirements. Egress NetworkPolicy to approved registries only. OPA policy denying images without provenance attestation. SLSA build-provenance attestation gates. MCP domain allowlist enforced at the network layer. Server-side lockfile-integrity validation.</p>
+<p><strong>Strength.</strong> Deterministic at admission. Bypass requires compromise of signing infrastructure (KMS key theft), signature stripping at a registry mirror, policy misconfigured to allow unsigned images in some namespaces (&quot;the tools namespace exception&quot;), or cosign trust policy with <code>subject: &quot;*&quot;</code> accepting anyone&#x27;s keyless signature.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- Cosign for OCI signing and verification.</li>
+<li>- Syft and Grype (or Trivy) for SBOM generation and scanning.</li>
+<li>- Kyverno 1.18+ or OPA Gatekeeper for admission control.</li>
+<li>- A signing key managed in KMS (AWS KMS, GCP KMS, or HashiCorp Vault), or keyless signing via GitHub OIDC + Sigstore.</li>
+<li>- A SLSA provenance generator (<code>slsa-github-generator</code>).</li>
+<li>- Cilium with FQDN policy support (or another CNI that enforces L7 DNS at egress).</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/build-and-sign.yml"><code>build-and-sign.yml</code></a>, GitHub Actions workflow that builds the agent image, signs it with <code>cosign --yes</code> (keyless), generates an SPDX SBOM with <code>syft</code>, and attaches the SBOM as a cosign attestation. Drop in <code>.github/workflows/</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/kyverno-verify-image-signatures.yaml"><code>kyverno-verify-image-signatures.yaml</code></a>, Kyverno ClusterPolicy verifying cosign signatures from a specific GitHub OIDC subject and verifying the SPDX attestation. Requires Kyverno 1.18+ for the <code>attestors</code>/<code>entries</code>/<code>keyless</code> block shape.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/kyverno-require-sbom.yaml"><code>kyverno-require-sbom.yaml</code></a>, Kyverno ClusterPolicy requiring an SPDX SBOM attestation on every image and verifying it was created by <code>syft</code> (heuristic; tune for your build).</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/cilium-mcp-fqdn-egress.yaml"><code>cilium-mcp-fqdn-egress.yaml</code></a>, CiliumNetworkPolicy restricting agent egress to a fixed list of approved FQDNs (api.anthropic.com, api.github.com, registry.example.com). Requires Cilium with <code>enable-l7-proxy: true</code> or DNS denials are not enforced.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/lockfile-integrity.yml"><code>lockfile-integrity.yml</code></a>, CI workflow that runs <code>npm ci --dry-run</code>, <code>pip-compile --check</code>, and <code>pip-audit</code> regardless of whether pre-commit was used locally. <strong>The real backstop for client-side lockfile pinning.</strong></li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Confirm unsigned image is rejected
+kubectl run test --image=docker.io/alpine
+# expected: rejected by verify-cosign-signature
+
+# 2. Confirm signed image is accepted
+# Replace the digest with a real signed agent image digest from your registry.
+kubectl run test --image=ghcr.io/example-org/claude-agent@sha256:9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f
+# expected: success if signature and SBOM attestation are present
+
+# 3. Confirm FQDN egress allowlist
+kubectl exec -n agent-claude-prod claude-code -- \
+  curl -sS --max-time 5 https://example.com
+# expected: failure (example.com not in allowlist)
+
+# 4. Confirm SBOM attestation present on a built image
+cosign tree ghcr.io/example-org/claude-agent@sha256:9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f
+# expected: SPDX attestation in the tree
+
+# 5. Confirm lockfile validation catches a hand-edited lockfile
+echo &#x27;&quot;resolved&quot;: &quot;https://attacker.example.com/evil-1.0.0.tgz&quot;&#x27; &gt;&gt; package-lock.json
+gh pr create
+# expected: CI fails at npm ci --dry-run
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- Cosign verification configured for a single namespace; agents in other namespaces deploy unsigned images.</li>
+<li>- Keyless signing trust policy with <code>subject: &quot;*&quot;</code> accepts anyone&#x27;s keyless signature.</li>
+<li>- FQDN allowlist enforced by Cilium but the cluster default CNI fails open when Cilium is restarted.</li>
+<li>- SBOM required but not validated against vulnerability scan; you have provenance for the malicious package.</li>
+<li>- Server-side lockfile check runs after merge, not before. The bad version is already in main.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 PR.PS-02, PR.PS-05 (unauthorized software prevented), PR.IR-01, GV.SC-07 (risks from suppliers identified, recorded, prioritized, assessed, responded to, monitored), ID.RA-09 (authenticity and integrity of hardware and software assessed prior to acquisition and use). NIST AI RMF MAP 4.1, MANAGE 3.1. OWASP LLM03, LLM04. OWASP ASI04. NIST SP 800-218 PS.3 (archive and protect each software release). NIST SP 800-161 Rev. 1 (supply chain risk management). SLSA framework. CISA/NSA/FBI AI Data Security CSI (May 2025). CISA/ASD ACSC &quot;Principles for Secure Integration of AI in OT&quot; (Dec 2025). OWASP MCP04, MCP09.</p></section>
+  <section class="risks"><h2>Primary bypasses</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>signing infrastructure compromise</li><li>signature stripping at registry mirror</li><li>signed-but-malicious images</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>PR.PS-02, PR.PS-05, PR.IR-01, GV.SC-07, ID.RA-09</td></tr><tr><th>NIST AI RMF</th><td>MAP 4.1, MANAGE 3.1</td></tr><tr><th>OWASP LLM</th><td>LLM03, LLM04</td></tr><tr><th>OWASP AGENTIC</th><td>ASI04</td></tr><tr><th>OTHER</th><td>NIST SP 800-218 PS.3, NIST SP 800-161, SLSA</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/protect/supply-chain/server-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

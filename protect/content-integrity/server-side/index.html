@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Content integrity at the server side layer | Protect | Agentic Covenants</title>
+<meta name="description" content="Egress NetworkPolicy so exfiltration has nowhere to post, DLP at the boundary, and send-side audit written outside the agent&#x27;s reach. Deliberately the weakest server-side cell in t">
+<link rel="canonical" href="https://agenticcovenants.com/protect/content-integrity/server-side/">
+<meta property="og:title" content="Content integrity at the server side layer | Protect | Agentic Covenants">
+<meta property="og:description" content="Egress NetworkPolicy so exfiltration has nowhere to post, DLP at the boundary, and send-side audit written outside the agent&#x27;s reach. Deliberately the weakest server-side cell in t">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/protect/content-integrity/server-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Protect</a> ›
+  <span>Content integrity</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Protect (PR) · Content integrity</p>
+  <h1>Content integrity <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
+  <blockquote class="q">If the agent decides to violate this concern, what stops it at this layer?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Egress NetworkPolicy so exfiltration has nowhere to post, DLP at the boundary, and send-side audit written outside the agent&#x27;s reach. Deliberately the weakest server-side cell in the framework: it catches the consequence, not the manipulation. The control that actually works is not a content control at all. A scoped credential, deny-by-default RBAC, and default-deny egress make a successful injection worthless, so injection is an authorization and blast-radius problem wearing a content costume.</p></section>
+  <section class="artifacts"><h2>Artifacts (2)</h2><figure class="artifact"><figcaption><code>egress-audit-policy.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/content-integrity/server-side/egress-audit-policy.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Kyverno policy requiring agent workloads to carry egress audit annotations.
+# ABOUTME: Ensures what left the boundary is recorded outside the agent&#x27;s reach.
+#
+# Evidence, not prevention. The EU AI Act Article 73 reporting clocks (2 days
+# for serious disruption of critical infrastructure, 15 days generally, in
+# force since 2 August 2026) are unmeetable without a record that survives the agent.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: agents-require-egress-audit
+  annotations:
+    policies.kyverno.io/title: Agent workloads must be egress-audited
+    policies.kyverno.io/category: Content integrity
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: &gt;-
+      An agent that can be prompt-injected will eventually be prompt-injected.
+      This policy does not prevent that. It requires that whatever the agent
+      sent is recorded somewhere the agent cannot edit, so an incident has an
+      evidence trail and a reporting clock can be met.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+
+  - name: require-egress-audit-annotation
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+          namespaces:
+          - &quot;agent-*&quot;
+    validate:
+      message: &gt;-
+        Agent pods must declare an egress audit sink via the
+        covenants.io/egress-audit-sink annotation. Exfiltration you cannot
+        evidence is exfiltration you cannot report.
+      pattern:
+        metadata:
+          annotations:
+            covenants.io/egress-audit-sink: &quot;?*&quot;
+
+  - name: audit-sink-must-be-external
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+          namespaces:
+          - &quot;agent-*&quot;
+    validate:
+      message: &gt;-
+        The egress audit sink must not resolve into the agent&#x27;s own namespace.
+        A log the agent can delete is not evidence.
+      deny:
+        conditions:
+          any:
+          - key: &quot;{{ request.object.metadata.annotations.\&quot;covenants.io/egress-audit-sink\&quot; }}&quot;
+            operator: AnyIn
+            value:
+            - &quot;*.agent-claude-prod.svc.cluster.local*&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>egress-exfiltration-policy.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/content-integrity/server-side/egress-exfiltration-policy.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Cilium egress policy bounding where an injected agent can send data.
+# ABOUTME: The real anti-exfiltration control: injection succeeds, and has nowhere to post.
+#
+# This is the server-side answer to prompt injection, and it is not a content
+# control. It does not detect the manipulation. It removes the payoff.
+#
+# Substitute the FQDNs for your own approved set. Every host listed here is a
+# host an injected agent may exfiltrate to, so the list is a threat-model
+# decision and belongs in the agent&#x27;s charter, not in a platform default.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: agent-egress-exfiltration-bound
+  namespace: agent-claude-prod
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: agent
+
+  egress:
+
+  # DNS is required for FQDN policy to function. Restricted to the cluster
+  # resolver so the agent cannot use an external resolver as a covert channel.
+  - toEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: kube-system
+        k8s-app: kube-dns
+    toPorts:
+    - ports:
+      - port: &quot;53&quot;
+        protocol: UDP
+      rules:
+        dns:
+        - matchPattern: &quot;*&quot;
+
+  # Model API. The one destination the agent genuinely needs.
+  - toFQDNs:
+    - matchName: &quot;api.anthropic.com&quot;
+    toPorts:
+    - ports:
+      - port: &quot;443&quot;
+        protocol: TCP
+
+  # Approved internal services, by FQDN rather than CIDR so the intent is
+  # readable and so a re-IP does not silently widen the policy.
+  - toFQDNs:
+    - matchName: &quot;artifacts.internal.example.com&quot;
+    toPorts:
+    - ports:
+      - port: &quot;443&quot;
+        protocol: TCP
+
+  # NOTE ON WHAT THIS DOES NOT STOP.
+  #
+  # Any allowlisted host is an exfiltration path if it accepts writes. If you
+  # allow a code-hosting domain, a Gist is permitted traffic. Narrow by method
+  # and path where the proxy supports it, and treat a write-capable allowlisted
+  # host as a residual risk you have accepted rather than one you have closed.
+  #
+  # DNS tunnelling survives this policy. The matchPattern &quot;*&quot; above is required
+  # for FQDN enforcement to work at all, and it is a covert channel. Detect it
+  # at the resolver rather than pretending the policy closes it. See
+  # sentinels/blast-radius/server-side/.
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Content integrity: server-side</h2>
+<p><strong>Deliberately the weakest server-side cell in the framework, and the reason this concern was added.</strong></p>
+<p>Every other concern has a server-side answer that ends the argument. RBAC denies the verb. The admission controller rejects the manifest. cosign refuses the unsigned image. The agent&#x27;s opinion is irrelevant.</p>
+<p>There is no equivalent here. <strong>Nothing on the server side can tell a prompt injection from the document it arrived in</strong>, because it is well-formed text on an authorized channel from an approved source. By the time anything server-side observes the agent, the manipulation has already happened.</p>
+<p>So this cell catches the <strong>consequence</strong> rather than the manipulation, and it does that well enough to matter.</p>
+<h3>What belongs here</h3>
+<div class="tw"><table><tbody>
+<tr><td>Control</td><td>Catches</td><td>Artifact</td></tr>
+<tr><td><strong>Egress containment</strong></td><td>Exfiltration having anywhere to go. If the agent can only reach an approved set of hosts, a successful injection cannot post data to the attacker&#x27;s endpoint</td><td><a href="https://github.com/peopleforrester/agentic-covenants/blob/main/egress-exfiltration-policy.yaml"><code>egress-exfiltration-policy.yaml</code></a></td></tr>
+<tr><td><strong>Send-side audit</strong></td><td>What actually left, recorded outside the agent&#x27;s reach, so an incident has an evidence trail</td><td><a href="https://github.com/peopleforrester/agentic-covenants/blob/main/egress-audit-policy.yaml"><code>egress-audit-policy.yaml</code></a></td></tr>
+<tr><td><strong>DLP at the boundary</strong></td><td>Credentials and regulated data in outbound payloads, independent of whether the client-side scanner ran</td><td>Vendor-specific; see notes below</td></tr>
+<tr><td><strong>Volume and shape anomaly</strong></td><td>The aggregate case, where every individual request was authorized and only the pattern is a leak</td><td><a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/blast-radius/server-side/"><code>sentinels/blast-radius/server-side/</code></a></td></tr>
+</tbody></table></div>
+<h3>The control that actually works is not in this directory</h3>
+<p>The strongest server-side answer to prompt injection is <strong>not a content control at all</strong>. It is making a successful injection worthless:</p>
+<ul>
+<li>- A scoped credential means the injected agent cannot reach the data worth stealing. See <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/identity/server-side/"><code>controls/identity/server-side/</code></a>.</li>
+<li>- Deny-by-default RBAC means it cannot perform the action. See <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/authorization/server-side/"><code>controls/authorization/server-side/</code></a>.</li>
+<li>- A default-deny NetworkPolicy means it cannot send anything anywhere. See <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/blast-radius/server-side/"><code>controls/blast-radius/server-side/</code></a>.</li>
+</ul>
+<p>This is why the framework&#x27;s answer to &quot;what about prompt injection?&quot; is not &quot;we scan for it.&quot; It is that <strong>injection is an authorization and blast-radius problem wearing a content costume</strong>, and those cells are where the enforcement lives.</p>
+<p>The lethal trifecta framing makes this concrete: injection becomes exfiltration only when the agent has private data, untrusted content, and external communication together. Removing any one is a design decision available on day one and costs nothing at runtime.</p>
+<h3>Honest limitations</h3>
+<ul>
+<li>- <strong>Egress allowlists leak through allowed hosts.</strong> If the agent may reach GitHub, exfiltration to a Gist is permitted traffic. Allowlisting by host is coarse; allowlisting by host and method and path is better and still incomplete.</li>
+<li>- <strong>DNS and timing channels</strong> survive most egress policy.</li>
+<li>- <strong>The audit trail is after the fact.</strong> It converts an unknown into a known, which is the Article 73 reporting requirement, and it stops nothing.</li>
+<li>- <strong>DLP inspects payloads it can read.</strong> End-to-end encrypted destinations defeat it.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# Policy must deny egress to a host outside the allowlist.
+kubectl run egress-probe --rm -i --restart=Never \
+  --image=curlimages/curl:8.11.1 \
+  --namespace agent-claude-prod \
+  -- curl -s --max-time 5 https://example.invalid &amp;&amp; echo &quot;FAIL: egress permitted&quot; || echo &quot;ok: egress denied&quot;
+
+# Allowlisted host must still work, or the policy is an outage.
+kubectl run egress-probe --rm -i --restart=Never \
+  --image=curlimages/curl:8.11.1 \
+  --namespace agent-claude-prod \
+  -- curl -s --max-time 5 -o /dev/null -w &#x27;%{http_code}&#x27; https://api.anthropic.com
+</code></pre>
+<p>Both directions, for the same reason the Kyverno suite tests both: a policy that denies everything is an outage rather than a control.</p></section>
+  <section class="risks"><h2>Primary bypasses</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>exfiltration through an allowlisted write-capable host</li><li>DNS and timing channels</li><li>end-to-end encrypted destinations defeating DLP</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>PR.DS-02, DE.CM-01, PR.IR-01</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 2.2</td></tr><tr><th>OWASP LLM</th><td>LLM02</td></tr><tr><th>OWASP AGENTIC</th><td>ASI02</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/protect/content-integrity/server-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

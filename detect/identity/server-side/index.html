@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identity at the server side layer | Detect | Agentic Covenants</title>
+<meta name="description" content="K8s audit log captures every agent SA action; CloudTrail with Object Lock; SIEM rules on out-of-hours, unexpected source IP, identity reuse.">
+<link rel="canonical" href="https://agenticcovenants.com/detect/identity/server-side/">
+<meta property="og:title" content="Identity at the server side layer | Detect | Agentic Covenants">
+<meta property="og:description" content="K8s audit log captures every agent SA action; CloudTrail with Object Lock; SIEM rules on out-of-hours, unexpected source IP, identity reuse.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/detect/identity/server-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Detect</a> ›
+  <span>Identity</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Detect (DE) · Identity</p>
+  <h1>Identity <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
+  <blockquote class="q">If this concern is breached, how do we know?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>K8s audit log captures every agent SA action; CloudTrail with Object Lock; SIEM rules on out-of-hours, unexpected source IP, identity reuse.</p></section>
+  <section class="artifacts"><h2>Artifacts (4)</h2><figure class="artifact"><figcaption><code>audit-policy.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/identity/server-side/audit-policy.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Kubernetes API server audit policy. Captures every agent SA action; identity-binding events at full request body.
+# ABOUTME: Apply with --audit-policy-file= on kube-apiserver. Combined with --audit-log-path= or an audit webhook to a SIEM.
+apiVersion: audit.k8s.io/v1
+kind: Policy
+omitStages:
+- RequestReceived
+
+rules:
+
+# 1. All agent SA mutations at RequestResponse level (full body).
+- level: RequestResponse
+  users:
+  - &quot;system:serviceaccount:agent-*&quot;
+  verbs: [&quot;create&quot;, &quot;update&quot;, &quot;patch&quot;, &quot;delete&quot;, &quot;deletecollection&quot;]
+
+# 2. Agent SA reads at Metadata level (which user, which resource, no body).
+- level: Metadata
+  users:
+  - &quot;system:serviceaccount:agent-*&quot;
+  verbs: [&quot;get&quot;, &quot;list&quot;, &quot;watch&quot;]
+
+# 3. Identity-binding events at full body, regardless of who initiated.
+# These are the events that change who can do what; logging them at full
+# detail lets the SIEM reconstruct privilege changes.
+- level: RequestResponse
+  resources:
+  - group: &quot;rbac.authorization.k8s.io&quot;
+    resources: [&quot;rolebindings&quot;, &quot;clusterrolebindings&quot;, &quot;roles&quot;, &quot;clusterroles&quot;]
+- level: RequestResponse
+  resources:
+  - group: &quot;&quot;
+    resources: [&quot;serviceaccounts&quot;]
+
+# 4. Secret reads/writes at full body. Secrets are credential material.
+- level: RequestResponse
+  resources:
+  - group: &quot;&quot;
+    resources: [&quot;secrets&quot;]
+  verbs: [&quot;get&quot;, &quot;create&quot;, &quot;update&quot;, &quot;patch&quot;, &quot;delete&quot;]
+
+# 5. Drop noisy health checks and well-known events that do not warrant
+# durable audit storage. Tune for your cluster&#x27;s actual chatter.
+- level: None
+  users:
+  - &quot;system:kube-proxy&quot;
+  - &quot;system:kube-scheduler&quot;
+  - &quot;system:kube-controller-manager&quot;
+  resources:
+  - group: &quot;&quot;
+    resources: [&quot;endpoints&quot;, &quot;services&quot;, &quot;nodes&quot;]
+  verbs: [&quot;get&quot;, &quot;list&quot;, &quot;watch&quot;]
+
+# 6. Default: log at Metadata level so we have at least the who-and-what
+# for everything not covered above.
+- level: Metadata
+</code></pre></figure><figure class="artifact"><figcaption><code>enable-cloudtrail.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/identity/server-side/enable-cloudtrail.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Provisions a multi-region CloudTrail trail delivering to an Object-Lock S3 bucket with log-file validation.
+# ABOUTME: Pair with the immutable-backup bucket from controls/blast-radius/server-side/. Trail name is per-environment.
+
+set -euo pipefail
+
+TRAIL_NAME=&quot;${TRAIL_NAME:-agent-audit}&quot;
+BUCKET=&quot;${BUCKET:-agent-cloudtrail-immutable}&quot;
+REGION=&quot;${AWS_REGION:-us-east-1}&quot;
+
+if [[ -z &quot;${AWS_PROFILE:-}&quot; ]]; then
+  echo &quot;Set AWS_PROFILE to a profile with cloudtrail:CreateTrail and s3:PutBucketPolicy.&quot; &gt;&amp;2
+  exit 1
+fi
+
+# Bucket policy that allows CloudTrail to write but no one to delete.
+# Object Lock on the bucket prevents log tampering even with bucket-write.
+cat &gt; /tmp/cloudtrail-bucket-policy.json &lt;&lt;EOF
+{
+  &quot;Version&quot;: &quot;2012-10-17&quot;,
+  &quot;Statement&quot;: [
+    {
+      &quot;Sid&quot;: &quot;AWSCloudTrailAclCheck&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Principal&quot;: { &quot;Service&quot;: &quot;cloudtrail.amazonaws.com&quot; },
+      &quot;Action&quot;: &quot;s3:GetBucketAcl&quot;,
+      &quot;Resource&quot;: &quot;arn:aws:s3:::${BUCKET}&quot;
+    },
+    {
+      &quot;Sid&quot;: &quot;AWSCloudTrailWrite&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Principal&quot;: { &quot;Service&quot;: &quot;cloudtrail.amazonaws.com&quot; },
+      &quot;Action&quot;: &quot;s3:PutObject&quot;,
+      &quot;Resource&quot;: &quot;arn:aws:s3:::${BUCKET}/AWSLogs/*&quot;,
+      &quot;Condition&quot;: {
+        &quot;StringEquals&quot;: { &quot;s3:x-amz-acl&quot;: &quot;bucket-owner-full-control&quot; }
+      }
+    }
+  ]
+}
+EOF
+
+aws --profile &quot;$AWS_PROFILE&quot; s3api put-bucket-policy \
+  --bucket &quot;$BUCKET&quot; \
+  --policy file:///tmp/cloudtrail-bucket-policy.json
+
+aws --profile &quot;$AWS_PROFILE&quot; cloudtrail create-trail \
+  --name &quot;$TRAIL_NAME&quot; \
+  --s3-bucket-name &quot;$BUCKET&quot; \
+  --include-global-service-events \
+  --is-multi-region-trail \
+  --enable-log-file-validation
+
+aws --profile &quot;$AWS_PROFILE&quot; cloudtrail put-event-selectors \
+  --trail-name &quot;$TRAIL_NAME&quot; \
+  --event-selectors &#x27;[{
+    &quot;ReadWriteType&quot;: &quot;All&quot;,
+    &quot;IncludeManagementEvents&quot;: true,
+    &quot;DataResources&quot;: [
+      {&quot;Type&quot;: &quot;AWS::S3::Object&quot;, &quot;Values&quot;: [&quot;arn:aws:s3:::&quot;]},
+      {&quot;Type&quot;: &quot;AWS::Lambda::Function&quot;, &quot;Values&quot;: [&quot;arn:aws:lambda&quot;]}
+    ]
+  }]&#x27;
+
+aws --profile &quot;$AWS_PROFILE&quot; cloudtrail start-logging --name &quot;$TRAIL_NAME&quot;
+
+echo &quot;CloudTrail $TRAIL_NAME provisioned and logging.&quot;
+echo &quot;&quot;
+echo &quot;Subscribe a SIEM to the trail via EventBridge:&quot;
+echo &quot;  aws events put-rule --name agent-cloudtrail-to-siem \\&quot;
+echo &quot;    --event-pattern &#x27;{\&quot;source\&quot;:[\&quot;aws.cloudtrail\&quot;]}&#x27; &quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>sigma-out-of-hours.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/identity/server-side/sigma-out-of-hours.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Sigma detection rule for agent SA used outside the expected business-hours window.
+# ABOUTME: Tune the hours range, weekend behavior, and on-call exception list for your team&#x27;s working pattern.
+title: Agent identity used outside expected hours
+id: 6f6c8b3a-1e2d-4a3c-9d4e-3b7c8a9f0e1d
+status: experimental
+description: &gt;
+  Detects use of an agent ServiceAccount or IAM principal outside the
+  expected business-hours window. Most agents in our environment operate
+  09:00-18:00 weekdays. Off-hours activity is an indicator of compromised
+  credentials, a forgotten cron job firing under an agent identity, or a
+  legitimate but undocumented operator action.
+references:
+  - https://github.com/peopleforrester/agentic-covenants/blob/main/SENTINELS_MATRIX.md
+author: agentic-covenants
+date: 2026/05/08
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    user.username|startswith: &#x27;system:serviceaccount:agent-&#x27;
+  filter_business_hours:
+    requestReceivedTimestamp|in_window:
+      hours_local: &#x27;09:00..18:00&#x27;
+      weekdays: [&#x27;Mon&#x27;, &#x27;Tue&#x27;, &#x27;Wed&#x27;, &#x27;Thu&#x27;, &#x27;Fri&#x27;]
+  filter_oncall_exceptions:
+    user.username|in:
+      - &#x27;system:serviceaccount:agent-oncall-pager:rotate-on-call&#x27;
+  condition: selection and not filter_business_hours and not filter_oncall_exceptions
+falsepositives:
+  - On-call rotation agents (add to filter_oncall_exceptions).
+  - Engineers running agents during incident response (treat as alert worth surfacing, not silencing).
+  - Cross-timezone teams (parameterize hours_local per agent or per region).
+level: medium
+tags:
+  - agent
+  - identity
+  - sentinels
+</code></pre></figure><figure class="artifact"><figcaption><code>sigma-unexpected-source-ip.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/identity/server-side/sigma-unexpected-source-ip.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Sigma detection rule for agent identity used from a source IP outside the known agent-egress set.
+# ABOUTME: known_agent_ips_lookup is a SIEM lookup table the operator maintains; the rule&#x27;s correctness depends on it.
+title: Agent identity used from unexpected source IP
+id: 7e5f9c2b-2f3e-5b4d-ae5f-4c8d9b0e1f2a
+status: experimental
+description: &gt;
+  Detects use of an agent ServiceAccount or IAM principal from a source IP
+  not in the known agent-egress set. Agent egress IPs are stable: NAT
+  gateway, EKS node CIDR, GitHub Actions IP ranges. A source IP outside this
+  set is an indicator of credential exfiltration to an external host or of
+  a misconfigured cluster path.
+references:
+  - https://github.com/peopleforrester/agentic-covenants/blob/main/SENTINELS_MATRIX.md
+author: agentic-covenants
+date: 2026/05/08
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    userIdentity.sessionContext.sessionIssuer.userName|startswith: &#x27;claude-&#x27;
+  filter:
+    sourceIPAddress|in: &#x27;@known_agent_ips_lookup&#x27;
+  condition: selection and not filter
+falsepositives:
+  - New NAT gateway provisioned and lookup table not updated (process; do not silence).
+  - GitHub Actions runner IP rotation (use the published IP range, not specific IPs).
+level: high
+tags:
+  - agent
+  - identity
+  - sentinels
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Sentinels, Identity / Server-side</h2>
+<p><strong>Control.</strong> Cloud audit log attributes every API call to a verified identity. Alert on identity not in expected set, identity used outside expected hours, identity used from unexpected source IP, identity reuse across agents.</p>
+<p><strong>Strength.</strong> Authoritative and external. Bypass requires audit logging not enabled, immutable storage not configured, or SIEM rule based on the wrong identifier (e.g. STS opaque session ID instead of resolved role ARN).</p>
+<h3>Tooling</h3>
+<ul>
+<li>- Kubernetes API server with audit logging configured.</li>
+<li>- AWS CloudTrail with Object Lock on the destination S3 bucket. (GCP Audit Logs or Azure Monitor for the equivalent.)</li>
+<li>- A SIEM with Sigma-style detection rules.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/audit-policy.yaml"><code>audit-policy.yaml</code></a>, Kubernetes audit policy that captures every agent SA action at RequestResponse level for mutations and Metadata level for reads. Identity-binding events (RoleBindings, ServiceAccount creation) are captured at full body.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/enable-cloudtrail.sh"><code>enable-cloudtrail.sh</code></a>, provisions a multi-region CloudTrail trail with log file validation enabled, delivering to an Object-Lock S3 bucket (provisioned in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/blast-radius/server-side/s3-immutable-backups.sh"><code>../../../controls/blast-radius/server-side/s3-immutable-backups.sh</code></a>).</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sigma-out-of-hours.yaml"><code>sigma-out-of-hours.yaml</code></a>, Sigma rule firing when an agent SA is used outside the expected business-hours window.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sigma-unexpected-source-ip.yaml"><code>sigma-unexpected-source-ip.yaml</code></a>, Sigma rule firing when the source IP of an agent action is outside the known agent-egress IP set.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Audit log captures agent SA actions
+kubectl --as=system:serviceaccount:agent-claude-prod:claude-code get pods
+grep &quot;claude-code&quot; /var/log/kubernetes/audit.log | tail -1
+# expected: user.username with the agent SA
+
+# 2. CloudTrail captures IAM action attributable to agent
+aws --profile claude-code-prod sts get-caller-identity
+sleep 60   # CloudTrail has delivery delay
+aws cloudtrail lookup-events \
+  --lookup-attributes AttributeKey=Username,AttributeValue=claude-code-prod \
+  | jq &#x27;.Events | length&#x27;
+# expected: greater than 0
+
+# 3. SIEM rule fires on out-of-hours
+# Manually run an action at 03:00 local time; alert should fire within minutes.
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- K8s audit policy not applied because the flag was not set on API server start. Verify with a known kubectl call against an audit log entry.</li>
+<li>- CloudTrail bucket without Object Lock; an attacker with bucket-write deletes evidence.</li>
+<li>- SIEM rule based on <code>userIdentity.principalId</code> instead of resolved role ARN. STS sessions present opaque IDs.</li>
+<li>- Audit log retention shorter than incident discovery window. 30 days is the floor; 365 days is defensible for compliance.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 DE.CM-01, DE.CM-09, DE.AE-02. NIST SP 800-92.</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>K8s audit policy not applied</li><li>CloudTrail bucket without Object Lock</li><li>SIEM rule based on userIdentity.principalId instead of resolved role ARN</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>DE.CM-01, DE.CM-09, DE.AE-02</td></tr><tr><th>OTHER</th><td>NIST SP 800-92</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/detect/identity/server-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

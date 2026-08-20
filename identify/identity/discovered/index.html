@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identity at the discovered layer | Identify | Agentic Covenants</title>
+<meta name="description" content="CloudTrail / GCP Audit Logs of SA and IAM principal usage. K8s controller watching SA+RoleBinding by naming pattern. Reverse-lookup from credential fingerprints in Sentinels.">
+<link rel="canonical" href="https://agenticcovenants.com/identify/identity/discovered/">
+<meta property="og:title" content="Identity at the discovered layer | Identify | Agentic Covenants">
+<meta property="og:description" content="CloudTrail / GCP Audit Logs of SA and IAM principal usage. K8s controller watching SA+RoleBinding by naming pattern. Reverse-lookup from credential fingerprints in Sentinels.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/identify/identity/discovered/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Identify</a> ›
+  <span>Identity</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Identify (ID) · Identity</p>
+  <h1>Identity <span class="at">at the</span> discovered <span class="at">layer</span></h1>
+  <p class="strength strength-discovered"><strong></strong> · </p>
+  <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>CloudTrail / GCP Audit Logs of SA and IAM principal usage. K8s controller watching SA+RoleBinding by naming pattern. Reverse-lookup from credential fingerprints in Sentinels.</p></section>
+  <section class="artifacts"><h2>Artifacts (2)</h2><figure class="artifact"><figcaption><code>discover-cloudtrail-agents.sql</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/discovered/discover-cloudtrail-agents.sql">view on GitHub</a></figcaption><p class="note">1,056 bytes. Too large to inline; open it on GitHub.</p></figure><figure class="artifact"><figcaption><code>discover-k8s-agents.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/discovered/discover-k8s-agents.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Lists every K8s ServiceAccount that looks like an agent (by namespace prefix or SA name pattern).
+# ABOUTME: Output goes to stdout as JSON lines. Feed into the operator-declared cross-reference job to surface shadow agents.
+
+set -euo pipefail
+
+NAMESPACES_PATTERN=&quot;${NAMESPACES_PATTERN:-^agent-}&quot;
+SA_PATTERNS=(
+  &quot;^claude-&quot;
+  &quot;-agent$&quot;
+  &quot;-bot$&quot;
+)
+
+# 1. Namespace-scoped: every SA in any namespace matching the pattern.
+mapfile -t AGENT_NAMESPACES &lt; &lt;(
+  kubectl get ns -o jsonpath=&#x27;{.items[*].metadata.name}&#x27; \
+    | tr &#x27; &#x27; &#x27;\n&#x27; \
+    | grep -E &quot;$NAMESPACES_PATTERN&quot; || true
+)
+
+for ns in &quot;${AGENT_NAMESPACES[@]}&quot;; do
+  kubectl get sa -n &quot;$ns&quot; -o jsonpath=&#x27;{range .items[*]}{.metadata.name}{&quot;\t&quot;}{.metadata.creationTimestamp}{&quot;\n&quot;}{end}&#x27; \
+    | while IFS=$&#x27;\t&#x27; read -r name ts; do
+      [[ -z &quot;$name&quot; ]] &amp;&amp; continue
+      jq -nc \
+        --arg source &quot;k8s-agent-namespace&quot; \
+        --arg namespace &quot;$ns&quot; \
+        --arg sa_name &quot;$name&quot; \
+        --arg created &quot;$ts&quot; \
+        &#x27;{source:$source, namespace:$namespace, sa_name:$sa_name, created_at:$created}&#x27;
+    done
+done
+
+# 2. SA-name-pattern: SAs across all namespaces whose name matches an agent pattern.
+for pattern in &quot;${SA_PATTERNS[@]}&quot;; do
+  kubectl get sa -A -o jsonpath=&#x27;{range .items[*]}{.metadata.namespace}{&quot;\t&quot;}{.metadata.name}{&quot;\t&quot;}{.metadata.creationTimestamp}{&quot;\n&quot;}{end}&#x27; \
+    | awk -F&#x27;\t&#x27; -v pat=&quot;$pattern&quot; &#x27;$2 ~ pat { print }&#x27; \
+    | while IFS=$&#x27;\t&#x27; read -r ns name ts; do
+        [[ -z &quot;$name&quot; ]] &amp;&amp; continue
+        jq -nc \
+          --arg source &quot;k8s-sa-name-pattern&quot; \
+          --arg pattern &quot;$pattern&quot; \
+          --arg namespace &quot;$ns&quot; \
+          --arg sa_name &quot;$name&quot; \
+          --arg created &quot;$ts&quot; \
+          &#x27;{source:$source, pattern:$pattern, namespace:$namespace, sa_name:$sa_name, created_at:$created}&#x27;
+      done
+done
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Inventory, Identity / Discovered</h2>
+<p><strong>What this cell records.</strong> Independent observation of which agent identities are actually in use, regardless of whether they declared themselves or appear in operator records.</p>
+<h3>Sources</h3>
+<ul>
+<li>- Cloud audit logs: CloudTrail <code>userIdentity.sessionContext.sessionIssuer</code> for IAM principals starting with <code>claude-</code>, <code>agent-</code>, or <code>bot-</code>. GCP Audit Logs, Azure Monitor for the equivalent.</li>
+<li>- Kubernetes API watches: list <code>ServiceAccount</code> and <code>RoleBinding</code> matching naming patterns (<code><em>-agent</code>, <code></em>-bot</code>, <code>claude-*</code>).</li>
+<li>- Reverse-lookup: credential fingerprints from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/identity/client-side/identity-log-hook.sh"><code>sentinels/identity/client-side/identity-log-hook.sh</code></a> joined by hash.</li>
+</ul>
+<h3>Reference tooling</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/discover-k8s-agents.sh"><code>discover-k8s-agents.sh</code></a>, lists every namespace-scoped ServiceAccount whose namespace matches <code>agent-<em></code> or whose name matches <code></em>-agent</code>/<code><em>-bot</code>/<code>claude-</em></code>. Feeds the operator-declared cross-reference.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/discover-cloudtrail-agents.sql"><code>discover-cloudtrail-agents.sql</code></a>, CloudWatch Logs Insights query listing every distinct AWS principal whose role name starts with the agent prefixes.</li>
+</ul>
+<h3>Cross-layer cross-references</h3>
+<ul>
+<li>- Discovered ∧ ¬operator-declared = <strong>shadow agent</strong>. Investigate ownership; charter or retire.</li>
+<li>- Discovered ∧ ¬self-declared = agent runtime did not register. Either older agent that predates the registration protocol, or registration failed silently.</li>
+</ul>
+<h3>Common failure modes</h3>
+<ul>
+<li>- Audit logs have gaps (retention expired, log delivery failed, audit policy missing the resource). Cannot discover agents whose activity fell into a gap.</li>
+<li>- Shadow agents in accounts/clusters where discovery has no credentials. Mitigation: org-wide cloud-account inventory and discovery agents in every account.</li>
+<li>- Naming pattern misses agents that did not follow convention (e.g., a SA literally named <code>prod-helper</code> is an agent in disguise).</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 ID.AM-01, ID.AM-02. NIST AI RMF MAP 1.1, MAP 1.5. CSA MAESTRO Layer 4, Layer 7. NIST SP 800-92 (log management). NIST AI Agent Standards Initiative under CAISI (Feb 17, 2026).</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>audit logs have gaps (retention expired, delivery failed, audit policy missing the resource)</li><li>shadow agents in accounts/clusters where discovery has no credentials</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>ID.AM-01, ID.AM-02</td></tr><tr><th>NIST AI RMF</th><td>MAP 1.1, MAP 1.5</td></tr><tr><th>CSA MAESTRO</th><td>Layer 4, Layer 7</td></tr><tr><th>OTHER</th><td>NIST SP 800-92 (log management), NIST AI Agent Standards Initiative under CAISI (Feb 17, 2026)</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/identify/identity/discovered/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supply chain at the server side layer | Detect | Agentic Covenants</title>
+<meta name="description" content="Image-pull events with signature verification status; SBOM diff over time per workload; cosign verification failures; egress NetworkPolicy denials to non-allowlisted MCP domains.">
+<link rel="canonical" href="https://agenticcovenants.com/detect/supply-chain/server-side/">
+<meta property="og:title" content="Supply chain at the server side layer | Detect | Agentic Covenants">
+<meta property="og:description" content="Image-pull events with signature verification status; SBOM diff over time per workload; cosign verification failures; egress NetworkPolicy denials to non-allowlisted MCP domains.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/detect/supply-chain/server-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Detect</a> ›
+  <span>Supply chain</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Detect (DE) · Supply chain</p>
+  <h1>Supply chain <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
+  <blockquote class="q">If this concern is breached, how do we know?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Image-pull events with signature verification status; SBOM diff over time per workload; cosign verification failures; egress NetworkPolicy denials to non-allowlisted MCP domains.</p></section>
+  <section class="artifacts"><h2>Artifacts (4)</h2><figure class="artifact"><figcaption><code>hubble-fqdn-deny-export.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/supply-chain/server-side/hubble-fqdn-deny-export.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Pipes Cilium Hubble L7 DNS denials to the SIEM. The egress-FQDN-allowlist denial signal.
+# ABOUTME: Requires Cilium with enable-l7-proxy: true. Run as a long-running service.
+
+set -euo pipefail
+
+SIEM_URL=&quot;${SIEM_URL:-https://siem.example.com:9200/agent-sentinel-fqdn-deny/_doc}&quot;
+SIEM_TOKEN=&quot;${SIEM_TOKEN:?Set SIEM_TOKEN.}&quot;
+NAMESPACE_FILTER=&quot;${NAMESPACE_FILTER:-agent-}&quot;
+
+# Filter for L7 DNS proxy denials. Cilium emits these as drop verdicts on
+# flows that hit the FQDN allowlist with no match.
+hubble observe --type drop --output json --follow --namespace &quot;${NAMESPACE_FILTER}&quot; \
+| jq --unbuffered -c &#x27;select(.flow.l7 != null and .flow.l7.dns != null and .flow.verdict == &quot;DROPPED&quot;)&#x27; \
+| while IFS= read -r line; do
+  curl -sS -X POST &quot;$SIEM_URL&quot; \
+    -H &quot;Authorization: Bearer ${SIEM_TOKEN}&quot; \
+    -H &quot;Content-Type: application/json&quot; \
+    -d &quot;$line&quot; \
+    &gt;/dev/null
+done
+</code></pre></figure><figure class="artifact"><figcaption><code>kyverno-log-image-pulls.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/supply-chain/server-side/kyverno-log-image-pulls.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Mutating Kyverno ClusterPolicy that annotates every Pod with image references and pull timestamp.
+# ABOUTME: The annotation is read by ship-policy-reports CronJob and shipped to SIEM. validationFailureAction is irrelevant for mutate.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: log-image-pulls
+  annotations:
+    policies.kyverno.io/title: Annotate every Pod with its image references for SIEM ingestion
+    policies.kyverno.io/category: Agentic Sentinels / Supply Chain
+spec:
+  background: false
+  rules:
+  - name: annotate-image-pull
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+    mutate:
+      patchStrategicMerge:
+        metadata:
+          annotations:
+            agent-sentinel/image-audit: &quot;{{ request.object.spec.containers[].image | join(&#x27;, &#x27;) }}&quot;
+            agent-sentinel/image-pull-ts: &quot;{{ time_now_utc() }}&quot;
+            agent-sentinel/namespace: &quot;{{ request.object.metadata.namespace }}&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>sbom-diff-cronjob.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/supply-chain/server-side/sbom-diff-cronjob.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Daily CronJob that runs syft against every image in agent namespaces, compares SBOM hashes day-over-day, ships diffs.
+# ABOUTME: SBOM hash captures transitive dependency changes; comparing only top-level package counts misses those.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sbom-differ
+  namespace: kyverno
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sbom-differ-read
+rules:
+- apiGroups: [&quot;&quot;]
+  resources: [&quot;pods&quot;]
+  verbs: [&quot;get&quot;, &quot;list&quot;]
+- apiGroups: [&quot;&quot;]
+  resources: [&quot;namespaces&quot;]
+  verbs: [&quot;get&quot;, &quot;list&quot;]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sbom-differ-read
+subjects:
+- kind: ServiceAccount
+  name: sbom-differ
+  namespace: kyverno
+roleRef:
+  kind: ClusterRole
+  name: sbom-differ-read
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sbom-cache
+  namespace: kyverno
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sbom-diff
+  namespace: kyverno
+spec:
+  schedule: &quot;0 6 * * *&quot;
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: sbom-differ
+          restartPolicy: OnFailure
+          containers:
+          - name: differ
+            # Pin by digest. Resolve current digest with: crane digest anchore/syft:v1.45.1
+            image: anchore/syft@sha256:REPLACE_WITH_DIGEST_FROM_CRANE
+            envFrom:
+            - secretRef:
+                name: siem-credentials
+            volumeMounts:
+            - name: cache
+              mountPath: /var/lib/sbom-cache
+            command: [&quot;/bin/sh&quot;, &quot;-c&quot;]
+            args:
+            - |
+              set -eu
+              for ns in $(kubectl get ns -l agentic-covenants.io/role=agent -o jsonpath=&#x27;{.items[*].metadata.name}&#x27;); do
+                for img in $(kubectl get pods -n &quot;$ns&quot; -o jsonpath=&#x27;{.items[*].spec.containers[*].image}&#x27; | tr &#x27; &#x27; &#x27;\n&#x27; | sort -u); do
+                  CURRENT=&quot;$(syft &quot;$img&quot; -o spdx-json 2&gt;/dev/null | sha256sum | awk &#x27;{print $1}&#x27;)&quot;
+                  KEY=&quot;$(printf &#x27;%s&#x27; &quot;$img&quot; | tr / _).hash&quot;
+                  LAST=&quot;$(cat &quot;/var/lib/sbom-cache/$KEY&quot; 2&gt;/dev/null || echo none)&quot;
+                  if [ &quot;$CURRENT&quot; != &quot;$LAST&quot; ]; then
+                    curl -sS -X POST &quot;$SIEM_URL/agent-sentinel-sbom/_doc&quot; \
+                      -H &quot;Authorization: Bearer $SIEM_TOKEN&quot; \
+                      -H &quot;Content-Type: application/json&quot; \
+                      -d &quot;{
+                        \&quot;event\&quot;: \&quot;sbom_diff\&quot;,
+                        \&quot;image\&quot;: \&quot;$img\&quot;,
+                        \&quot;namespace\&quot;: \&quot;$ns\&quot;,
+                        \&quot;prev_hash\&quot;: \&quot;$LAST\&quot;,
+                        \&quot;curr_hash\&quot;: \&quot;$CURRENT\&quot;,
+                        \&quot;ts\&quot;: \&quot;$(date -Iseconds)\&quot;
+                      }&quot;
+                    echo &quot;$CURRENT&quot; &gt; &quot;/var/lib/sbom-cache/$KEY&quot;
+                  fi
+                done
+              done
+          volumes:
+          - name: cache
+            persistentVolumeClaim:
+              claimName: sbom-cache
+</code></pre></figure><figure class="artifact"><figcaption><code>sigma-cosign-failure.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/supply-chain/server-side/sigma-cosign-failure.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Sigma rule firing on PolicyReport entries where the verify-image-signatures Kyverno policy failed.
+# ABOUTME: Pair with rich context (PR, build SHA, image digest) at alert generation; bare image SHA pages waste oncall time.
+title: Cosign image-signature verification failure
+id: 9b0c1d2e-3f4a-5b6c-7d8e-9f0a1b2c3d4e
+status: experimental
+description: &gt;
+  Detects an admission failure on the verify-image-signatures Kyverno
+  policy. Either an image was deployed without a cosign signature, or its
+  signature did not match the trusted issuer. This is high signal: the
+  signing pipeline failed, the registry is serving an unsigned image, or
+  someone is attempting to deploy a non-allowlisted image.
+references:
+  - https://github.com/peopleforrester/agentic-covenants/blob/main/SENTINELS_MATRIX.md
+author: agentic-covenants
+date: 2026/05/08
+logsource:
+  category: kyverno_policy_report
+detection:
+  selection:
+    event: policy_report
+    data.policy: verify-image-signatures
+    data.failed|gt: 0
+  condition: selection
+falsepositives:
+  - First-deploy of a new image before its signature has propagated to Rekor (rare with current Sigstore latencies; treat as worth investigating).
+  - Mirror registry stripping signatures (treat as a misconfiguration and fix).
+level: high
+tags:
+  - agent
+  - supply_chain
+  - sentinels
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Sentinels, Supply chain / Server-side</h2>
+<p><strong>Control.</strong> Image-pull events captured via Kyverno mutate. Daily SBOM-diff CronJob. Cosign verification failures surface as PolicyReport entries. Cilium FQDN denial flow events shipped to SIEM.</p>
+<p><strong>Strength.</strong> Deterministic at admission and at the network layer. Failure modes: SBOM diff that compares only top-level package counts (misses transitive dependency changes); image-pull annotation policy in Audit mode (does not actually annotate); cosign failure alert without context (operator gets paged with image SHA but no PR or build context); Hubble FQDN logs disabled by default in some Cilium installs (verify <code>enable-l7-proxy: true</code>).</p>
+<h3>Tooling</h3>
+<ul>
+<li>- Kyverno 1.18+.</li>
+<li>- syft for SBOM generation.</li>
+<li>- Cilium with Hubble and L7 proxy enabled.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/kyverno-log-image-pulls.yaml"><code>kyverno-log-image-pulls.yaml</code></a>, mutating ClusterPolicy that annotates every Pod with the image references and pull timestamp; the annotation is shipped to SIEM by the policy-report shipping CronJob in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/authorization/server-side/ship-policy-reports.yaml"><code>../../authorization/server-side/ship-policy-reports.yaml</code></a>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sbom-diff-cronjob.yaml"><code>sbom-diff-cronjob.yaml</code></a>, daily CronJob that runs syft against every image in agent namespaces, hashes the SBOM, compares to the previous day&#x27;s hash, ships sbom_diff events when changed.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/hubble-fqdn-deny-export.sh"><code>hubble-fqdn-deny-export.sh</code></a>, pipes Hubble L7 DNS denials to SIEM (the FQDN-egress denial signal).</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sigma-cosign-failure.yaml"><code>sigma-cosign-failure.yaml</code></a>, SIEM rule firing on policy-report entries where <code>data.policy: verify-image-signatures</code> and <code>data.failed &gt; 0</code>.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Image pull event captured
+# Replace digest with a real signed agent image digest from your registry
+kubectl run test --image=ghcr.io/example-org/claude-agent@sha256:9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f -n agent-claude-prod
+kubectl get pod test -n agent-claude-prod \
+  -o jsonpath=&#x27;{.metadata.annotations.agent-sentinel/image-audit}&#x27;
+# expected: matches the image
+
+# 2. SBOM diff fires on image update
+# Push a new image. Wait for next CronJob run. Check SIEM.
+
+# 3. Cosign verification failure surfaces
+kubectl run unsigned --image=docker.io/alpine -n agent-claude-prod
+# expected: admission rejection; PolicyReport entry; SIEM alert via sigma-cosign-failure
+
+# 4. FQDN denial captured
+kubectl exec -n agent-claude-prod claude-code -- curl -sS --max-time 3 https://blocked-mcp.example.com
+hubble observe --type drop --since 1m | grep blocked-mcp
+# expected: drop event
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- SBOM diff that compares only top-level package counts. Misses transitive dependency changes.</li>
+<li>- Image pull annotation runs as <code>mutate</code> policy in Audit mode. Does not actually annotate.</li>
+<li>- Cosign failure alert without context. Operator gets paged with image SHA, no PR or build context.</li>
+<li>- Hubble FQDN logs disabled by default in some Cilium installs. Verify <code>enable-l7-proxy: true</code>.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 DE.CM-09, ID.RA-09, GV.SC-07. NIST SP 800-161 Rev. 1. SLSA framework. CISA/NSA/FBI AI Data Security CSI (May 2025).</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>SBOM diff compares only top-level package counts (misses transitive)</li><li>image pull annotation runs as mutate in Audit mode (does not annotate)</li><li>Hubble FQDN logs disabled by default in some Cilium installs</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>DE.CM-09, ID.RA-09, GV.SC-07</td></tr><tr><th>OTHER</th><td>NIST SP 800-161 Rev. 1, SLSA framework, CISA/NSA/FBI AI Data Security CSI (May 2025)</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/detect/supply-chain/server-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

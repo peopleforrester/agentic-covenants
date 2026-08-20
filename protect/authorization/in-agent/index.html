@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Authorization at the in agent layer | Protect | Agentic Covenants</title>
+<meta name="description" content="Model instructions and scoped tool descriptions.">
+<link rel="canonical" href="https://agenticcovenants.com/protect/authorization/in-agent/">
+<meta property="og:title" content="Authorization at the in agent layer | Protect | Agentic Covenants">
+<meta property="og:description" content="Model instructions and scoped tool descriptions.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/protect/authorization/in-agent/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Protect</a> ›
+  <span>Authorization</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Protect (PR) · Authorization</p>
+  <h1>Authorization <span class="at">at the</span> in agent <span class="at">layer</span></h1>
+  <p class="strength strength-in-agent"><strong>advisory</strong> · Bypassable by language alone</p>
+  <blockquote class="q">If the agent decides to violate this concern, what stops it at this layer?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="here" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Model instructions and scoped tool descriptions.</p></section>
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>tool-description-template.md</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/in-agent/tool-description-template.md">view on GitHub</a></figcaption><pre><code># Tool-description template, Authorization scoping
+
+Use this shape for every tool description in your agent&#x27;s tool registry, MCP server, or Claude Code skill. The model reads the description; write it for the model.
+
+---
+
+## Template
+
+```
+{{ TOOL_NAME }}
+
+Purpose:
+  {{ ONE_SENTENCE_PURPOSE }}
+
+Allowed inputs:
+  - {{ ALLOWED_INPUT_1 }}
+  - {{ ALLOWED_INPUT_2 }}
+
+Not for:
+  - {{ FORBIDDEN_USE_1 }}     (this is a hard scope boundary; do not use this tool for it)
+  - {{ FORBIDDEN_USE_2 }}     (this is enforced at &lt;client-side hook | server-side policy&gt;)
+
+When you are about to call this tool, check:
+  1. Is the input within the allowed list?
+  2. Is the action consistent with the operator&#x27;s stated goal in this session?
+  3. Will this action be reversible without operator intervention?
+
+If any answer is no, stop and ask the operator. The lower-layer enforcement
+will reject the call regardless; you will save a round-trip.
+```
+
+---
+
+## Example: a `kubectl` wrapper tool
+
+```
+kubectl_get
+
+Purpose:
+  Read the state of Kubernetes resources in the operator&#x27;s diagnostic namespace.
+
+Allowed inputs:
+  - kubectl get pods, services, deployments, configmaps in namespace=agent-claude-prod
+  - kubectl logs of pods in namespace=agent-claude-prod
+
+Not for:
+  - kubectl delete, apply, patch, edit, exec, port-forward, cp, debug
+  - any action targeting namespaces other than agent-claude-prod
+  - any action with --all-namespaces or -A
+
+When you are about to call this tool, check:
+  1. Is the verb &quot;get&quot; or &quot;logs&quot;?
+  2. Is the namespace agent-claude-prod?
+  3. Are there no flags that broaden the scope (--all-namespaces, --as, --as-group)?
+
+If any answer is no, stop and ask the operator. The cluster RBAC (Role
+&quot;claude-code&quot; in namespace agent-claude-prod) will reject the call anyway,
+but asking first is faster than waiting for the rejection.
+```
+
+## Notes
+
+- Mention the lower-layer enforcement explicitly. &quot;The cluster RBAC will reject this anyway&quot; is a hint to the model that this tool is real-world scoped, not just norm-scoped.
+- Keep the &quot;When you are about to call this tool, check&quot; list short. Three to five items, each answerable in one second.
+- Use the imperative (&quot;stop and ask&quot;), not the suggestive (&quot;you should consider&quot;).
+- Do not include real production resource names in the example. The example must be obviously an example.
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Authorization / In-agent</h2>
+<p><strong>Control.</strong> Model instructions and tool descriptions that scope each tool to its safe operations and explicitly say what the tool is not for.</p>
+<p><strong>Strength.</strong> Advisory only. Model instructions are bypassable. Tool descriptions are slightly more durable because the model uses them for its own decision-making, but they are still not enforcement.</p>
+<h3>Tooling</h3>
+<p>None. The artifact is text in the system prompt and in each tool&#x27;s <code>description</code> field.</p>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/tool-description-template.md"><code>tool-description-template.md</code></a>, drop-in template for a tool description that names the tool&#x27;s purpose, lists what it must not be used for, and includes a &quot;if you are about to do X, stop and ask&quot; line.</li>
+</ul>
+<h3>Verification</h3>
+<p>You cannot verify this layer the way you verify the others. The &quot;verification&quot; is a lint that confirms each tool description has scope and exclusion language. A linter like <code>mcp-scanner</code> (see <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/supply-chain/client-side/"><code>../../supply-chain/client-side/</code></a>) can enforce a basic pattern.</p>
+<h3>Common mistakes</h3>
+<ul>
+<li>- Tool descriptions that say what the tool <em>can</em> do but not what it must not do. The asymmetry matters; models will assume capability when scope is silent.</li>
+<li>- Treating the description as documentation for humans. The model reads it. Write it for the model first, the operator second.</li>
+<li>- Embedding examples of forbidden inputs in the description. Models pattern-match; an example of a forbidden command can become a template the model uses.</li>
+</ul>
+<h3>Citation</h3>
+<p>Advisory; no direct framework mapping. Thematic: NIST AI RMF MAP 5.1 (likelihood and magnitude of impacts documented). OWASP LLM06 (Excessive Agency), mitigation principle. OWASP ASI02 (Tool Misuse), mitigation principle.</p></section>
+  <section class="risks"><h2>Primary bypasses</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>prompt injection</li><li>novel framing</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>(advisory)</td></tr><tr><th>NIST AI RMF</th><td>MAP 5.1</td></tr><tr><th>OWASP LLM</th><td>LLM06</td></tr><tr><th>OWASP AGENTIC</th><td>ASI02</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/protect/authorization/in-agent/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

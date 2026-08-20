@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Authorization at the server side layer | Recover | Agentic Covenants</title>
+<meta name="description" content="Reapply RBAC, Kyverno, IAM from declarative source; audit for drift between cluster state and source.">
+<link rel="canonical" href="https://agenticcovenants.com/recover/authorization/server-side/">
+<meta property="og:title" content="Authorization at the server side layer | Recover | Agentic Covenants">
+<meta property="og:description" content="Reapply RBAC, Kyverno, IAM from declarative source; audit for drift between cluster state and source.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/recover/authorization/server-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Recover</a> ›
+  <span>Authorization</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Recover (RC) · Authorization</p>
+  <h1>Authorization <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
+  <blockquote class="q">How do I get back to a known-good state and not repeat this?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Reapply RBAC, Kyverno, IAM from declarative source; audit for drift between cluster state and source.</p></section>
+  <section class="artifacts"><h2>Artifacts (2)</h2><figure class="artifact"><figcaption><code>agent-restore-authorization-server</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/restorations/authorization/server-side/agent-restore-authorization-server">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Server-side authorization-rebuild runbook. Removes emergency-deny, reapplies RBAC + Kyverno + IAM from declarative source.
+# ABOUTME: Source-of-truth manifests must be intact (signed commits, signed tags, off-cluster mirror); script does not check repo integrity.
+
+set -euo pipefail
+
+if [[ $# -lt 2 ]]; then
+  echo &quot;Usage: agent-restore-authorization-server &lt;AGENT_NAME&gt; &lt;INCIDENT_ID&gt;&quot; &gt;&amp;2
+  exit 64
+fi
+
+AGENT_NAME=&quot;$1&quot;
+INCIDENT_ID=&quot;$2&quot;
+NAMESPACE=&quot;agent-${AGENT_NAME}&quot;
+MANIFESTS_DIR=&quot;${MANIFESTS_DIR:-./manifests}&quot;
+
+# 1. Remove emergency Kyverno deny-all ClusterPolicies (there may be multiple,
+# each tagged with an incident ID).
+mapfile -t EMERGENCY_POLICIES &lt; &lt;(
+  kubectl get clusterpolicies -o name 2&gt;/dev/null \
+    | grep -E &quot;emergency-deny-(all|agents|image-)&quot;
+)
+for cp in &quot;${EMERGENCY_POLICIES[@]}&quot;; do
+  kubectl delete &quot;$cp&quot; 2&gt;/dev/null || true
+done
+
+# 2. Reapply the agent&#x27;s Role and RoleBinding from declarative source.
+ROLE_FILE=&quot;$MANIFESTS_DIR/rbac/${AGENT_NAME}-role.yaml&quot;
+BINDING_FILE=&quot;$MANIFESTS_DIR/rbac/${AGENT_NAME}-rolebinding.yaml&quot;
+for f in &quot;$ROLE_FILE&quot; &quot;$BINDING_FILE&quot;; do
+  if [[ -r &quot;$f&quot; ]]; then
+    kubectl apply -f &quot;$f&quot;
+  else
+    echo &quot;WARN: $f not found in source; skipping&quot; &gt;&amp;2
+  fi
+done
+
+# 3. Reapply the operational Kyverno policies.
+if [[ -d &quot;$MANIFESTS_DIR/kyverno&quot; ]]; then
+  kubectl apply -f &quot;$MANIFESTS_DIR/kyverno/&quot; 2&gt;/dev/null || true
+fi
+
+# 4. Remove any lingering EmergencyDenyAll IAM policies on the agent role.
+mapfile -t IAM_POLICIES &lt; &lt;(
+  aws iam list-role-policies --role-name &quot;$AGENT_NAME&quot; \
+    --query &#x27;PolicyNames[?starts_with(@, `EmergencyDenyAll`)]&#x27; \
+    --output text 2&gt;/dev/null | tr &#x27;\t&#x27; &#x27;\n&#x27;
+)
+for p in &quot;${IAM_POLICIES[@]}&quot;; do
+  [[ -z &quot;$p&quot; ]] &amp;&amp; continue
+  aws iam delete-role-policy --role-name &quot;$AGENT_NAME&quot; --policy-name &quot;$p&quot; 2&gt;/dev/null || true
+done
+
+# 5. Audit drift between cluster state and source.
+SCRIPT_DIR=&quot;$(cd &quot;$(dirname &quot;${BASH_SOURCE[0]}&quot;)&quot; &amp;&amp; pwd)&quot;
+if [[ -x &quot;$SCRIPT_DIR/drift-audit.sh&quot; ]]; then
+  echo &quot;Drift audit:&quot;
+  &quot;$SCRIPT_DIR/drift-audit.sh&quot; &quot;$NAMESPACE&quot; || true
+fi
+
+logger -t agent-recovery -p user.notice \
+  &quot;$(jq -n \
+      --arg event &quot;authorization_restored_server&quot; \
+      --arg agent &quot;$AGENT_NAME&quot; \
+      --arg incident &quot;$INCIDENT_ID&quot; \
+      --arg actor &quot;$(whoami)&quot; \
+      --arg ts &quot;$(date -Iseconds)&quot; \
+      &#x27;{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}&#x27;)&quot;
+
+echo &quot;Server-side authorization restored for $AGENT_NAME&quot;
+echo &quot;Review drift-audit output before declaring recovery complete.&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>drift-audit.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/restorations/authorization/server-side/drift-audit.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Drift-detection helper. Lists Kubernetes resources in a namespace not present in the declarative source-of-truth.
+# ABOUTME: Anything in cluster but not in source is suspect after a recovery; review and decide delete or capture.
+
+set -euo pipefail
+
+NAMESPACE=&quot;${1:-}&quot;
+MANIFESTS_DIR=&quot;${MANIFESTS_DIR:-./manifests}&quot;
+
+if [[ -z &quot;$NAMESPACE&quot; ]]; then
+  echo &quot;Usage: drift-audit.sh &lt;NAMESPACE&gt;&quot; &gt;&amp;2
+  exit 64
+fi
+
+# Resource kinds worth auditing. Add or remove for your environment.
+KINDS=(
+  configmaps secrets serviceaccounts
+  roles rolebindings
+  deployments daemonsets statefulsets
+  services networkpolicies
+  pods
+)
+
+echo &quot;Drift audit for namespace: $NAMESPACE&quot;
+echo &quot;Source manifests: $MANIFESTS_DIR&quot;
+echo
+
+for kind in &quot;${KINDS[@]}&quot;; do
+  mapfile -t CLUSTER_NAMES &lt; &lt;(
+    kubectl get &quot;$kind&quot; -n &quot;$NAMESPACE&quot; -o jsonpath=&#x27;{.items[*].metadata.name}&#x27; 2&gt;/dev/null \
+      | tr &#x27; &#x27; &#x27;\n&#x27; | sort -u
+  )
+
+  for name in &quot;${CLUSTER_NAMES[@]}&quot;; do
+    [[ -z &quot;$name&quot; ]] &amp;&amp; continue
+    # Heuristic: assume manifest filename pattern is &lt;name&gt;-&lt;kind&gt;.yaml or &lt;kind&gt;/&lt;name&gt;.yaml.
+    # Drift detection here is a starter; tighten for your repo layout.
+    if ! grep -rqE &quot;^\s*name:\s*$name\s*$&quot; &quot;$MANIFESTS_DIR&quot; 2&gt;/dev/null; then
+      echo &quot;DRIFT: $kind/$name in cluster but not referenced in $MANIFESTS_DIR/&quot;
+    fi
+  done
+done
+
+echo
+echo &quot;Review each DRIFT line. Anything not deliberate during recovery should be deleted.&quot;
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Restorations, Authorization / Server-side</h2>
+<p><strong>Precondition.</strong> Interventions L3-C2 has fired (Kyverno deny-all in effect, agent Role empty, IAM deny-all attached). Restorations identity row complete. The declarative source-of-truth has been verified intact (signed commits, signed tags, off-cluster mirror).</p>
+<p><strong>Authority.</strong> On-call plus security review.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- <code>kubectl</code> with permission to apply RBAC and Kyverno resources.</li>
+<li>- AWS CLI (or GCP/Azure equivalent) for IAM resync.</li>
+<li>- <code>kubectl-neat</code> or <code>kubediff</code> for drift detection (optional).</li>
+<li>- Source-of-truth manifests: <code>manifests/rbac/</code>, <code>manifests/kyverno/</code>, <code>infrastructure/iam/</code>.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-restore-authorization-server"><code>agent-restore-authorization-server</code></a>, runbook script. Removes emergency Kyverno deny ClusterPolicy, reapplies the agent&#x27;s Role from source, reapplies the operational Kyverno policies, re-removes any EmergencyDenyAll IAM policies, audits cluster drift vs source.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/drift-audit.sh"><code>drift-audit.sh</code></a>, drift-detection helper. Lists resources in the agent namespace not present in <code>manifests/</code>. Anything in cluster but not in source is suspect.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Emergency Kyverno deny-all removed
+kubectl get clusterpolicy emergency-deny-all-agents 2&gt;&amp;1 | grep -i &quot;not found&quot;
+
+# 2. Agent Role has rules from source
+kubectl get role -n agent-claude-code-prod claude-code -o jsonpath=&#x27;{.rules}&#x27;
+# expected: matches manifests/rbac/&lt;agent&gt;-role.yaml
+
+# 3. Operational Kyverno policies in effect
+kubectl get clusterpolicies | grep -E &quot;(agents-no-cluster-roles|verify-image-signatures)&quot;
+
+# 4. Drift audit clean
+./drift-audit.sh agent-claude-code-prod
+# expected: no entries (or all entries explained)
+
+# 5. Test action that was denied during incident now succeeds
+kubectl --as=system:serviceaccount:agent-claude-code-prod:claude-code get pods
+# expected: success
+</code></pre>
+<h3>Common failure modes</h3>
+<ul>
+<li>- Declarative source itself was compromised during incident. Verify source repo integrity (signed commits, signed tags) before reapply.</li>
+<li>- Reapply does not delete drift; only adds/updates declared resources. Run drift audit and explicitly delete unknown resources.</li>
+<li>- Emergency-deny ClusterPolicy not removed. The agent has its Role back but is still globally denied by the emergency policy.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 RC.RP-01, RC.IM-01; PR.AA-05 (recovery dimension). NIST SP 800-207 (Zero Trust). CIS Kubernetes Benchmark. NIST AI RMF MANAGE 4.1.</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>declarative source itself was compromised during incident</li><li>reapply does not delete drift; only adds/updates declared resources</li><li>emergency-deny ClusterPolicy not removed</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RC.RP-01, RC.IM-01, PR.AA-05</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 4.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI02, ASI03, ASI05</td></tr><tr><th>OTHER</th><td>NIST SP 800-207, CIS Kubernetes Benchmark</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/recover/authorization/server-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

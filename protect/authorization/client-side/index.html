@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Authorization at the client side layer | Protect | Agentic Covenants</title>
+<meta name="description" content="Deny-by-default tool allowlist, capability-based restriction, PreToolUse hooks, pre-commit hooks.">
+<link rel="canonical" href="https://agenticcovenants.com/protect/authorization/client-side/">
+<meta property="og:title" content="Authorization at the client side layer | Protect | Agentic Covenants">
+<meta property="og:description" content="Deny-by-default tool allowlist, capability-based restriction, PreToolUse hooks, pre-commit hooks.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/protect/authorization/client-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Protect</a> ›
+  <span>Authorization</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Protect (PR) · Authorization</p>
+  <h1>Authorization <span class="at">at the</span> client side <span class="at">layer</span></h1>
+  <p class="strength strength-client-side"><strong>deterministic</strong> · Outside the model&#x27;s reasoning</p>
+  <blockquote class="q">If the agent decides to violate this concern, what stops it at this layer?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="here" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Deny-by-default tool allowlist, capability-based restriction, PreToolUse hooks, pre-commit hooks.</p></section>
+  <section class="artifacts"><h2>Artifacts (4)</h2><figure class="artifact"><figcaption><code>deny-protected-paths.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/client-side/deny-protected-paths.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: pre-commit hook that fails when the diff touches operator-only paths.
+# ABOUTME: This catches operator-machine commits; --no-verify bypasses it. Server-side pre-receive is the backstop.
+
+set -euo pipefail
+
+# Operator may set this env var to bypass the check for legitimate human commits
+# performed via a controlled session. Setting it from inside an agent context
+# requires write access to the operator&#x27;s shell profile, which the agent should
+# not have.
+if [[ &quot;${OPERATOR_OVERRIDE:-}&quot; == &quot;1&quot; ]]; then
+  exit 0
+fi
+
+cat &lt;&lt;&#x27;EOF&#x27; &gt;&amp;2
+BLOCKED: edits to protected paths are operator-only.
+
+The agent must not commit to:
+  - infrastructure/prod/    (production IaC)
+  - .github/workflows/      (CI configuration)
+  - secrets/                (sealed secrets and key material)
+  - .claude/                (agent runtime configuration)
+  - /etc/agents/            (system-level agent config)
+
+If you are the operator and need to make this change manually, set
+OPERATOR_OVERRIDE=1 in your shell and re-run the commit.
+
+This pre-commit hook is bypassable with `git commit --no-verify`. The
+server-side Git pre-receive hook in controls/authorization/server-side/
+enforces the same rule and is not bypassable. Try to push with --no-verify
+applied locally; the push will fail there too.
+EOF
+exit 1
+</code></pre></figure><figure class="artifact"><figcaption><code>pre-commit-config.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/client-side/pre-commit-config.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: pre-commit framework config running gitleaks and a protected-paths gate.
+# ABOUTME: Drop at repo root as .pre-commit-config.yaml and run `pre-commit install`. Backstopped by server-side pre-receive.
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: [&quot;--maxkb=512&quot;]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: local
+    hooks:
+      - id: deny-protected-paths
+        name: Deny edits to protected paths from agent commits
+        language: script
+        entry: ./scripts/deny-protected-paths.sh
+        files: &#x27;^(infrastructure/prod/|\.github/workflows/|secrets/|\.claude/|/etc/agents/)&#x27;
+        always_run: false
+        pass_filenames: true
+</code></pre></figure><figure class="artifact"><figcaption><code>pre_tool_use.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/client-side/pre_tool_use.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Claude Code PreToolUse hook with deny-then-ask-then-allow precedence.
+# ABOUTME: Receives JSON on stdin. Exit 0 = allow. Exit 2 = deny (Claude Code shows the message). Exit other = error.
+
+set -euo pipefail
+
+LOG_DIR=&quot;${LOG_DIR:-/var/log/agents/claude-code}&quot;
+mkdir -p &quot;$LOG_DIR&quot; 2&gt;/dev/null || true
+
+# Hook receives JSON on stdin per Claude Code hook spec.
+INPUT=&quot;$(cat)&quot;
+TOOL_NAME=&quot;$(echo &quot;$INPUT&quot; | jq -r &#x27;.tool_name // empty&#x27;)&quot;
+TOOL_INPUT=&quot;$(echo &quot;$INPUT&quot; | jq -r &#x27;.tool_input.command // empty&#x27;)&quot;
+SESSION_ID=&quot;$(echo &quot;$INPUT&quot; | jq -r &#x27;.session_id // &quot;default&quot;&#x27;)&quot;
+
+# ----- Tier-4 hard-deny patterns -----
+# These cannot be confirmed past at the client side. The agent must not even
+# be asked to run them. Each pattern is a regex applied to TOOL_INPUT.
+DENY_PATTERNS=(
+  &#x27;\brm\s+-rf\s+/&#x27;
+  &#x27;\brm\s+-rf\s+~&#x27;
+  &#x27;\brm\s+-rf\s+\$HOME&#x27;
+  &#x27;\bterraform\s+destroy&#x27;
+  &#x27;\bterraform\s+apply.*-auto-approve&#x27;
+  &#x27;\bDROP\s+TABLE&#x27;
+  &#x27;\bDROP\s+DATABASE&#x27;
+  &#x27;\bTRUNCATE\s+TABLE&#x27;
+  &#x27;\bkubectl\s+delete\s+ns&#x27;
+  &#x27;\bkubectl\s+delete\s+namespace&#x27;
+  &#x27;\bkubectl\s+scale\s+.*--replicas=0&#x27;
+  &#x27;\baws\s+s3\s+rb&#x27;
+  &#x27;\baws\s+ec2\s+terminate-instances&#x27;
+  &#x27;\baws\s+rds\s+delete-db-instance&#x27;
+  &#x27;\bgh\s+repo\s+delete&#x27;
+  &#x27;\bgit\s+push\s+(--force|-f)&#x27;
+  &#x27;\bgit\s+reset\s+--hard&#x27;
+  &#x27;\bdd\s+if=/dev/zero\s+of=&#x27;
+  &#x27;\bmkfs\b&#x27;
+  &#x27;:\(\)\s*\{\s*:\|:&amp;\s*\};:&#x27;
+)
+
+for pattern in &quot;${DENY_PATTERNS[@]}&quot;; do
+  if echo &quot;$TOOL_INPUT&quot; | grep -qE &quot;$pattern&quot;; then
+    echo &quot;BLOCKED: command matches deny pattern: ${pattern}&quot; &gt;&amp;2
+    echo &quot;$(date -Iseconds) DENY $SESSION_ID $TOOL_NAME pattern=${pattern} input=${TOOL_INPUT}&quot; \
+      &gt;&gt; &quot;$LOG_DIR/pre_tool_use.log&quot; 2&gt;/dev/null || true
+    exit 2
+  fi
+done
+
+# ----- Obfuscation defenses -----
+# Catches the trivial cases. Not a guarantee. An adversarial agent has more
+# obfuscation options than a regex list can enumerate.
+OBFUSCATION_PATTERNS=(
+  &#x27;\bbase64\s+(--decode|-d|-D)\b&#x27;
+  &#x27;\beval\s+\$\(&#x27;
+  &#x27;\bbash\s+-c\s+\$\(&#x27;
+  &#x27;\bsh\s+-c\s+\$\(&#x27;
+  &#x27;\bpython3?\s+-c\s+[&quot;\x27]exec\(&#x27;
+  &#x27;\bcurl\s+[^|]+\|\s*(bash|sh)\b&#x27;
+  &#x27;\bwget\s+[^|]+\|\s*(bash|sh)\b&#x27;
+  &#x27;\bxargs\s+rm\b&#x27;
+)
+
+for pattern in &quot;${OBFUSCATION_PATTERNS[@]}&quot;; do
+  if echo &quot;$TOOL_INPUT&quot; | grep -qE &quot;$pattern&quot;; then
+    echo &quot;BLOCKED: obfuscation pattern detected: ${pattern}&quot; &gt;&amp;2
+    echo &quot;$(date -Iseconds) DENY-OBFUSCATION $SESSION_ID $TOOL_NAME pattern=${pattern} input=${TOOL_INPUT}&quot; \
+      &gt;&gt; &quot;$LOG_DIR/pre_tool_use.log&quot; 2&gt;/dev/null || true
+    exit 2
+  fi
+done
+
+# ----- Allow with logging -----
+echo &quot;$(date -Iseconds) ALLOW $SESSION_ID $TOOL_NAME input=${TOOL_INPUT}&quot; \
+  &gt;&gt; &quot;$LOG_DIR/pre_tool_use.log&quot; 2&gt;/dev/null || true
+
+exit 0
+</code></pre></figure><figure class="artifact"><figcaption><code>settings.json</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/client-side/settings.json">view on GitHub</a></figcaption><pre><code>{
+  &quot;_comment&quot;: &quot;defaultMode dontAsk auto-denies anything that would otherwise prompt: only the allow rules below, built-in read-only Bash, and calls a PreToolUse hook approves will run. Valid modes are default (aka manual), acceptEdits, plan, auto, dontAsk, bypassPermissions. There is no deny mode; the deny LIST below is what blocks specific tools.&quot;,
+  &quot;permissions&quot;: {
+    &quot;defaultMode&quot;: &quot;dontAsk&quot;,
+    &quot;allow&quot;: [
+      &quot;Read&quot;,
+      &quot;Glob&quot;,
+      &quot;Grep&quot;
+    ],
+    &quot;ask&quot;: [
+      &quot;Edit&quot;,
+      &quot;Write&quot;,
+      &quot;Bash(git:status)&quot;,
+      &quot;Bash(git:diff)&quot;,
+      &quot;Bash(git:log)&quot;,
+      &quot;Bash(git:add:*)&quot;,
+      &quot;Bash(git:commit:*)&quot;,
+      &quot;Bash(npm:install)&quot;,
+      &quot;Bash(pip:install)&quot;
+    ],
+    &quot;deny&quot;: [
+      &quot;Bash(rm:-rf)&quot;,
+      &quot;Bash(rm:-rf:/)&quot;,
+      &quot;Bash(terraform:destroy)&quot;,
+      &quot;Bash(terraform:apply:-auto-approve)&quot;,
+      &quot;Bash(kubectl:delete:*)&quot;,
+      &quot;Bash(kubectl:scale:*--replicas=0*)&quot;,
+      &quot;Bash(aws:s3:rb)&quot;,
+      &quot;Bash(aws:ec2:terminate-instances)&quot;,
+      &quot;Bash(aws:rds:delete-db-instance)&quot;,
+      &quot;Bash(gh:repo:delete)&quot;,
+      &quot;Bash(curl:*-X:DELETE*)&quot;,
+      &quot;Bash(docker:system:prune)&quot;,
+      &quot;Bash(helm:uninstall)&quot;,
+      &quot;Bash(git:push:--force)&quot;,
+      &quot;Bash(git:reset:--hard)&quot;,
+      &quot;Bash(dd:*)&quot;,
+      &quot;Bash(mkfs:*)&quot;
+    ]
+  },
+  &quot;hooks&quot;: {
+    &quot;PreToolUse&quot;: [
+      {
+        &quot;matcher&quot;: &quot;Bash&quot;,
+        &quot;hooks&quot;: [
+          {
+            &quot;type&quot;: &quot;command&quot;,
+            &quot;command&quot;: &quot;/etc/agents/hooks/pre_tool_use.sh&quot;
+          }
+        ]
+      }
+    ]
+  }
+}
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Authorization / Client-side</h2>
+<p><strong>Control.</strong> <code>--allowedTools</code> deny-by-default. Capability-based tool restriction at the SDK layer. PreToolUse pattern hooks with <strong>deny-then-ask-then-allow</strong> precedence. Pre-commit hooks blocking changes to protected paths. Hooks directory and config owned by the operator, not the agent.</p>
+<p><strong>Strength.</strong> Deterministic when the hook config is uncompromised and the agent runtime honors precedence. Bypassable through allowlisted-shell shell-out, command obfuscation (base64, eval, env-var indirection), equivalent commands not in the pattern list, <code>--no-verify</code>, and filesystem tampering when the agent has write access to the hook surface.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- Claude Code v2.1.40 or later (the May 2026 PreToolUse precedence patch, pre-patch versions allow <code>allow</code> to override <code>deny</code>).</li>
+<li>- <code>pre-commit</code> framework on the operator&#x27;s machine.</li>
+<li>- <code>jq</code> for the hook script.</li>
+<li>- A server-side Git pre-receive hook to backstop <code>--no-verify</code>. Lives in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/server-side/"><code>../server-side/</code></a>.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/settings.json"><code>settings.json</code></a>, Claude Code project settings with <code>permissions</code> <code>defaultMode: deny</code>, an explicit <code>allow</code> list (read-only ops), an <code>ask</code> list (mutation ops), a <code>deny</code> list (destructive ops). Drop in your project at <code>.claude/settings.json</code> (operator-owned, agent runs as a different user).</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/pre_tool_use.sh"><code>pre_tool_use.sh</code></a>, PreToolUse hook that receives JSON on stdin per the Claude Code hook spec. Hard-deny patterns (<code>rm -rf /</code>, <code>terraform destroy</code>, fork bombs) and obfuscation patterns (base64 decode, eval). Deploy to <code>/etc/agents/hooks/</code> with mode 0755 and owner root.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/pre-commit-config.yaml"><code>pre-commit-config.yaml</code></a>, pre-commit framework config that runs gitleaks plus a deny-protected-paths hook. Drop at the repo root as <code>.pre-commit-config.yaml</code> and run <code>pre-commit install</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/deny-protected-paths.sh"><code>deny-protected-paths.sh</code></a>, pre-commit hook that fails when the diff touches <code>infrastructure/prod/</code>, <code>.github/workflows/</code>, or <code>secrets/</code>. Operator commits to those paths; agent commits do not.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Hook fires on a denied command
+echo &#x27;{&quot;tool_name&quot;:&quot;Bash&quot;,&quot;tool_input&quot;:{&quot;command&quot;:&quot;rm -rf /tmp/test&quot;}}&#x27; \
+  | /etc/agents/hooks/pre_tool_use.sh
+echo &quot;exit code: $?&quot;
+# expected: BLOCKED message + exit 2
+
+# 2. Hook does not fire on an allowed command
+echo &#x27;{&quot;tool_name&quot;:&quot;Bash&quot;,&quot;tool_input&quot;:{&quot;command&quot;:&quot;ls -la&quot;}}&#x27; \
+  | /etc/agents/hooks/pre_tool_use.sh
+echo &quot;exit code: $?&quot;
+# expected: exit 0
+
+# 3. Hook config ownership
+ls -la /etc/agents/hooks/pre_tool_use.sh
+# expected: owner root, mode 0755
+
+# 4. Agent cannot edit the hook
+sudo -u agent-runner touch /etc/agents/hooks/pre_tool_use.sh
+# expected: Permission denied
+
+# 5. Pre-commit fires on a protected path
+git checkout -b test-protected
+echo &quot;test&quot; &gt;&gt; infrastructure/prod/main.tf
+git add . &amp;&amp; git commit -m &quot;test&quot;
+# expected: failure at the deny-protected-paths hook
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- Allowing <code>Bash(*)</code> in the allow list, which gates nothing.</li>
+<li>- Pattern hooks that match <code>kubectl delete</code> but not <code>kubectl scale --replicas=0</code>. Pattern hooks catch casual misuse, not adversarial agents. Document the equivalent-command bypass and accept the matrix&#x27;s framing.</li>
+<li>- Hook config owned by the agent&#x27;s own user. The agent edits its own deny list at runtime.</li>
+<li>- Forgetting to enable the May 2026 Claude Code patch where <code>allow</code> no longer beats <code>deny</code>. Verify with <code>claude --version</code> and check the changelog.</li>
+<li>- Pre-commit only on the operator&#x27;s machine. The agent runs <code>git commit --no-verify</code> and skips it. Mitigation is the server-side pre-receive hook in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/server-side/"><code>../server-side/</code></a>.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 PR.AA-05 (least privilege, separation of duties), PR.PS-01 (configuration management practices). NIST AI RMF MANAGE 2.4, MANAGE 4.1. OWASP LLM06 (Excessive Agency); LLM05 (Improper Output Handling). OWASP ASI02 (Tool Misuse), ASI05 (Unexpected Code Execution). OWASP MCP02, MCP05. OWASP Agentic Least Agency principle. NIST SP 800-207 §2.1 (least privilege).</p></section>
+  <section class="risks"><h2>Primary bypasses</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>shell-out via allowlisted Bash</li><li>pattern evasion (equivalent commands)</li><li>--no-verify on pre-commit</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>PR.AA-05, PR.PS-01</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 2.4, MANAGE 4.1</td></tr><tr><th>OWASP LLM</th><td>LLM05, LLM06</td></tr><tr><th>OWASP AGENTIC</th><td>ASI02, ASI05</td></tr><tr><th>OTHER</th><td>OWASP Agentic Least Agency, NIST SP 800-207 §2.1</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/protect/authorization/client-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

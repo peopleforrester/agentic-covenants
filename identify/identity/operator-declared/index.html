@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identity at the operator declared layer | Identify | Agentic Covenants</title>
+<meta name="description" content="Operator-maintained registry; agents.yaml in GitOps; ServiceNow CMDB; internal AI inventory tool. Owner-confirmed. Updated on charter signature.">
+<link rel="canonical" href="https://agenticcovenants.com/identify/identity/operator-declared/">
+<meta property="og:title" content="Identity at the operator declared layer | Identify | Agentic Covenants">
+<meta property="og:description" content="Operator-maintained registry; agents.yaml in GitOps; ServiceNow CMDB; internal AI inventory tool. Owner-confirmed. Updated on charter signature.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/identify/identity/operator-declared/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Identify</a> ›
+  <span>Identity</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Identify (ID) · Identity</p>
+  <h1>Identity <span class="at">at the</span> operator declared <span class="at">layer</span></h1>
+  <p class="strength strength-operator-declared"><strong></strong> · </p>
+  <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Operator-maintained registry; agents.yaml in GitOps; ServiceNow CMDB; internal AI inventory tool. Owner-confirmed. Updated on charter signature.</p></section>
+  
+  <section class="readme"><h2>Cell notes</h2><h2>Inventory, Identity / Operator-declared</h2>
+<p><strong>What this cell records.</strong> The operator&#x27;s intent: every agent the org has approved, by name, with owner, charter reference, and creation date.</p>
+<h3>Where it lives</h3>
+<p>A GitOps registry: <code>agents/&lt;agent-identifier&gt;.yaml</code> per agent, committed to a repo under branch protection (the same protection that <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/approval-gating/server-side/"><code>controls/approval-gating/server-side/</code></a> applies). PR-reviewed changes only.</p>
+<h3>Reference tooling</h3>
+<p>This cell is paperwork, not code. The structure is the <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/templates/inventory-record.yaml"><code>inventory/templates/inventory-record.yaml</code></a> format.</p>
+<h3>Cross-layer cross-references</h3>
+<ul>
+<li>- Every entry here should match a self-declared registration (<code>../self-declared/</code>). Operator-declared but not self-declared = ghost agent.</li>
+<li>- Every entry here should match a discovered identity (<code>../discovered/</code>). Operator-declared but not discovered = same ghost-agent state.</li>
+<li>- A self-declared agent without an operator-declared entry = unauthorized agent. Investigate.</li>
+</ul>
+<h3>Common failure modes</h3>
+<ul>
+<li>- Spreadsheet drift: registry hand-edited, not PR-reviewed.</li>
+<li>- Stale entries: agent retired, registry not updated.</li>
+<li>- Missing fields: owner-email empty or generic (&quot;ai-team@&quot;), backup-owner empty. Fail PR review on missing-required-field.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 ID.AM-01, ID.AM-02, ID.AM-08. NIST AI RMF MAP 1.1, MAP 1.5. ISO/IEC 42001 §A.5. Singapore IMDA Agentic AI Framework (Jan 22, 2026).</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>spreadsheet drift (entries stale within months)</li><li>registry not GitOps; changes not PR-reviewed</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>ID.AM-01, ID.AM-02, ID.AM-08</td></tr><tr><th>NIST AI RMF</th><td>MAP 1.1, MAP 1.5</td></tr><tr><th>CSA MAESTRO</th><td>Layer 7</td></tr><tr><th>OTHER</th><td>ISO/IEC 42001 §A.5, Singapore IMDA Agentic AI Framework</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/identify/identity/operator-declared/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

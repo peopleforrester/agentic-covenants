@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identity at the client side layer | Recover | Agentic Covenants</title>
+<meta name="description" content="Regenerate credential file with strict ACLs, rotate OIDC client secret, re-authenticate operator host to SSO, verify ACLs survived.">
+<link rel="canonical" href="https://agenticcovenants.com/recover/identity/client-side/">
+<meta property="og:title" content="Identity at the client side layer | Recover | Agentic Covenants">
+<meta property="og:description" content="Regenerate credential file with strict ACLs, rotate OIDC client secret, re-authenticate operator host to SSO, verify ACLs survived.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/recover/identity/client-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Recover</a> ›
+  <span>Identity</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Recover (RC) · Identity</p>
+  <h1>Identity <span class="at">at the</span> client side <span class="at">layer</span></h1>
+  <p class="strength strength-client-side"><strong>deterministic</strong> · Outside the model&#x27;s reasoning</p>
+  <blockquote class="q">How do I get back to a known-good state and not repeat this?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="here" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Regenerate credential file with strict ACLs, rotate OIDC client secret, re-authenticate operator host to SSO, verify ACLs survived.</p></section>
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>agent-restore-identity-local</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/restorations/identity/client-side/agent-restore-identity-local">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Local identity-rebuild runbook. Re-issues credential from IdP, places under strict ACLs, verifies deny-on-self.
+# ABOUTME: Run from a known-clean operator host. AGENT_TOKEN must already be issued (by the IdP API or a separate script).
+
+set -euo pipefail
+
+if [[ $# -lt 2 ]]; then
+  echo &quot;Usage: agent-restore-identity-local &lt;AGENT_NAME&gt; &lt;INCIDENT_ID&gt;&quot; &gt;&amp;2
+  echo &quot;  AGENT_TOKEN must be set in the environment (issue via IdP API first).&quot; &gt;&amp;2
+  exit 64
+fi
+
+AGENT_NAME=&quot;$1&quot;
+INCIDENT_ID=&quot;$2&quot;
+AGENT_USER=&quot;${AGENT_USER:-agent-runner}&quot;
+OPERATOR_GROUP=&quot;${OPERATOR_GROUP:-operators}&quot;
+CRED_PATH=&quot;/etc/agents/${AGENT_NAME}&quot;
+
+if [[ -z &quot;${AGENT_TOKEN:-}&quot; ]]; then
+  echo &quot;AGENT_TOKEN must be set in the environment (issue via IdP API first).&quot; &gt;&amp;2
+  exit 1
+fi
+
+# 1. Place credential in operator-owned config.
+mkdir -p &quot;$CRED_PATH&quot;
+chown &quot;root:${OPERATOR_GROUP}&quot; &quot;$CRED_PATH&quot;
+chmod 0750 &quot;$CRED_PATH&quot;
+
+umask 0177
+printf &#x27;%s\n&#x27; &quot;$AGENT_TOKEN&quot; &gt; &quot;$CRED_PATH/token&quot;
+chown &quot;root:${OPERATOR_GROUP}&quot; &quot;$CRED_PATH/token&quot;
+chmod 0640 &quot;$CRED_PATH/token&quot;
+
+# 2. Reapply deny-on-self ACL so the agent&#x27;s own user cannot read the
+# credential at rest (only the systemd unit reads it as root at launch).
+if command -v setfacl &gt;/dev/null 2&gt;&amp;1; then
+  setfacl -m &quot;u:${AGENT_USER}:---&quot; &quot;$CRED_PATH/token&quot;
+else
+  echo &quot;WARN: setfacl not available; agent user may be able to read its credential at rest&quot; &gt;&amp;2
+fi
+
+# 3. Remove the requires_reauth flag from Interventions so the agent can launch.
+rm -f &quot;$CRED_PATH/.requires_reauth&quot;
+
+# 4. Verify ACLs and permissions survived.
+EXPECTED_PERMS=&quot;640&quot;
+ACTUAL_PERMS=$(stat -c &quot;%a&quot; &quot;$CRED_PATH/token&quot;)
+if [[ &quot;$ACTUAL_PERMS&quot; != &quot;$EXPECTED_PERMS&quot; ]]; then
+  echo &quot;WARN: credential permissions are $ACTUAL_PERMS, expected $EXPECTED_PERMS&quot; &gt;&amp;2
+fi
+
+if command -v getfacl &gt;/dev/null 2&gt;&amp;1; then
+  if ! getfacl &quot;$CRED_PATH/token&quot; 2&gt;/dev/null | grep -q &quot;user:${AGENT_USER}:---&quot;; then
+    echo &quot;WARN: deny-on-self ACL for ${AGENT_USER} is missing on $CRED_PATH/token&quot; &gt;&amp;2
+  fi
+fi
+
+# 5. Log the recovery.
+logger -t agent-recovery -p user.notice \
+  &quot;$(jq -n \
+      --arg event &quot;identity_restored_local&quot; \
+      --arg agent &quot;$AGENT_NAME&quot; \
+      --arg incident &quot;$INCIDENT_ID&quot; \
+      --arg fingerprint &quot;$(printf &#x27;%s&#x27; &quot;$AGENT_TOKEN&quot; | sha256sum | cut -d&#x27; &#x27; -f1 | head -c 16)&quot; \
+      --arg actor &quot;$(whoami)&quot; \
+      --arg ts &quot;$(date -Iseconds)&quot; \
+      &#x27;{event:$event, agent:$agent, incident:$incident, cred_fingerprint:$fingerprint, actor:$actor, ts:$ts}&#x27;)&quot;
+
+unset AGENT_TOKEN
+echo &quot;Local identity restored for $AGENT_NAME (incident $INCIDENT_ID)&quot;
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Restorations, Identity / Client-side</h2>
+<p><strong>Precondition.</strong> Interventions L2-C1 has fired (local credentials deleted, agent process killed). The IdP user/service account corresponding to this agent has been confirmed clean: no recent privilege grants from compromised admin sessions, no MFA factors added during incident window.</p>
+<p><strong>Authority.</strong> On-call.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- IdP API access (Okta, Auth0, Keycloak, Dex) for credential reissue.</li>
+<li>- <code>setfacl</code> for the deny-on-self ACL pattern from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/identity/client-side/"><code>../../../controls/identity/client-side/</code></a>.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-restore-identity-local"><code>agent-restore-identity-local</code></a>, runbook script. Issues fresh credential from IdP, places in operator-owned config with strict ACLs, removes the <code>requires_reauth</code> flag, verifies the deny-on-self ACL survived.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Credential in place with correct permissions
+ls -la /etc/agents/claude-code-prod/token
+# expected: -rw-r----- root operators
+
+# 2. Agent can authenticate
+sudo -u agent-runner /usr/local/bin/claude --version
+
+# 3. Old credential is invalid (test against IdP)
+# Provider-specific: try a request with the old token, expect 401.
+</code></pre>
+<h3>Common failure modes</h3>
+<ul>
+<li>- Issuing the new credential with a long TTL by default. Re-pin to the 15-minute TTL from <code>controls/identity/server-side/pod-with-projected-token.yaml</code> to limit exposure.</li>
+<li>- Forgetting to remove the <code>requires_reauth</code> flag, the agent never restarts.</li>
+<li>- ACLs reset to defaults during recovery and not re-applied. The deny-on-self ACL must be reapplied or the agent can read its own credential at rest.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 RC.RP-01 (recovery plan executed), RC.IM-01 (improvements integrated). NIST SP 800-61 Rev. 2. NIST SP 800-63B Rev. 4.</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>new credential issued with default long TTL</li><li>requires_reauth flag not removed</li><li>ACLs reset to defaults during recovery</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RC.RP-01, RC.IM-01</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 4.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI03, ASI10</td></tr><tr><th>OTHER</th><td>NIST SP 800-61 Rev. 2, NIST SP 800-63B Rev. 4</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/recover/identity/client-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

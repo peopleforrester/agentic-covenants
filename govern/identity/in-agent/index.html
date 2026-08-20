@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identity at the in agent layer | Govern | Agentic Covenants</title>
+<meta name="description" content="Named human owner accountable for the agent&#x27;s actions. Backup owner identified. Identity claims tied to charter via registered agent identifier.">
+<link rel="canonical" href="https://agenticcovenants.com/govern/identity/in-agent/">
+<meta property="og:title" content="Identity at the in agent layer | Govern | Agentic Covenants">
+<meta property="og:description" content="Named human owner accountable for the agent&#x27;s actions. Backup owner identified. Identity claims tied to charter via registered agent identifier.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/govern/identity/in-agent/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Govern</a> ›
+  <span>Identity</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Govern (GV) · Identity</p>
+  <h1>Identity <span class="at">at the</span> in agent <span class="at">layer</span></h1>
+  <p class="strength strength-in-agent"><strong>advisory</strong> · Bypassable by language alone</p>
+  <blockquote class="q">Who is allowed to put this agent into the world, under what authority, accountable to what policy, with what retirement criteria?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="here" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Named human owner accountable for the agent&#x27;s actions. Backup owner identified. Identity claims tied to charter via registered agent identifier.</p></section>
+  
+  <section class="readme"><h2>Cell notes</h2><h2>Charter, Identity / Agent</h2>
+<p><strong>Structural question.</strong> Does each agent have a charter file naming a specific accountable human owner, a backup owner, and a registered agent identifier that ties runtime identity claims back to the charter?</p>
+<p><strong>Owner.</strong> The named human owner. Counter-signed by domain authority.</p>
+<h3>Template fragment</h3>
+<p>The <code>ownership:</code> block of <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/templates/agent-charter.yaml"><code>../../templates/agent-charter.yaml</code></a>:</p>
+<pre><code>
+ownership:
+  owner_name: Michael Forrester
+  owner_role: Principal Training Architect
+  owner_email: michael@example.com
+  backup_owner_name: Steven Heckler
+  backup_owner_role: Managing Director
+  backup_owner_email: steven@example.com
+
+agent:
+  name: claude-code-prod
+  identifier: agent-claude-code-prod-001
+</code></pre>
+<h3>Audit prompts</h3>
+<ul>
+<li>- For [agent X], who is the human owner? When did they accept ownership?</li>
+<li>- Is there a backup owner? Have they acknowledged the backup role?</li>
+<li>- Does the runtime identity (ServiceAccount or IAM principal) reference the charter <code>identifier</code>?</li>
+</ul>
+<h3>Operational tie-in</h3>
+<ul>
+<li>- The owner&#x27;s contact info goes into PagerDuty as the on-call recipient for that agent&#x27;s Sentinels alerts.</li>
+<li>- The backup owner is the failover when the named owner is unavailable.</li>
+<li>- The <code>identifier</code> in the charter must match the <code>agentic-covenants.io/agent-name</code> label on the Kubernetes namespace and ServiceAccount in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/identity/server-side/"><code>../../../controls/identity/server-side/</code></a>.</li>
+</ul>
+<h3>Common failure modes</h3>
+<ul>
+<li>- Owner departs and no backup-owner accepts handoff. <strong>Charter retirement criterion</strong> in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/templates/agent-charter.yaml"><code>../../templates/agent-charter.yaml</code></a> handles this; the agent retires automatically after 30 days.</li>
+<li>- Owner-name field filled in but the person never knew they owned the agent. Drill: ask the listed owner whether they own this agent.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 GV.RR-02; PR.AA-01 (charter dimension of identity management). NIST AI RMF GOVERN 2.1, GOVERN 2.2 (accountability). ISO/IEC 42001 §A.4.1 (leadership commitment). EU AI Act Art. 14(4) (human oversight role); Art. 26. NIST NCCoE Concept Paper on Software and AI Agent Identity and Authorization (Feb 5, 2026).</p></section>
+  
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>GV.RR-02, PR.AA-01</td></tr><tr><th>NIST AI RMF</th><td>GOVERN 2.1, GOVERN 2.2</td></tr><tr><th>ISO IEC 42001</th><td>§A.4.1</td></tr><tr><th>EU AI ACT</th><td>Art. 14(4), Art. 26</td></tr><tr><th>OTHER</th><td>NIST NCCoE Concept Paper on AI Agent Identity (Feb 5, 2026)</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/govern/identity/in-agent/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

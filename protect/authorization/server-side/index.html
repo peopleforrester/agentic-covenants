@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Authorization at the server side layer | Protect | Agentic Covenants</title>
+<meta name="description" content="Scoped RBAC Roles, IAM with explicit ARN, Kyverno or OPA admission, namespace scoping.">
+<link rel="canonical" href="https://agenticcovenants.com/protect/authorization/server-side/">
+<meta property="og:title" content="Authorization at the server side layer | Protect | Agentic Covenants">
+<meta property="og:description" content="Scoped RBAC Roles, IAM with explicit ARN, Kyverno or OPA admission, namespace scoping.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/protect/authorization/server-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Protect</a> ›
+  <span>Authorization</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Protect (PR) · Authorization</p>
+  <h1>Authorization <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
+  <blockquote class="q">If the agent decides to violate this concern, what stops it at this layer?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Scoped RBAC Roles, IAM with explicit ARN, Kyverno or OPA admission, namespace scoping.</p></section>
+  <section class="artifacts"><h2>Artifacts (3)</h2><figure class="artifact"><figcaption><code>aws-iam-scoped-policy.json</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/server-side/aws-iam-scoped-policy.json">view on GitHub</a></figcaption><pre><code>{
+  &quot;Version&quot;: &quot;2012-10-17&quot;,
+  &quot;Statement&quot;: [
+    {
+      &quot;Sid&quot;: &quot;AllowReadOnlyOnSpecificReportsBucket&quot;,
+      &quot;Effect&quot;: &quot;Allow&quot;,
+      &quot;Action&quot;: [
+        &quot;s3:GetObject&quot;,
+        &quot;s3:ListBucket&quot;,
+        &quot;s3:GetBucketLocation&quot;
+      ],
+      &quot;Resource&quot;: [
+        &quot;arn:aws:s3:::reports-readonly-prod&quot;,
+        &quot;arn:aws:s3:::reports-readonly-prod/*&quot;
+      ]
+    },
+    {
+      &quot;Sid&quot;: &quot;DenyDestructiveOnAnyResourceWithoutAgentTag&quot;,
+      &quot;Effect&quot;: &quot;Deny&quot;,
+      &quot;Action&quot;: [
+        &quot;s3:DeleteBucket&quot;,
+        &quot;s3:DeleteObject&quot;,
+        &quot;s3:DeleteObjectVersion&quot;,
+        &quot;s3:PutBucketPolicy&quot;,
+        &quot;s3:PutBucketLifecycleConfiguration&quot;,
+        &quot;s3:PutBucketAcl&quot;
+      ],
+      &quot;Resource&quot;: &quot;*&quot;,
+      &quot;Condition&quot;: {
+        &quot;StringNotEquals&quot;: {
+          &quot;aws:ResourceTag/agentic-covenants/agent-allowed&quot;: &quot;claude-code-prod&quot;
+        }
+      }
+    },
+    {
+      &quot;Sid&quot;: &quot;DenyAllOtherS3Actions&quot;,
+      &quot;Effect&quot;: &quot;Deny&quot;,
+      &quot;NotAction&quot;: [
+        &quot;s3:GetObject&quot;,
+        &quot;s3:ListBucket&quot;,
+        &quot;s3:GetBucketLocation&quot;
+      ],
+      &quot;Resource&quot;: &quot;*&quot;
+    },
+    {
+      &quot;Sid&quot;: &quot;DenyIAMEscalationPrimitives&quot;,
+      &quot;Effect&quot;: &quot;Deny&quot;,
+      &quot;Action&quot;: [
+        &quot;iam:CreateUser&quot;,
+        &quot;iam:CreateRole&quot;,
+        &quot;iam:CreatePolicy&quot;,
+        &quot;iam:CreatePolicyVersion&quot;,
+        &quot;iam:SetDefaultPolicyVersion&quot;,
+        &quot;iam:AttachUserPolicy&quot;,
+        &quot;iam:AttachRolePolicy&quot;,
+        &quot;iam:AttachGroupPolicy&quot;,
+        &quot;iam:PassRole&quot;,
+        &quot;iam:PutUserPolicy&quot;,
+        &quot;iam:PutRolePolicy&quot;,
+        &quot;iam:PutGroupPolicy&quot;,
+        &quot;iam:UpdateAssumeRolePolicy&quot;
+      ],
+      &quot;Resource&quot;: &quot;*&quot;
+    }
+  ]
+}
+</code></pre></figure><figure class="artifact"><figcaption><code>git-pre-receive-hook.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/server-side/git-pre-receive-hook.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Git server-side pre-receive hook. Cannot be bypassed by --no-verify. Install on every Git server in the org.
+# ABOUTME: Blocks force-pushes to main, edits to protected paths from non-CODEOWNERS, and any diff containing secrets.
+
+set -euo pipefail
+
+PROTECTED_PATHS=(
+  &#x27;infrastructure/prod/&#x27;
+  &#x27;.github/workflows/&#x27;
+  &#x27;secrets/&#x27;
+  &#x27;.claude/&#x27;
+)
+
+ZERO_SHA=&quot;0000000000000000000000000000000000000000&quot;
+EXIT_CODE=0
+
+while read -r oldrev newrev refname; do
+
+  # 1. Reject force-pushes to main / master / release branches.
+  case &quot;$refname&quot; in
+    refs/heads/main|refs/heads/master|refs/heads/release/*)
+      if [[ &quot;$oldrev&quot; != &quot;$ZERO_SHA&quot; &amp;&amp; &quot;$newrev&quot; != &quot;$ZERO_SHA&quot; ]]; then
+        if ! git merge-base --is-ancestor &quot;$oldrev&quot; &quot;$newrev&quot; 2&gt;/dev/null; then
+          echo &quot;BLOCKED: force-push to ${refname} is not permitted&quot; &gt;&amp;2
+          EXIT_CODE=1
+          continue
+        fi
+      fi
+      ;;
+  esac
+
+  # Skip the per-commit checks on branch deletion.
+  if [[ &quot;$newrev&quot; == &quot;$ZERO_SHA&quot; ]]; then
+    continue
+  fi
+
+  # 2. Reject edits to protected paths from authors not listed in CODEOWNERS.
+  if [[ &quot;$oldrev&quot; == &quot;$ZERO_SHA&quot; ]]; then
+    # New branch: scan all reachable commits.
+    CHANGED=$(git diff-tree --no-commit-id --name-only -r &quot;$newrev&quot;)
+  else
+    CHANGED=$(git diff --name-only &quot;$oldrev&quot; &quot;$newrev&quot;)
+  fi
+
+  AUTHOR_EMAIL=$(git log -1 --pretty=format:%ae &quot;$newrev&quot;)
+
+  while IFS= read -r path; do
+    [[ -z &quot;$path&quot; ]] &amp;&amp; continue
+    for protected in &quot;${PROTECTED_PATHS[@]}&quot;; do
+      if [[ &quot;$path&quot; == &quot;$protected&quot;* ]]; then
+        if ! git show &quot;$newrev:CODEOWNERS&quot; 2&gt;/dev/null \
+            | grep -E &quot;^\s*${protected}&quot; \
+            | grep -q &quot;$AUTHOR_EMAIL&quot;; then
+          echo &quot;BLOCKED: ${path} is a protected path; ${AUTHOR_EMAIL} is not in CODEOWNERS for it&quot; &gt;&amp;2
+          EXIT_CODE=1
+        fi
+      fi
+    done
+  done &lt;&lt;&lt; &quot;$CHANGED&quot;
+
+  # 3. Run gitleaks against the diff. Skipped if gitleaks is not installed
+  # so the hook fails closed only on real findings, not infrastructure issues.
+  if command -v gitleaks &gt;/dev/null 2&gt;&amp;1; then
+    DIFF_OUTPUT=$(git diff &quot;$oldrev..$newrev&quot; 2&gt;/dev/null || true)
+    if [[ -n &quot;$DIFF_OUTPUT&quot; ]]; then
+      if ! echo &quot;$DIFF_OUTPUT&quot; \
+          | gitleaks detect --source - --no-banner --no-color --exit-code 1 &gt;/dev/null 2&gt;&amp;1; then
+        echo &quot;BLOCKED: secrets detected by gitleaks in ${refname} (${oldrev:0:8}..${newrev:0:8})&quot; &gt;&amp;2
+        EXIT_CODE=1
+      fi
+    fi
+  else
+    echo &quot;WARN: gitleaks not installed on server; secret-scan step skipped&quot; &gt;&amp;2
+  fi
+
+done
+
+exit &quot;$EXIT_CODE&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>kyverno-no-cluster-roles.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/server-side/kyverno-no-cluster-roles.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Kyverno ClusterPolicy denying ClusterRoleBindings, wildcard verbs, and prod-namespace bindings on agent SAs.
+# ABOUTME: Verified against Kyverno CLI 1.17.1 on 2026-08-17 by tests/kyverno/. validationFailureAction must be Enforce, not Audit.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: agents-no-cluster-roles
+  annotations:
+    policies.kyverno.io/title: Agents must use namespace-scoped Roles only
+    policies.kyverno.io/category: Agentic Covenants / Authorization
+    policies.kyverno.io/severity: high
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+
+  - name: deny-clusterrolebinding-for-agent-sa
+    match:
+      any:
+      - resources:
+          kinds: [ClusterRoleBinding]
+    validate:
+      message: &gt;-
+        Agents must use namespace-scoped RoleBindings, never ClusterRoleBindings.
+        ServiceAccounts in namespaces matching agent-* may not be ClusterRoleBinding subjects.
+      foreach:
+      - list: &quot;request.object.subjects&quot;
+        deny:
+          conditions:
+            all:
+            - key: &quot;{{ element.kind }}&quot;
+              operator: Equals
+              value: &quot;ServiceAccount&quot;
+            - key: &quot;{{ element.namespace }}&quot;
+              operator: AnyIn
+              value: [&quot;agent-*&quot;]
+
+  - name: deny-wildcard-verbs-in-roles
+    match:
+      any:
+      - resources:
+          kinds: [Role, ClusterRole]
+    validate:
+      message: &gt;-
+        Wildcard verbs are not permitted. List the verbs explicitly: get, list, watch, etc.
+      # foreach/deny rather than a pattern anchor: verbs is a list of strings,
+      # so a nested map pattern never matches and denies every Role including
+      # correctly-scoped ones. Verified by tests/kyverno/.
+      foreach:
+      - list: &quot;request.object.rules[]&quot;
+        deny:
+          conditions:
+            any:
+            - key: &quot;{{ contains(element.verbs, &#x27;*&#x27;) }}&quot;
+              operator: Equals
+              value: true
+
+  - name: deny-wildcard-resources-in-roles
+    match:
+      any:
+      - resources:
+          kinds: [Role, ClusterRole]
+    validate:
+      message: &gt;-
+        Wildcard resources are not permitted. List resources explicitly, including subresources
+        such as pods/exec where access must be explicit.
+      foreach:
+      - list: &quot;request.object.rules[]&quot;
+        deny:
+          conditions:
+            any:
+            - key: &quot;{{ contains(element.resources, &#x27;*&#x27;) }}&quot;
+              operator: Equals
+              value: true
+
+  - name: deny-agent-sa-binding-into-prod-namespaces
+    match:
+      any:
+      - resources:
+          kinds: [RoleBinding]
+          namespaces:
+          - &quot;prod-*&quot;
+          - &quot;production&quot;
+          - &quot;prd&quot;
+    validate:
+      message: &gt;-
+        Agent ServiceAccounts (namespaces matching agent-*) cannot be bound into production namespaces.
+        Production work belongs to a human operator with their own credentials.
+      foreach:
+      - list: &quot;request.object.subjects&quot;
+        deny:
+          conditions:
+            all:
+            - key: &quot;{{ element.kind }}&quot;
+              operator: Equals
+              value: &quot;ServiceAccount&quot;
+            - key: &quot;{{ element.namespace }}&quot;
+              operator: AnyIn
+              value: [&quot;agent-*&quot;]
+
+  - name: require-explicit-resource-on-rolebinding
+    match:
+      any:
+      - resources:
+          kinds: [RoleBinding, ClusterRoleBinding]
+    validate:
+      message: &gt;-
+        RoleBinding/ClusterRoleBinding must reference a Role or ClusterRole that exists.
+        roleRef.name must be set.
+      pattern:
+        roleRef:
+          name: &quot;?*&quot;
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Authorization / Server-side</h2>
+<p><strong>Control.</strong> Scoped RBAC Roles, never ClusterRoles. IAM policies scoped to specific resources with explicit ARN. Kyverno or OPA admission policies. Namespace-scoped permissions. Deny <code>*</code> verbs. Deny prod namespaces from agent ServiceAccounts. Server-side Git pre-receive hooks for repo-level enforcement.</p>
+<p><strong>Strength.</strong> Deterministic and external to both the agent and the operator&#x27;s machine. Bypass requires escalation primitives in RBAC (<code>escalate</code>, <code>bind</code>, impersonation), aggregated roles missed by the policy author, subresource access not denied (<code>pods/exec</code> when only <code>pods</code> is denied), admission webhook fail-open, IAM condition logic bugs, or operator manipulation through a persuasive PR description.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- Kubernetes RBAC (built-in).</li>
+<li>- Kyverno 1.18+ (older releases use a different <code>attestors</code> block shape) or OPA Gatekeeper.</li>
+<li>- <strong>Kubernetes-native admission (no controller to install): ValidatingAdmissionPolicy (GA since 1.30) and MutatingAdmissionPolicy (GA and default-on in 1.36 &quot;Haru&quot;, April 2026).</strong> These are in-tree CEL admission policies with no webhook, which removes the &quot;admission webhook fail-open&quot; bypass listed below. Prefer VAP for the deny-wildcard-verbs / deny-ClusterRoleBinding rules where you want zero external dependencies; reach for Kyverno/OPA when you need <code>verifyImages</code>, generate rules, or cross-cluster policy libraries. The two compose.</li>
+<li>- AWS IAM, GCP IAM, or Azure RBAC.</li>
+<li>- <strong>Managed deterministic pre-action authorization (this cell as a product).</strong> <strong>Amazon Bedrock AgentCore Policy went GA March 3, 2026</strong>: authorization rules written in the <strong>Cedar</strong> policy language, default-deny, evaluated <strong>at the Gateway</strong> on every agent-to-tool request, outside the agent&#x27;s code, outside the model&#x27;s reasoning, and therefore not reachable by prompt injection. Microsoft shipped comparable runtime enforcement starting with Copilot in Q1 2026. This is the same control the rest of this cell builds by hand; if you are on Bedrock, use it rather than reimplementing it, and keep the Kubernetes-side admission policies as the second layer for anything the gateway does not mediate. The design point to preserve either way: <strong>policy is evaluated before the tool executes, by something the agent does not control.</strong></li>
+<li>- Server-side Git pre-receive hooks (every Git server in your org, not just origin).</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/kyverno-no-cluster-roles.yaml"><code>kyverno-no-cluster-roles.yaml</code></a>, ClusterPolicy with three rules: deny <code>ClusterRoleBinding</code> whose subjects include any agent ServiceAccount; deny wildcard verbs in any Role or ClusterRole; deny RoleBinding into prod namespaces with agent SA subjects. Apply with <code>kubectl apply -f</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/git-pre-receive-hook.sh"><code>git-pre-receive-hook.sh</code></a>, server-side pre-receive hook. Rejects force-pushes to main, blocks edits to protected paths from non-CODEOWNERS, runs gitleaks against the diff. Install in <code>/var/lib/git/&lt;repo&gt;.git/hooks/pre-receive</code> on every Git server.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/aws-iam-scoped-policy.json"><code>aws-iam-scoped-policy.json</code></a>, example IAM policy with explicit <code>Resource</code> ARNs for the allow list and a tagged-deny clause for everything else. Substitute resource ARNs for your environment.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Confirm Kyverno blocks wildcard verbs
+kubectl apply -f - &lt;&lt;EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: bad-role
+  namespace: agent-claude-prod
+rules:
+- apiGroups: [&quot;*&quot;]
+  resources: [&quot;*&quot;]
+  verbs: [&quot;*&quot;]
+EOF
+# expected: rejected by Kyverno
+
+# 2. Confirm pre-receive hook blocks --no-verify bypass
+cd /tmp/test-repo
+echo &quot;test&quot; &gt;&gt; infrastructure/prod/main.tf
+git add . &amp;&amp; git commit --no-verify -m &quot;test&quot;
+git push origin main
+# expected: failure at server-side pre-receive
+
+# 3. Confirm IAM denies cross-resource access
+aws --profile claude-code-prod s3 ls s3://other-bucket
+# expected: AccessDenied
+
+# 4. Confirm Kyverno background scan finds existing violations
+kubectl get clusterpolicyreport -A
+# expected: report of any pre-existing wildcard roles
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- Kyverno installed in audit mode (<code>Audit</code>), which logs but does not enforce. Confirm <code>validationFailureAction: Enforce</code>.</li>
+<li>- Pre-receive hook installed only on origin; clones to other Git remotes do not enforce. Make it a server-wide hook on every Git server in the org.</li>
+<li>- IAM with <code>&quot;Resource&quot;: &quot;<em>&quot;</code> and a forgotten <code>&quot;Action&quot;: &quot;</em>&quot;</code> next to it.</li>
+<li>- ClusterRole created for legitimate operator use, then accidentally bound to an agent SA via a copy-pasted RoleBinding.</li>
+<li>- Forgetting subresources: denying <code>pods</code> does not deny <code>pods/exec</code>, <code>pods/portforward</code>, <code>pods/attach</code>. List them.</li>
+<li>- Webhook timeout <code>failurePolicy: Ignore</code>, under load, the policy fails open and admits the violating resource.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 PR.AA-05 (least privilege, separation of duties), PR.PS-01 (configuration management practices), PR.PS-05 (unauthorized software prevented). NIST SP 800-207 (Zero Trust). OWASP ASI02, ASI03, ASI05. CIS Kubernetes Benchmark.</p></section>
+  <section class="risks"><h2>Primary bypasses</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>escalate/bind/impersonate in RBAC</li><li>subresource access not denied</li><li>admission webhook fail-open</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>PR.AA-05, PR.PS-01, PR.PS-05</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 2.4, MANAGE 4.1</td></tr><tr><th>OWASP LLM</th><td>LLM05, LLM06</td></tr><tr><th>OWASP AGENTIC</th><td>ASI02, ASI03, ASI05</td></tr><tr><th>OTHER</th><td>NIST SP 800-207, CIS Kubernetes Benchmark</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/protect/authorization/server-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

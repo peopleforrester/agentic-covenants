@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supply chain at the client side layer | Respond | Agentic Covenants</title>
+<meta name="description" content="Remove suspect MCP server from allowlist, quarantine downloaded packages to restricted location, lock lockfile, pin runtime to last-known-good, kill agent.">
+<link rel="canonical" href="https://agenticcovenants.com/respond/supply-chain/client-side/">
+<meta property="og:title" content="Supply chain at the client side layer | Respond | Agentic Covenants">
+<meta property="og:description" content="Remove suspect MCP server from allowlist, quarantine downloaded packages to restricted location, lock lockfile, pin runtime to last-known-good, kill agent.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/respond/supply-chain/client-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Respond</a> ›
+  <span>Supply chain</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Respond (RS) · Supply chain</p>
+  <h1>Supply chain <span class="at">at the</span> client side <span class="at">layer</span></h1>
+  <p class="strength strength-client-side"><strong>deterministic</strong> · Outside the model&#x27;s reasoning</p>
+  <blockquote class="q">How do I stop the bleeding now?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="here" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Remove suspect MCP server from allowlist, quarantine downloaded packages to restricted location, lock lockfile, pin runtime to last-known-good, kill agent.</p></section>
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>agent-quarantine-supply-chain-local</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/supply-chain/client-side/agent-quarantine-supply-chain-local">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Local supply-chain quarantine runbook. Allowlist removal, package quarantine, lockfile lock, runtime pin, kill.
+# ABOUTME: Pre-stage last-known-good-runtime-version.txt under /etc/agents/emergency/ before relying on this runbook.
+
+set -euo pipefail
+
+if [[ $# -lt 2 ]]; then
+  echo &quot;Usage: agent-quarantine-supply-chain-local &lt;AGENT_NAME&gt; &lt;SUSPECT_PACKAGE&gt;&quot; &gt;&amp;2
+  echo &quot;  SUSPECT_PACKAGE is the name as it appears in mcp-allowlist.json or installed module dirs.&quot; &gt;&amp;2
+  exit 64
+fi
+
+AGENT_NAME=&quot;$1&quot;
+SUSPECT=&quot;$2&quot;
+INCIDENT_ID=&quot;$(uuidgen 2&gt;/dev/null || python3 -c &#x27;import uuid; print(uuid.uuid4())&#x27;)&quot;
+EMERGENCY_DIR=&quot;${EMERGENCY_DIR:-/etc/agents/emergency}&quot;
+ALLOWLIST=&quot;/etc/agents/mcp-allowlist.json&quot;
+
+# 1. Remove suspect MCP server from allowlist.
+if [[ -r &quot;$ALLOWLIST&quot; ]]; then
+  TMPFILE=&quot;$(mktemp)&quot;
+  jq --arg name &quot;$SUSPECT&quot; &#x27;del(.servers[$name])&#x27; &quot;$ALLOWLIST&quot; &gt; &quot;$TMPFILE&quot;
+  mv &quot;$TMPFILE&quot; &quot;$ALLOWLIST&quot;
+  chmod 0644 &quot;$ALLOWLIST&quot;
+fi
+
+# 2. Quarantine downloaded packages by moving them to a restricted location.
+QUARANTINE=&quot;/var/quarantine/${INCIDENT_ID}&quot;
+mkdir -p &quot;$QUARANTINE&quot;
+chmod 0700 &quot;$QUARANTINE&quot;
+
+for path in \
+    &quot;/usr/local/lib/node_modules/$SUSPECT&quot; \
+    &quot;/usr/lib/python3/dist-packages/$SUSPECT&quot; \
+    &quot;/usr/local/lib/python3/dist-packages/$SUSPECT&quot; \
+    &quot;/home/agent-runner/.local/share/mcp/$SUSPECT&quot; \
+    &quot;/home/agent-runner/.npm/_cacache/$SUSPECT&quot;; do
+  if [[ -e &quot;$path&quot; ]]; then
+    mv &quot;$path&quot; &quot;$QUARANTINE/&quot; 2&gt;/dev/null || \
+      echo &quot;WARN: could not move $path to quarantine&quot; &gt;&amp;2
+  fi
+done
+
+# 3. Lock lockfiles against further changes.
+for lockfile in \
+    &quot;/etc/agents/$AGENT_NAME/package-lock.json&quot; \
+    &quot;/etc/agents/$AGENT_NAME/requirements.txt&quot; \
+    &quot;/etc/agents/$AGENT_NAME/Pipfile.lock&quot; \
+    &quot;/etc/agents/$AGENT_NAME/poetry.lock&quot; \
+    &quot;/etc/agents/$AGENT_NAME/go.sum&quot; \
+    &quot;/etc/agents/$AGENT_NAME/Cargo.lock&quot;; do
+  [[ -f &quot;$lockfile&quot; ]] &amp;&amp; chattr +i &quot;$lockfile&quot; 2&gt;/dev/null || true
+done
+
+# 4. Pin agent runtime to last-known-good.
+if [[ -r &quot;$EMERGENCY_DIR/last-known-good-runtime-version.txt&quot; ]]; then
+  cp &quot;$EMERGENCY_DIR/last-known-good-runtime-version.txt&quot; \
+     &quot;/etc/agents/$AGENT_NAME/runtime-version.txt&quot;
+else
+  echo &quot;WARN: $EMERGENCY_DIR/last-known-good-runtime-version.txt not found; runtime pin skipped&quot; &gt;&amp;2
+fi
+
+# 5. Kill the agent so it picks up the new state on restart.
+pkill -KILL -f &quot;claude.*$AGENT_NAME&quot; 2&gt;/dev/null || true
+
+logger -t agent-incident -p user.warning \
+  &quot;$(jq -n \
+      --arg event &quot;supply_chain_quarantined_local&quot; \
+      --arg agent &quot;$AGENT_NAME&quot; \
+      --arg suspect &quot;$SUSPECT&quot; \
+      --arg incident &quot;$INCIDENT_ID&quot; \
+      --arg quarantine &quot;$QUARANTINE&quot; \
+      --arg actor &quot;$(whoami)&quot; \
+      --arg ts &quot;$(date -Iseconds)&quot; \
+      &#x27;{event:$event, agent:$agent, suspect:$suspect, incident:$incident, quarantine:$quarantine, actor:$actor, ts:$ts}&#x27;)&quot;
+
+echo &quot;Local supply chain quarantined for $AGENT_NAME (suspect: $SUSPECT, quarantine: $QUARANTINE, incident: $INCIDENT_ID)&quot;
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Interventions, Supply chain / Client-side</h2>
+<p><strong>Trigger.</strong> MCP allowlist violation, tool-description hash mismatch, lockfile diff with unsigned package, pre-commit dependency scan finding.</p>
+<p><strong>Authority.</strong> On-call.</p>
+<p><strong>Speed target.</strong> Under 60 seconds.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- The MCP allowlist layout from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/client-side/"><code>../../../controls/supply-chain/client-side/</code></a>.</li>
+<li>- <code>chattr</code> for locking lockfiles.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-quarantine-supply-chain-local"><code>agent-quarantine-supply-chain-local</code></a>, runbook script. Removes the suspect server from <code>mcp-allowlist.json</code>, moves suspect package files to <code>/var/quarantine/&lt;incident&gt;/</code>, sets <code>chattr +i</code> on lockfiles, pins runtime to last-known-good, kills the agent so the new state applies.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Suspect removed from allowlist
+jq &#x27;.servers | has(&quot;filesystem-bad&quot;)&#x27; /etc/agents/mcp-allowlist.json
+# expected: false
+
+# 2. Quarantine populated
+ls -la /var/quarantine/
+
+# 3. Lockfile immutable
+lsattr /etc/agents/claude-code-prod/package-lock.json
+# expected: &#x27;i&#x27; attribute present
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- Quarantining files but missing in-memory state, Python with already-imported modules keeps the malicious code loaded. The kill step is mandatory.</li>
+<li>- <code>chattr +i</code> on a file in tmpfs, does not stick across reboot. Mitigate by ensuring lockfile lives on persistent FS.</li>
+<li>- Forgetting that the agent may have credentials cached in OS keychain that the quarantined package planted.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 RS.MI-01, RS.MI-02. NIST AI RMF MANAGE 3.1. OWASP ASI04, ASI06. OWASP MCP04, MCP09.</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>in-memory state retains malicious imports until restart</li><li>chattr +i not durable on tmpfs</li><li>keychain credentials planted by package survive</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RS.MI-01, RS.MI-02</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 3.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI04, ASI06</td></tr><tr><th>OWASP MCP</th><td>MCP04, MCP09</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/respond/supply-chain/client-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

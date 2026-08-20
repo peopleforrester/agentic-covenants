@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identity at the in agent layer | Detect | Agentic Covenants</title>
+<meta name="description" content="Tool-call logs include credential fingerprint (hash, never raw token); session correlation.">
+<link rel="canonical" href="https://agenticcovenants.com/detect/identity/in-agent/">
+<meta property="og:title" content="Identity at the in agent layer | Detect | Agentic Covenants">
+<meta property="og:description" content="Tool-call logs include credential fingerprint (hash, never raw token); session correlation.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/detect/identity/in-agent/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Detect</a> ›
+  <span>Identity</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Detect (DE) · Identity</p>
+  <h1>Identity <span class="at">at the</span> in agent <span class="at">layer</span></h1>
+  <p class="strength strength-in-agent"><strong>advisory</strong> · Bypassable by language alone</p>
+  <blockquote class="q">If this concern is breached, how do we know?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="here" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Tool-call logs include credential fingerprint (hash, never raw token); session correlation.</p></section>
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>ship-sessions.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/identity/in-agent/ship-sessions.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Ships agent session transcripts to a remote sink the agent cannot write to.
+# ABOUTME: Run from the operator account via cron or systemd timer; never from the agent&#x27;s user.
+
+set -euo pipefail
+
+LOCAL_SESSIONS=&quot;${LOCAL_SESSIONS:-/home/agent-runner/.claude/sessions}&quot;
+REMOTE_SINK=&quot;${REMOTE_SINK:-rsync://siem-ingest.example.com/agent-sessions}&quot;
+HOST=&quot;$(hostname -f)&quot;
+LOCK_FILE=&quot;/var/lib/agents/.ship-sessions.lock&quot;
+
+# Single-flight lock to prevent overlap on slow runs.
+exec 9&gt;&quot;$LOCK_FILE&quot;
+if ! flock -n 9; then
+  echo &quot;ship-sessions: another run in progress; exiting&quot;
+  exit 0
+fi
+
+if [[ ! -d &quot;$LOCAL_SESSIONS&quot; ]]; then
+  echo &quot;ship-sessions: $LOCAL_SESSIONS does not exist; nothing to ship&quot;
+  exit 0
+fi
+
+# rsync with --append-verify so a partial transfer can resume.
+# --remove-source-files would be a destructive option and is deliberately
+# omitted; the sink is authoritative and the local copy is the audit trail.
+rsync -av --append-verify \
+  --include=&#x27;*.json&#x27; --include=&#x27;*.jsonl&#x27; --include=&#x27;*.log&#x27; \
+  --exclude=&#x27;*&#x27; \
+  &quot;$LOCAL_SESSIONS/&quot; \
+  &quot;${REMOTE_SINK}/${HOST}/&quot;
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Sentinels, Identity / In-agent</h2>
+<p><strong>Control.</strong> Tool-call logs include credential fingerprint (hash of token, never the token); session correlation; logs ship to a remote sink.</p>
+<p><strong>Strength.</strong> Forensic. Useful after the fact, not in real time.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- Claude Code (or your agent runtime) configured to emit transcript and tool-call logs.</li>
+<li>- A remote sink the agent&#x27;s user cannot write to. Without this, the agent edits its own forensic record.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/ship-sessions.sh"><code>ship-sessions.sh</code></a>, cron-style script that tails <code>~/.claude/sessions/</code> for new entries and ships them to a remote sink. Run from the operator account, not the agent&#x27;s.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Confirm session shipping
+ls -la /var/log/agents/sessions/   # remote sink local mirror
+# expected: recent files
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- Logs ship to a sink the agent has write access to.</li>
+<li>- Session correlation drops because the session ID is not propagated through hook events.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 DE.CM-09. NIST SP 800-92 (Computer Security Log Management).</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>logs not shipped to a remote sink (agent edits local-only logs)</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>DE.CM-09</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/detect/identity/in-agent/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

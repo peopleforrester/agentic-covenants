@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blast radius at the server side layer | Respond | Agentic Covenants</title>
+<meta name="description" content="Apply emergency NetworkPolicy default-deny, scale Deployment to zero, force-delete pods, optionally cordon node, block egress at cloud firewall.">
+<link rel="canonical" href="https://agenticcovenants.com/respond/blast-radius/server-side/">
+<meta property="og:title" content="Blast radius at the server side layer | Respond | Agentic Covenants">
+<meta property="og:description" content="Apply emergency NetworkPolicy default-deny, scale Deployment to zero, force-delete pods, optionally cordon node, block egress at cloud firewall.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/respond/blast-radius/server-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Respond</a> ›
+  <span>Blast radius</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Respond (RS) · Blast radius</p>
+  <h1>Blast radius <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
+  <blockquote class="q">How do I stop the bleeding now?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Apply emergency NetworkPolicy default-deny, scale Deployment to zero, force-delete pods, optionally cordon node, block egress at cloud firewall.</p></section>
+  <section class="artifacts"><h2>Artifacts (3)</h2><figure class="artifact"><figcaption><code>agent-contain-server</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/blast-radius/server-side/agent-contain-server">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Server-side blast-radius containment runbook. NetworkPolicy default-deny, scale to zero, force-delete pods.
+# ABOUTME: Pre-stage networkpolicy-emergency-deny.yaml and sg-deny-all-egress.json under /etc/agents/emergency/.
+
+set -euo pipefail
+
+if [[ $# -lt 1 ]]; then
+  echo &quot;Usage: agent-contain-server &lt;AGENT_NAME&gt;&quot; &gt;&amp;2
+  exit 64
+fi
+
+AGENT_NAME=&quot;$1&quot;
+NAMESPACE=&quot;agent-${AGENT_NAME}&quot;
+INCIDENT_ID=&quot;$(uuidgen 2&gt;/dev/null || python3 -c &#x27;import uuid; print(uuid.uuid4())&#x27;)&quot;
+EMERGENCY_DIR=&quot;${EMERGENCY_DIR:-/etc/agents/emergency}&quot;
+DRAIN_NODES=&quot;${DRAIN_NODES:-0}&quot;   # set to 1 to cordon and drain nodes hosting the agent
+BLOCK_EGRESS_SG=&quot;${BLOCK_EGRESS_SG:-1}&quot;
+
+if [[ ! -r &quot;$EMERGENCY_DIR/networkpolicy-emergency-deny.yaml&quot; ]]; then
+  echo &quot;REFUSING: $EMERGENCY_DIR/networkpolicy-emergency-deny.yaml not pre-staged&quot; &gt;&amp;2
+  exit 1
+fi
+
+# 1. Apply emergency NetworkPolicy default-deny in the agent&#x27;s namespace.
+kubectl apply -n &quot;$NAMESPACE&quot; -f &quot;$EMERGENCY_DIR/networkpolicy-emergency-deny.yaml&quot;
+
+# 2. Scale all Deployments in the agent namespace to zero.
+kubectl scale deployment -n &quot;$NAMESPACE&quot; --all --replicas=0 2&gt;/dev/null || true
+
+# 3. Force-delete pods that did not respect scale-down.
+kubectl delete pods -n &quot;$NAMESPACE&quot; --all --force --grace-period=0 2&gt;/dev/null &amp;
+DELETE_PID=$!
+
+# 4. Optional: cordon and drain the nodes hosting the agent if compromise
+# extends to the host (Falco events from outside the namespace, kernel-level
+# escape suspected, etc.).
+if [[ &quot;$DRAIN_NODES&quot; == &quot;1&quot; ]]; then
+  mapfile -t AGENT_NODES &lt; &lt;(
+    kubectl get pods -n &quot;$NAMESPACE&quot; -o jsonpath=&#x27;{.items[*].spec.nodeName}&#x27; 2&gt;/dev/null \
+      | tr &#x27; &#x27; &#x27;\n&#x27; | sort -u
+  )
+  for node in &quot;${AGENT_NODES[@]}&quot;; do
+    [[ -z &quot;$node&quot; ]] &amp;&amp; continue
+    kubectl cordon &quot;$node&quot; 2&gt;/dev/null || true
+    kubectl drain &quot;$node&quot; \
+      --grace-period=0 --force \
+      --delete-emptydir-data --ignore-daemonsets &amp;
+  done
+fi
+
+# 5. Block egress at cloud firewall (AWS Security Group example).
+if [[ &quot;$BLOCK_EGRESS_SG&quot; == &quot;1&quot; ]] &amp;&amp; command -v aws &gt;/dev/null 2&gt;&amp;1; then
+  SG_ID=&quot;$(aws ec2 describe-security-groups \
+    --filters &quot;Name=tag:agent,Values=$AGENT_NAME&quot; \
+    --query &#x27;SecurityGroups[0].GroupId&#x27; --output text 2&gt;/dev/null || true)&quot;
+  if [[ -n &quot;$SG_ID&quot; &amp;&amp; &quot;$SG_ID&quot; != &quot;None&quot; ]]; then
+    aws ec2 update-security-group-rule-descriptions-egress \
+      --group-id &quot;$SG_ID&quot; \
+      --ip-permissions &quot;$(cat &quot;$EMERGENCY_DIR/sg-deny-all-egress.json&quot;)&quot; \
+      2&gt;/dev/null || echo &quot;WARN: SG rule update failed; SG may be referenced elsewhere&quot; &gt;&amp;2
+  fi
+fi
+
+wait
+
+logger -t agent-incident -p user.warning \
+  &quot;$(jq -n \
+      --arg event &quot;blast_radius_contained_server&quot; \
+      --arg agent &quot;$AGENT_NAME&quot; \
+      --arg incident &quot;$INCIDENT_ID&quot; \
+      --arg actor &quot;$(whoami)&quot; \
+      --arg ts &quot;$(date -Iseconds)&quot; \
+      &#x27;{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}&#x27;)&quot;
+
+echo &quot;Server-side blast radius contained for $AGENT_NAME (incident $INCIDENT_ID)&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>networkpolicy-emergency-deny.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/blast-radius/server-side/networkpolicy-emergency-deny.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Emergency default-deny NetworkPolicy applied during blast-radius containment. No allow rules; ingress and egress fully denied.
+# ABOUTME: Pre-stage at /etc/agents/emergency/. CNI-dependent — verify your CNI enforces NetworkPolicy at all (some legacy setups do not).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: emergency-deny-everything
+  annotations:
+    incident: &quot;true&quot;
+spec:
+  podSelector: {}   # all pods in the namespace
+  policyTypes:
+  - Ingress
+  - Egress
+# No ingress or egress rules below = deny everything.
+</code></pre></figure><figure class="artifact"><figcaption><code>sg-deny-all-egress.json</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/blast-radius/server-side/sg-deny-all-egress.json">view on GitHub</a></figcaption><pre><code>[
+  {
+    &quot;IpProtocol&quot;: &quot;-1&quot;,
+    &quot;IpRanges&quot;: [
+      {
+        &quot;CidrIp&quot;: &quot;0.0.0.0/0&quot;,
+        &quot;Description&quot;: &quot;Emergency lockdown: incident response. Egress denied.&quot;
+      }
+    ]
+  }
+]
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Interventions, Blast radius / Server-side</h2>
+<p><strong>Trigger.</strong> Falco alert from cluster, NetworkPolicy violation spike, ResourceQuota near-limit emergency, cross-namespace operations from an agent SA.</p>
+<p><strong>Authority.</strong> On-call, no second approval.</p>
+<p><strong>Speed target.</strong> Under 5 seconds for namespace freeze, under 60 seconds for full drain.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- <code>kubectl</code> with permission to apply NetworkPolicies, scale Deployments, and (for cordon-and-drain) cordon nodes.</li>
+<li>- AWS CLI (or GCP/Azure equivalent) with permission to update Security Group egress rules.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-contain-server"><code>agent-contain-server</code></a>, runbook script. Applies emergency NetworkPolicy default-deny, scales agent Deployments to zero, force-deletes pods, optionally cordons and drains nodes, and blocks egress at the cloud firewall.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/networkpolicy-emergency-deny.yaml"><code>networkpolicy-emergency-deny.yaml</code></a>, pre-staged default-deny NetworkPolicy with no allow rules. Applied to the agent namespace. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/networkpolicy-emergency-deny.yaml</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sg-deny-all-egress.json"><code>sg-deny-all-egress.json</code></a>, pre-staged AWS Security Group egress-rule descriptions used by the runbook to update the agent&#x27;s SG. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/sg-deny-all-egress.json</code>.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. NetworkPolicy in effect
+kubectl get networkpolicy -n agent-claude-code-prod emergency-deny-everything
+
+# 2. Egress blocked
+kubectl exec -n agent-claude-code-prod $(kubectl get pods -n agent-claude-code-prod -o name | head -1) -- \
+  curl -sS --max-time 3 https://example.com 2&gt;&amp;1 || echo &quot;OK: egress blocked&quot;
+
+# 3. Deployment scaled to zero
+kubectl get deployments -n agent-claude-code-prod -o jsonpath=&#x27;{.items[*].spec.replicas}&#x27;
+# expected: 0 0 0...
+
+# 4. No pods running
+kubectl get pods -n agent-claude-code-prod
+# expected: empty
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- <code>kubectl drain</code> without <code>--grace-period=0</code> honors <code>terminationGracePeriodSeconds: 300</code>, the pod runs for 5 minutes. Use <code>--force --grace-period=0</code>.</li>
+<li>- Existing TCP connections survive NetworkPolicy changes (CNI-dependent). Verify by attempting a fresh connection after applying.</li>
+<li>- Cordoning the wrong node, verify the pods&#x27; actual node placement before draining.</li>
+<li>- Cloud firewall rule modification fails silently if the security group is referenced by other resources. Verify rule before declaring contained.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 RS.MI-01, RS.MI-02; PR.IR-01 (response dimension). NIST SP 800-61 Rev. 2. NISTIR 8596. OWASP ASI05, ASI08. NIST AI RMF MANAGE 4.1.</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>drain without --grace-period=0 honors 5-min terminationGracePeriodSeconds</li><li>existing TCP connections survive NetworkPolicy changes (CNI-dependent)</li><li>cloud SG modification fails silently if SG is referenced elsewhere</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RS.MI-01, RS.MI-02, PR.IR-01</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 4.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI05, ASI08</td></tr><tr><th>OTHER</th><td>NIST SP 800-61 Rev. 2, NISTIR 8596</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/respond/blast-radius/server-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

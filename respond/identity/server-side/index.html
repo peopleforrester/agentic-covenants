@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identity at the server side layer | Respond | Agentic Covenants</title>
+<meta name="description" content="Revoke OIDC token at IdP, disable ServiceAccount, rotate IAM keys, attach deny-all IAM policy, invalidate all active sessions.">
+<link rel="canonical" href="https://agenticcovenants.com/respond/identity/server-side/">
+<meta property="og:title" content="Identity at the server side layer | Respond | Agentic Covenants">
+<meta property="og:description" content="Revoke OIDC token at IdP, disable ServiceAccount, rotate IAM keys, attach deny-all IAM policy, invalidate all active sessions.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/respond/identity/server-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Respond</a> ›
+  <span>Identity</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Respond (RS) · Identity</p>
+  <h1>Identity <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
+  <blockquote class="q">How do I stop the bleeding now?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Revoke OIDC token at IdP, disable ServiceAccount, rotate IAM keys, attach deny-all IAM policy, invalidate all active sessions.</p></section>
+  <section class="artifacts"><h2>Artifacts (2)</h2><figure class="artifact"><figcaption><code>agent-revoke-server</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/identity/server-side/agent-revoke-server">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Server-side identity-revocation runbook. Disables SA, force-deletes pods, attaches IAM deny-all, revokes OIDC sessions.
+# ABOUTME: Pre-authorized at on-call level. Reversible. Pre-stage iam-deny-all.json under /etc/agents/emergency/ before relying on this script.
+
+set -euo pipefail
+
+if [[ $# -lt 1 ]]; then
+  echo &quot;Usage: agent-revoke-server &lt;AGENT_NAME&gt;&quot; &gt;&amp;2
+  exit 64
+fi
+
+AGENT_NAME=&quot;$1&quot;
+NAMESPACE=&quot;agent-${AGENT_NAME}&quot;
+INCIDENT_ID=&quot;$(uuidgen 2&gt;/dev/null || python3 -c &#x27;import uuid; print(uuid.uuid4())&#x27;)&quot;
+EMERGENCY_DIR=&quot;${EMERGENCY_DIR:-/etc/agents/emergency}&quot;
+
+# 1. Disable ServiceAccount automount (existing pods keep their tokens until restart).
+kubectl patch sa -n &quot;$NAMESPACE&quot; claude-code \
+  --type=&#x27;merge&#x27; \
+  -p &#x27;{&quot;automountServiceAccountToken&quot;:false}&#x27; 2&gt;/dev/null || \
+  echo &quot;WARN: kubectl patch failed; SA may not exist in $NAMESPACE&quot; &gt;&amp;2
+
+# 2. Delete all pods in the namespace to force token re-mount (which will fail).
+# Background so we can continue with IAM revocation in parallel.
+kubectl delete pods -n &quot;$NAMESPACE&quot; --all --force --grace-period=0 2&gt;/dev/null &amp;
+KUBE_PID=$!
+
+# 3. Attach IAM deny-all policy.
+if [[ -r &quot;$EMERGENCY_DIR/iam-deny-all.json&quot; ]]; then
+  aws iam put-role-policy \
+    --role-name &quot;$AGENT_NAME&quot; \
+    --policy-name &quot;EmergencyDenyAll-${INCIDENT_ID}&quot; \
+    --policy-document &quot;file://$EMERGENCY_DIR/iam-deny-all.json&quot; 2&gt;/dev/null || \
+    echo &quot;WARN: aws iam put-role-policy failed&quot; &gt;&amp;2
+else
+  echo &quot;WARN: $EMERGENCY_DIR/iam-deny-all.json not found; pre-stage this file before depending on this runbook.&quot; &gt;&amp;2
+fi
+
+# 4. Revoke OIDC tokens at the IdP. Provider-specific; Okta example below.
+# Set OKTA_API_TOKEN, OKTA_DOMAIN in the operator&#x27;s break-glass env before
+# invoking. For other IdPs (Auth0, Keycloak, Dex), substitute the equivalent
+# session-clear API call.
+if [[ -n &quot;${OKTA_DOMAIN:-}&quot; &amp;&amp; -n &quot;${OKTA_API_TOKEN:-}&quot; ]]; then
+  USER_ID=$(curl -sS &quot;https://${OKTA_DOMAIN}/api/v1/users?q=${AGENT_NAME}&quot; \
+    -H &quot;Authorization: SSWS $OKTA_API_TOKEN&quot; \
+    -H &quot;Accept: application/json&quot; | jq -r &#x27;.[0].id // empty&#x27;)
+  if [[ -n &quot;$USER_ID&quot; ]]; then
+    curl -sS -X DELETE &quot;https://${OKTA_DOMAIN}/api/v1/users/${USER_ID}/sessions&quot; \
+      -H &quot;Authorization: SSWS $OKTA_API_TOKEN&quot; \
+      -H &quot;Accept: application/json&quot; &gt;/dev/null
+  fi
+fi
+
+# 5. Wait for pod deletion to complete before declaring done.
+wait &quot;$KUBE_PID&quot; 2&gt;/dev/null || true
+
+# 6. Log to cluster events and to syslog.
+kubectl create event --namespace &quot;$NAMESPACE&quot; \
+  --type=Warning \
+  --reason=IdentityRevoked \
+  --message=&quot;Emergency identity revocation for $AGENT_NAME, incident $INCIDENT_ID&quot; 2&gt;/dev/null || true
+
+logger -t agent-incident -p user.warning \
+  &quot;$(jq -n \
+      --arg event &quot;identity_revoked_server&quot; \
+      --arg agent &quot;$AGENT_NAME&quot; \
+      --arg incident &quot;$INCIDENT_ID&quot; \
+      --arg actor &quot;$(whoami)&quot; \
+      --arg ts &quot;$(date -Iseconds)&quot; \
+      &#x27;{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}&#x27;)&quot;
+
+echo &quot;Server-side identity revoked for $AGENT_NAME (incident $INCIDENT_ID)&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>iam-deny-all.json</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/identity/server-side/iam-deny-all.json">view on GitHub</a></figcaption><pre><code>{
+  &quot;Version&quot;: &quot;2012-10-17&quot;,
+  &quot;Statement&quot;: [
+    {
+      &quot;Sid&quot;: &quot;EmergencyDenyAll&quot;,
+      &quot;Effect&quot;: &quot;Deny&quot;,
+      &quot;Action&quot;: &quot;*&quot;,
+      &quot;Resource&quot;: &quot;*&quot;
+    }
+  ]
+}
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Interventions, Identity / Server-side</h2>
+<p><strong>Trigger.</strong> Same as client-side, plus indicators that the agent has cluster or cloud reach.</p>
+<p><strong>Authority.</strong> On-call, no second approval. Reversible.</p>
+<p><strong>Speed target.</strong> Under 30 seconds plus token TTL window.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- <code>kubectl</code> with permission to patch ServiceAccounts and delete Pods in agent namespaces.</li>
+<li>- AWS CLI (or GCP/Azure equivalent) with permission to attach IAM policies.</li>
+<li>- IdP API access for OIDC session revocation (Okta/Auth0/Keycloak/Dex).</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-revoke-server"><code>agent-revoke-server</code></a>, runbook script. Disables ServiceAccount automount, force-deletes pods to break token mounts, attaches an IAM <code>Deny *</code> policy to the agent role, terminates active OIDC sessions.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/iam-deny-all.json"><code>iam-deny-all.json</code></a>, pre-staged IAM policy document used by the runbook. <code>Deny <em></code> on <code></em></code>. <strong>Pre-stage this file</strong> at <code>/etc/agents/emergency/iam-deny-all.json</code>.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. SA automount disabled
+kubectl get sa -n agent-claude-code-prod claude-code -o jsonpath=&#x27;{.automountServiceAccountToken}&#x27;
+# expected: false
+
+# 2. Pods recreated and failing to mount token
+kubectl get pods -n agent-claude-code-prod
+# expected: error/CrashLoopBackOff state, unable to start
+
+# 3. IAM deny-all attached
+aws iam list-role-policies --role-name claude-code-prod | grep EmergencyDenyAll
+
+# 4. OIDC sessions terminated (provider-specific verification)
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- Forgetting that existing pods retain their mounted tokens until restart. Step 2 (pod deletion) is mandatory.</li>
+<li>- Token TTL of 1 hour means deny-policy is the only fast cutoff; revocation alone leaves a window.</li>
+<li>- Deleting the IAM role instead of attaching a deny policy. Deletion can fail if other resources reference the role; deny policy is faster and reversible.</li>
+<li>- Not testing the IdP API path before the incident. The emergency is the wrong time to learn that your Okta API token expired.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 RS.MI-01, RS.MI-02; PR.AA-01 (response dimension). NIST SP 800-63B Rev. 4 (credential lifecycle). NIST SP 800-207 (Zero Trust). OWASP ASI03, ASI10. NIST AI RMF MANAGE 4.1.</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>JWT TTL window remains valid until expiry</li><li>existing pods retain mounted tokens until restart</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RS.MI-01, RS.MI-02, PR.AA-01</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 4.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI03, ASI10</td></tr><tr><th>OTHER</th><td>NIST SP 800-63B Rev. 4, NIST SP 800-207</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/respond/identity/server-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identity at the server side layer | Recover | Agentic Covenants</title>
+<meta name="description" content="Disable old ServiceAccount, recreate from declarative source, rotate IAM keys, re-establish OIDC trust policy, re-issue SPIFFE identity, verify no inherited permissions.">
+<link rel="canonical" href="https://agenticcovenants.com/recover/identity/server-side/">
+<meta property="og:title" content="Identity at the server side layer | Recover | Agentic Covenants">
+<meta property="og:description" content="Disable old ServiceAccount, recreate from declarative source, rotate IAM keys, re-establish OIDC trust policy, re-issue SPIFFE identity, verify no inherited permissions.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/recover/identity/server-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Recover</a> ›
+  <span>Identity</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Recover (RC) · Identity</p>
+  <h1>Identity <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
+  <blockquote class="q">How do I get back to a known-good state and not repeat this?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Disable old ServiceAccount, recreate from declarative source, rotate IAM keys, re-establish OIDC trust policy, re-issue SPIFFE identity, verify no inherited permissions.</p></section>
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>agent-restore-identity-server</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/restorations/identity/server-side/agent-restore-identity-server">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Server-side identity-rebuild runbook. Recreates SA from source, drops emergency deny, rotates keys, restores trust policy.
+# ABOUTME: Requires manifests/rbac/&lt;agent&gt;-serviceaccount.yaml and manifests/iam/&lt;agent&gt;-trust-policy.json in source.
+
+set -euo pipefail
+
+if [[ $# -lt 2 ]]; then
+  echo &quot;Usage: agent-restore-identity-server &lt;AGENT_NAME&gt; &lt;INCIDENT_ID&gt;&quot; &gt;&amp;2
+  exit 64
+fi
+
+AGENT_NAME=&quot;$1&quot;
+INCIDENT_ID=&quot;$2&quot;
+NAMESPACE=&quot;agent-${AGENT_NAME}&quot;
+MANIFESTS_DIR=&quot;${MANIFESTS_DIR:-./manifests}&quot;
+
+# 1. Delete the old (compromised) ServiceAccount.
+kubectl delete sa -n &quot;$NAMESPACE&quot; claude-code 2&gt;/dev/null || true
+
+# 2. Recreate from declarative source.
+SA_FILE=&quot;$MANIFESTS_DIR/rbac/${AGENT_NAME}-serviceaccount.yaml&quot;
+if [[ ! -r &quot;$SA_FILE&quot; ]]; then
+  echo &quot;REFUSING: $SA_FILE not found in source&quot; &gt;&amp;2
+  echo &quot;Cluster will have no ServiceAccount in $NAMESPACE until this is fixed.&quot; &gt;&amp;2
+  exit 1
+fi
+kubectl apply -f &quot;$SA_FILE&quot;
+
+# 3. Remove the emergency IAM deny-all policies.
+mapfile -t POLICIES &lt; &lt;(
+  aws iam list-role-policies --role-name &quot;$AGENT_NAME&quot; \
+    --query &#x27;PolicyNames[?starts_with(@, `EmergencyDenyAll`)]&#x27; \
+    --output text 2&gt;/dev/null | tr &#x27;\t&#x27; &#x27;\n&#x27;
+)
+for p in &quot;${POLICIES[@]}&quot;; do
+  [[ -z &quot;$p&quot; ]] &amp;&amp; continue
+  aws iam delete-role-policy --role-name &quot;$AGENT_NAME&quot; --policy-name &quot;$p&quot; 2&gt;/dev/null || true
+done
+
+# 4. Rotate IAM access keys if the role has any persistent keys (OIDC
+# federation prefers keyless; this branch is for legacy setups).
+if mapfile -t KEYS &lt; &lt;(
+    aws iam list-access-keys --user-name &quot;$AGENT_NAME&quot; \
+      --query &#x27;AccessKeyMetadata[].AccessKeyId&#x27; --output text 2&gt;/dev/null | tr &#x27;\t&#x27; &#x27;\n&#x27;
+  ) &amp;&amp; [[ ${#KEYS[@]} -gt 0 ]]; then
+  for key in &quot;${KEYS[@]}&quot;; do
+    [[ -z &quot;$key&quot; ]] &amp;&amp; continue
+    aws iam delete-access-key --user-name &quot;$AGENT_NAME&quot; --access-key-id &quot;$key&quot; 2&gt;/dev/null || true
+  done
+  aws iam create-access-key --user-name &quot;$AGENT_NAME&quot; &gt;/dev/null 2&gt;&amp;1 || true
+fi
+
+# 5. Detect trust-policy drift and restore from source if drifted.
+TRUST_FILE=&quot;$MANIFESTS_DIR/iam/${AGENT_NAME}-trust-policy.json&quot;
+if [[ -r &quot;$TRUST_FILE&quot; ]]; then
+  EXPECTED=&quot;$(jq -S . &quot;$TRUST_FILE&quot;)&quot;
+  ACTUAL=&quot;$(aws iam get-role --role-name &quot;$AGENT_NAME&quot; \
+              --query &#x27;AssumeRolePolicyDocument&#x27; --output json 2&gt;/dev/null | jq -S .)&quot;
+  if [[ &quot;$EXPECTED&quot; != &quot;$ACTUAL&quot; ]]; then
+    echo &quot;Trust-policy drift detected; restoring from source&quot; &gt;&amp;2
+    aws iam update-assume-role-policy \
+      --role-name &quot;$AGENT_NAME&quot; \
+      --policy-document &quot;file://$TRUST_FILE&quot;
+  fi
+fi
+
+# 6. Re-issue SPIFFE identity if SPIRE is in use.
+if command -v spire-server &gt;/dev/null 2&gt;&amp;1; then
+  spire-server entry create \
+    -spiffeID &quot;spiffe://${TRUST_DOMAIN:-example.com}/agent/${AGENT_NAME}&quot; \
+    -parentID &quot;spiffe://${TRUST_DOMAIN:-example.com}/k8s_workload/${NAMESPACE}&quot; \
+    -selector &quot;k8s:ns:${NAMESPACE}&quot; \
+    -selector &quot;k8s:sa:claude-code&quot; \
+    -ttl 900 2&gt;/dev/null || true
+fi
+
+# 7. Verify a freshly-issued token reflects the new SA, not a stale binding.
+NEW_TOKEN=&quot;$(kubectl create token claude-code -n &quot;$NAMESPACE&quot; --duration=900s 2&gt;/dev/null || true)&quot;
+if [[ -n &quot;$NEW_TOKEN&quot; ]]; then
+  CLAIM=&quot;$(printf &#x27;%s&#x27; &quot;$NEW_TOKEN&quot; | cut -d. -f2 \
+            | base64 -d 2&gt;/dev/null \
+            | jq -r &#x27;.&quot;kubernetes.io&quot;.serviceaccount.uid // empty&#x27;)&quot;
+  if [[ -z &quot;$CLAIM&quot; ]]; then
+    echo &quot;WARN: new token does not carry expected claims&quot; &gt;&amp;2
+  fi
+fi
+
+logger -t agent-recovery -p user.notice \
+  &quot;$(jq -n \
+      --arg event &quot;identity_restored_server&quot; \
+      --arg agent &quot;$AGENT_NAME&quot; \
+      --arg incident &quot;$INCIDENT_ID&quot; \
+      --arg actor &quot;$(whoami)&quot; \
+      --arg ts &quot;$(date -Iseconds)&quot; \
+      &#x27;{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}&#x27;)&quot;
+
+echo &quot;Server-side identity restored for $AGENT_NAME&quot;
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Restorations, Identity / Server-side</h2>
+<p><strong>Precondition.</strong> Interventions L3-C1 has fired (ServiceAccount automount disabled, IAM deny-all attached, OIDC sessions revoked). Restorations L2-C1 has completed (new local credentials are in place).</p>
+<p><strong>Authority.</strong> On-call plus security review.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- <code>kubectl</code> with permission to delete and create ServiceAccounts in agent namespaces.</li>
+<li>- AWS CLI (or GCP/Azure equivalent) with permission to manage IAM access keys and update trust policies.</li>
+<li>- <code>spire-server</code> CLI if SPIFFE is in use.</li>
+<li>- Source-of-truth manifests for the agent&#x27;s RBAC under <code>manifests/rbac/</code>.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-restore-identity-server"><code>agent-restore-identity-server</code></a>, runbook script. Deletes old SA, recreates from declarative source, removes EmergencyDenyAll IAM policy, rotates IAM access keys (if any), checks OIDC trust-policy drift and restores from declarative source if drifted, re-issues SPIFFE identity.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. ServiceAccount exists and is the new instance
+kubectl get sa -n agent-claude-code-prod claude-code -o jsonpath=&#x27;{.metadata.creationTimestamp}&#x27;
+# expected: recent timestamp
+
+# 2. Emergency deny policy removed
+aws iam list-role-policies --role-name claude-code-prod --query &#x27;PolicyNames&#x27;
+# expected: does not include EmergencyDenyAll
+
+# 3. Old token rejected (test with a kubectl call using a captured-pre-incident token; expect 401)
+
+# 4. New pods can mount tokens successfully
+kubectl run identity-test --image=alpine --rm -it -n agent-claude-code-prod \
+  --serviceaccount=claude-code -- sleep 10
+# expected: clean start, no auth errors
+</code></pre>
+<h3>Common failure modes</h3>
+<ul>
+<li>- Deleting the SA but failing to recreate it because the YAML in source has drifted. The cluster has no SA; new pods cannot start.</li>
+<li>- Trust policy drift not checked. The trust policy was the attack surface; restoring without verifying leaves it compromised.</li>
+<li>- Forgetting to remove the EmergencyDenyAll IAM policy, the agent has identity but cannot do anything.</li>
+<li>- Old IAM access keys not deleted, old credentials remain valid alongside new ones.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 RC.RP-01, RC.IM-01; PR.AA-01 (recovery dimension). NIST SP 800-207. NIST NCCoE Concept Paper on Software and AI Agent Identity and Authorization (Feb 5, 2026).</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>SA YAML in source has drifted; cluster has no SA after delete-and-recreate</li><li>trust policy drift not checked</li><li>EmergencyDenyAll not removed</li><li>old IAM access keys not deleted</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RC.RP-01, RC.IM-01, PR.AA-01</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 4.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI03, ASI10</td></tr><tr><th>OTHER</th><td>NIST SP 800-207, NIST NCCoE Concept Paper on AI Agent Identity</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/recover/identity/server-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

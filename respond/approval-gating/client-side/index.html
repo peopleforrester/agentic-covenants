@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Approval gating at the client side layer | Respond | Agentic Covenants</title>
+<meta name="description" content="Replace approval hook with deny-all, disable Auto Mode classifier, disable judgment-query escalation channel, force out-of-band on every action.">
+<link rel="canonical" href="https://agenticcovenants.com/respond/approval-gating/client-side/">
+<meta property="og:title" content="Approval gating at the client side layer | Respond | Agentic Covenants">
+<meta property="og:description" content="Replace approval hook with deny-all, disable Auto Mode classifier, disable judgment-query escalation channel, force out-of-band on every action.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/respond/approval-gating/client-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Respond</a> ›
+  <span>Approval gating</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Respond (RS) · Approval gating</p>
+  <h1>Approval gating <span class="at">at the</span> client side <span class="at">layer</span></h1>
+  <p class="strength strength-client-side"><strong>deterministic</strong> · Outside the model&#x27;s reasoning</p>
+  <blockquote class="q">How do I stop the bleeding now?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="here" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Replace approval hook with deny-all, disable Auto Mode classifier, disable judgment-query escalation channel, force out-of-band on every action.</p></section>
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>agent-approval-lockdown-local</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/approval-gating/client-side/agent-approval-lockdown-local">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Local approval-gating lockdown runbook. Deny-all hook, Auto Mode off, OOB required, escalation disabled.
+# ABOUTME: Re-uses the deny-all hook from interventions/authorization/client-side/. Pre-stage that and BREAK_GLASS_TOKEN.
+
+set -euo pipefail
+
+if [[ $# -lt 1 ]]; then
+  echo &quot;Usage: agent-approval-lockdown-local &lt;AGENT_NAME&gt;&quot; &gt;&amp;2
+  exit 64
+fi
+
+AGENT_NAME=&quot;$1&quot;
+INCIDENT_ID=&quot;$(uuidgen 2&gt;/dev/null || python3 -c &#x27;import uuid; print(uuid.uuid4())&#x27;)&quot;
+EMERGENCY_DIR=&quot;${EMERGENCY_DIR:-/etc/agents/emergency}&quot;
+SETTINGS_PATH=&quot;/etc/agents/${AGENT_NAME}/settings.json&quot;
+ESCALATE_URL=&quot;${ESCALATE_URL:-https://escalate.example.com}&quot;
+
+if [[ ! -r &quot;$EMERGENCY_DIR/deny-all-hook.sh&quot; ]]; then
+  echo &quot;REFUSING: $EMERGENCY_DIR/deny-all-hook.sh not pre-staged&quot; &gt;&amp;2
+  exit 1
+fi
+
+# 1. Replace approval hook with deny-all (shared with authorization lockdown).
+chattr -i /etc/agents/hooks/pre_tool_use.sh 2&gt;/dev/null || true
+cp &quot;$EMERGENCY_DIR/deny-all-hook.sh&quot; /etc/agents/hooks/pre_tool_use.sh
+chmod 0755 /etc/agents/hooks/pre_tool_use.sh
+chattr +i /etc/agents/hooks/pre_tool_use.sh 2&gt;/dev/null || true
+
+# 2. Disable Auto Mode classifier and force out-of-band on every action.
+if [[ -r &quot;$SETTINGS_PATH&quot; ]]; then
+  TMPFILE=&quot;$(mktemp)&quot;
+  jq &#x27;.permissions.autoMode = false
+      | .permissions.requireOutOfBand = true
+      | .permissions.judgmentQueryEscalation = false&#x27; \
+      &quot;$SETTINGS_PATH&quot; &gt; &quot;$TMPFILE&quot;
+  mv &quot;$TMPFILE&quot; &quot;$SETTINGS_PATH&quot;
+  chmod 0644 &quot;$SETTINGS_PATH&quot;
+fi
+
+# 3. Disable judgment-query escalation channel via the service API.
+if [[ -n &quot;${BREAK_GLASS_TOKEN:-}&quot; ]]; then
+  curl -sS -X POST &quot;$ESCALATE_URL/api/disable&quot; \
+    -H &quot;Authorization: Bearer $BREAK_GLASS_TOKEN&quot; \
+    -H &quot;Content-Type: application/json&quot; \
+    -d &quot;$(jq -n --arg agent &quot;$AGENT_NAME&quot; --arg incident &quot;$INCIDENT_ID&quot; \
+            &#x27;{agent:$agent, incident:$incident}&#x27;)&quot; \
+    &gt;/dev/null || echo &quot;WARN: escalation-channel disable API call failed&quot; &gt;&amp;2
+else
+  echo &quot;WARN: BREAK_GLASS_TOKEN unset; escalation channel not disabled&quot; &gt;&amp;2
+fi
+
+# 4. Kill the agent so the new state applies on next launch.
+pkill -KILL -f &quot;claude.*$AGENT_NAME&quot; 2&gt;/dev/null || true
+
+logger -t agent-incident -p user.warning \
+  &quot;$(jq -n \
+      --arg event &quot;approval_locked_local&quot; \
+      --arg agent &quot;$AGENT_NAME&quot; \
+      --arg incident &quot;$INCIDENT_ID&quot; \
+      --arg actor &quot;$(whoami)&quot; \
+      --arg ts &quot;$(date -Iseconds)&quot; \
+      &#x27;{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}&#x27;)&quot;
+
+echo &quot;Local approval gating locked down for $AGENT_NAME (incident $INCIDENT_ID)&quot;
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Interventions, Approval gating / Client-side</h2>
+<p><strong>Trigger.</strong> Sentinels detected approval bypass, fatigue pattern saturation (mean response under 2s across 50+ approvals), judgment-query escalation channel compromise.</p>
+<p><strong>Authority.</strong> On-call.</p>
+<p><strong>Speed target.</strong> Under 10 seconds.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- The hook layout from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/authorization/client-side/"><code>../../authorization/client-side/</code></a> (this runbook re-uses the deny-all hook).</li>
+<li>- <code>jq</code> for editing <code>settings.json</code> in place.</li>
+<li>- API access to your judgment-query escalation service to disable it.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-approval-lockdown-local"><code>agent-approval-lockdown-local</code></a>, runbook script. Replaces the approval hook with the deny-all hook (shared with authorization client-side), disables Auto Mode in <code>settings.json</code>, sets <code>requireOutOfBand: true</code>, disables the judgment-query escalation channel, kills the agent.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Auto Mode disabled
+jq &#x27;.permissions.autoMode&#x27; /etc/agents/claude-code-prod/settings.json
+# expected: false
+
+# 2. Hook is deny-all
+md5sum /etc/agents/hooks/pre_tool_use.sh /etc/agents/emergency/deny-all-hook.sh
+# expected: identical
+
+# 3. Escalation channel disabled
+curl -sS https://escalate.example.com/api/status?agent=claude-code-prod
+# expected: disabled: true
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- Disabling Auto Mode but not replacing the hook. Auto Mode disabled means more prompts; the agent still proceeds on the prompts.</li>
+<li>- Not disabling the escalation channel, the agent escalates to a compromised channel and gets fake approvals.</li>
+<li>- Settings JSON edited in place; if the original was JSON5 (with comments), the standard <code>jq</code> rewrite breaks it. Use a JSON-comment-aware tool if your config is JSON5.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 RS.MI-01. NIST AI RMF MANAGE 4.1. OWASP ASI09. EU AI Act Art. 14 (response dimension).</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>Auto Mode disabled but hook still permissive</li><li>JSON5 settings broken by jq rewrite</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RS.MI-01</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 4.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI09</td></tr><tr><th>OTHER</th><td>EU AI Act Art. 14 (response dimension)</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/respond/approval-gating/client-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

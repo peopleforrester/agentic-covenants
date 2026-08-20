@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Approval gating at the server side layer | Recover | Agentic Covenants</title>
+<meta name="description" content="Re-enable branch protection (enforce_admins true), re-add CODEOWNERS, audit bypass events from incident, unfreeze deployments only after rest of recovery is verified.">
+<link rel="canonical" href="https://agenticcovenants.com/recover/approval-gating/server-side/">
+<meta property="og:title" content="Approval gating at the server side layer | Recover | Agentic Covenants">
+<meta property="og:description" content="Re-enable branch protection (enforce_admins true), re-add CODEOWNERS, audit bypass events from incident, unfreeze deployments only after rest of recovery is verified.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/recover/approval-gating/server-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Recover</a> ›
+  <span>Approval gating</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Recover (RC) · Approval gating</p>
+  <h1>Approval gating <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
+  <blockquote class="q">How do I get back to a known-good state and not repeat this?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Re-enable branch protection (enforce_admins true), re-add CODEOWNERS, audit bypass events from incident, unfreeze deployments only after rest of recovery is verified.</p></section>
+  <section class="artifacts"><h2>Artifacts (2)</h2><figure class="artifact"><figcaption><code>agent-restore-approval-server</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/restorations/approval-gating/server-side/agent-restore-approval-server">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Server-side approval-gating rebuild. Restore branch protection, re-enable workflows, audit bypasses, unfreeze on flag.
+# ABOUTME: Refuses to apply branch protection without enforce_admins: true. --unfreeze must be explicit.
+
+set -euo pipefail
+
+UNFREEZE=&quot;0&quot;
+ARGS=()
+for arg in &quot;$@&quot;; do
+  case &quot;$arg&quot; in
+    --unfreeze) UNFREEZE=&quot;1&quot; ;;
+    *)          ARGS+=(&quot;$arg&quot;) ;;
+  esac
+done
+set -- &quot;${ARGS[@]}&quot;
+
+if [[ $# -lt 2 ]]; then
+  echo &quot;Usage: agent-restore-approval-server &lt;AGENT_NAME&gt; &lt;INCIDENT_ID&gt; [--unfreeze]&quot; &gt;&amp;2
+  echo &quot;  REPO=org/repo agent-restore-approval-server claude-code-prod $(uuidgen) --unfreeze&quot; &gt;&amp;2
+  exit 64
+fi
+
+AGENT_NAME=&quot;$1&quot;
+INCIDENT_ID=&quot;$2&quot;
+REPO=&quot;${REPO:?REPO must be set to GitHub owner/repo}&quot;
+PROTECTION_FILE=&quot;${PROTECTION_FILE:-./controls/approval-gating/server-side/branch-protection-expected.json}&quot;
+
+if [[ ! -r &quot;$PROTECTION_FILE&quot; ]]; then
+  echo &quot;REFUSING: $PROTECTION_FILE not found&quot; &gt;&amp;2
+  exit 1
+fi
+
+# 1. Verify the source-of-truth has enforce_admins: true before restoring.
+ENFORCE_ADMINS=&quot;$(jq -r &#x27;.enforce_admins // false&#x27; &quot;$PROTECTION_FILE&quot;)&quot;
+if [[ &quot;$ENFORCE_ADMINS&quot; != &quot;true&quot; ]]; then
+  echo &quot;REFUSING: $PROTECTION_FILE has enforce_admins=$ENFORCE_ADMINS.&quot; &gt;&amp;2
+  echo &quot;enforce_admins=true is the load-bearing flag for branch protection. Fix source before restore.&quot; &gt;&amp;2
+  exit 1
+fi
+
+# 2. Restore branch protection from source.
+gh api -X PUT &quot;repos/$REPO/branches/main/protection&quot; \
+  --input &quot;$PROTECTION_FILE&quot; &gt;/dev/null
+
+# 3. Re-enable every workflow that was disabled during Interventions.
+mapfile -t WORKFLOW_IDS &lt; &lt;(
+  gh api &quot;repos/$REPO/actions/workflows&quot; --jq &#x27;.workflows[].id&#x27;
+)
+for wid in &quot;${WORKFLOW_IDS[@]}&quot;; do
+  gh api -X PUT &quot;repos/$REPO/actions/workflows/$wid/enable&quot; &gt;/dev/null 2&gt;&amp;1 || true
+done
+
+# 4. Audit bypass events from the incident window. Output to stderr; the
+# operator must review before considering recovery complete.
+SCRIPT_DIR=&quot;$(cd &quot;$(dirname &quot;${BASH_SOURCE[0]}&quot;)&quot; &amp;&amp; pwd)&quot;
+if [[ -x &quot;$SCRIPT_DIR/audit-bypass-events.sh&quot; ]]; then
+  echo
+  echo &quot;Bypass-event audit (review each entry before unfreezing):&quot;
+  &quot;$SCRIPT_DIR/audit-bypass-events.sh&quot; &quot;$REPO&quot; &quot;$INCIDENT_ID&quot; || true
+fi
+
+# 5. Unfreeze deployments only when --unfreeze is explicitly passed.
+if [[ &quot;$UNFREEZE&quot; == &quot;1&quot; ]]; then
+  gh variable set DEPLOY_FREEZE -b false -R &quot;$REPO&quot; &gt;/dev/null
+  echo &quot;DEPLOY_FREEZE set to false.&quot;
+else
+  echo
+  echo &quot;DEPLOY_FREEZE not changed. Re-run with --unfreeze when ready.&quot;
+fi
+
+logger -t agent-recovery -p user.notice \
+  &quot;$(jq -n \
+      --arg event &quot;approval_restored_server&quot; \
+      --arg agent &quot;$AGENT_NAME&quot; \
+      --arg repo &quot;$REPO&quot; \
+      --arg incident &quot;$INCIDENT_ID&quot; \
+      --arg unfreeze &quot;$UNFREEZE&quot; \
+      --arg actor &quot;$(whoami)&quot; \
+      --arg ts &quot;$(date -Iseconds)&quot; \
+      &#x27;{event:$event, agent:$agent, repo:$repo, incident:$incident, unfreeze:$unfreeze, actor:$actor, ts:$ts}&#x27;)&quot;
+
+echo &quot;Server-side approval gating restored for $AGENT_NAME on $REPO&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>audit-bypass-events.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/restorations/approval-gating/server-side/audit-bypass-events.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Lists pushes to protected branches during an incident window with forced: true or admin-bypass markers.
+# ABOUTME: Output is for human review; any commit that landed via bypass needs to be inspected for malicious change.
+
+set -euo pipefail
+
+REPO=&quot;${1:?Usage: audit-bypass-events.sh &lt;REPO&gt; &lt;INCIDENT_ID&gt;}&quot;
+INCIDENT_ID=&quot;${2:?Usage: audit-bypass-events.sh &lt;REPO&gt; &lt;INCIDENT_ID&gt;}&quot;
+SINCE=&quot;${INCIDENT_START:-}&quot;
+UNTIL=&quot;${INCIDENT_END:-}&quot;
+
+if [[ -z &quot;$SINCE&quot; || -z &quot;$UNTIL&quot; ]]; then
+  echo &quot;Set INCIDENT_START and INCIDENT_END as ISO-8601 timestamps. The earliest IoC from Sentinels is the right SINCE; the time Interventions completed is the right UNTIL.&quot; &gt;&amp;2
+  exit 64
+fi
+
+echo &quot;Auditing $REPO for bypass events from $SINCE to $UNTIL ...&quot;
+echo
+
+# Force-pushes during the window. branch_protection_rule events would also
+# show in the GitHub Audit Log API; this script uses the events API as a
+# starting point.
+gh api &quot;repos/$REPO/events?per_page=100&quot; \
+  --jq &quot;.[] | select(.created_at &gt;= \&quot;$SINCE\&quot; and .created_at &lt;= \&quot;$UNTIL\&quot;)
+        | select(.type == \&quot;PushEvent\&quot; and .payload.forced == true)
+        | {created_at, actor: .actor.login, ref: .payload.ref, head: .payload.head}&quot;
+
+echo
+echo &quot;Cross-reference each line above with PR review records. Any commit landed via force-push during the incident window must be reviewed.&quot;
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Restorations, Approval gating / Server-side</h2>
+<p><strong>Precondition.</strong> Interventions L3-C4 has fired (branch protection locked, workflows disabled, DEPLOY_FREEZE engaged, environments locked). Restorations identity, authorization, and blast-radius rows complete.</p>
+<p><strong>Authority.</strong> On-call plus security review.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- <code>gh</code> CLI authenticated with <code>repo_admin</code>.</li>
+<li>- The branch-protection JSON in source: <code>controls/approval-gating/server-side/branch-protection-expected.json</code>.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-restore-approval-server"><code>agent-restore-approval-server</code></a>, runbook script. Restores branch protection from source (verifies <code>enforce_admins: true</code>), re-enables every workflow, audits bypass events from the incident window, unfreezes deployments <strong>only when explicitly authorized</strong> via the <code>--unfreeze</code> flag.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/audit-bypass-events.sh"><code>audit-bypass-events.sh</code></a>, helper that lists every push to a protected branch during the incident window with <code>forced: true</code> or admin-bypass markers. Output must be reviewed manually before declaring approval-gating recovered.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Branch protection restored from source-of-truth
+gh api repos/$REPO/branches/main/protection \
+  --jq &#x27;{enforce_admins: .enforce_admins.enabled, reviews: .required_pull_request_reviews.required_approving_review_count}&#x27;
+# expected: enforce_admins: true, reviews: 2
+
+# 2. Workflows re-enabled
+gh api repos/$REPO/actions/workflows --jq &#x27;.workflows[] | {name, state}&#x27; | grep -v &quot;disabled_manually&quot;
+
+# 3. DEPLOY_FREEZE off (only after the rest of recovery verified)
+gh variable list -R $REPO | grep DEPLOY_FREEZE
+# expected: DEPLOY_FREEZE=false
+
+# 4. No bypass events found unreviewed during incident window
+./audit-bypass-events.sh &quot;$INCIDENT_START_TIMESTAMP&quot; &quot;$INCIDENT_END_TIMESTAMP&quot;
+</code></pre>
+<h3>Common failure modes</h3>
+<ul>
+<li>- Protection config not version-controlled; restored from incomplete copy. The expected JSON must live at <code>controls/approval-gating/server-side/branch-protection-expected.json</code>.</li>
+<li>- Bypass events during incident not reviewed. <strong>Any commit that landed via bypass during the incident window is suspect.</strong> Audit each one for malicious changes before the cleanup is complete.</li>
+<li>- DEPLOY_FREEZE unfrozen before recovery complete. The runbook requires <code>--unfreeze</code> as an explicit flag rather than unfreezing by default.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 RC.RP-01, RC.IM-01; GV.RR-02 (recovery dimension). NIST AI RMF GOVERN 4.1, MANAGE 4.1. OWASP ASI02, ASI09. EU AI Act Art. 14, Art. 26.</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>protection config not version-controlled; restored from incomplete copy</li><li>bypass events during incident not reviewed for malicious commits</li><li>DEPLOY_FREEZE unfrozen before recovery complete</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RC.RP-01, RC.IM-01, GV.RR-02</td></tr><tr><th>NIST AI RMF</th><td>GOVERN 4.1, MANAGE 4.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI02, ASI09</td></tr><tr><th>OTHER</th><td>EU AI Act Art. 14, Art. 26</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/recover/approval-gating/server-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

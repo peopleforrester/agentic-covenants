@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Approval gating at the operator declared layer | Identify | Agentic Covenants</title>
+<meta name="description" content="Operator-maintained review calendar. Quarterly attestation. Tracks pending and overdue reviews.">
+<link rel="canonical" href="https://agenticcovenants.com/identify/approval-gating/operator-declared/">
+<meta property="og:title" content="Approval gating at the operator declared layer | Identify | Agentic Covenants">
+<meta property="og:description" content="Operator-maintained review calendar. Quarterly attestation. Tracks pending and overdue reviews.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/identify/approval-gating/operator-declared/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Identify</a> ›
+  <span>Approval gating</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Identify (ID) · Approval gating</p>
+  <h1>Approval gating <span class="at">at the</span> operator declared <span class="at">layer</span></h1>
+  <p class="strength strength-operator-declared"><strong></strong> · </p>
+  <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Operator-maintained review calendar. Quarterly attestation. Tracks pending and overdue reviews.</p></section>
+  
+  <section class="readme"><h2>Cell notes</h2><h2>Inventory, Approval gating / Operator-declared</h2>
+<p><strong>What this cell records.</strong> The operator&#x27;s review calendar and outstanding-review tracking.</p>
+<h3>Fields</h3>
+<ul>
+<li>- <code>last_owner_attestation</code>, owner re-signed the charter and confirmed the agent is still needed.</li>
+<li>- <code>next_owner_attestation_due</code></li>
+<li>- <code>pending_approvals[]</code>, charter amendments awaiting signatures.</li>
+<li>- <code>overdue_reviews[]</code>, agents whose <code>next_review_due</code> has passed.</li>
+</ul>
+<h3>Operational tie-in</h3>
+<p>Drives an executive dashboard tracking review compliance per domain. Per-cell escalation when reviews are overdue.</p>
+<h3>Common failure mode</h3>
+<p>Quarterly review process exists on paper, never executed. Reviews become rubber stamps when they happen. Mitigation: automated reminders, escalation if overdue, exec dashboard.</p>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 ID.IM-01, ID.IM-02. NIST AI RMF GOVERN 1.5. ISO/IEC 42001 §A.9.</p></section>
+  
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>ID.IM-01, ID.IM-02</td></tr><tr><th>NIST AI RMF</th><td>GOVERN 1.5</td></tr><tr><th>OTHER</th><td>ISO/IEC 42001 §A.9 (performance evaluation)</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/identify/approval-gating/operator-declared/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

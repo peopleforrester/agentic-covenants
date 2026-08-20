@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Approval gating at the client side layer | Recover | Agentic Covenants</title>
+<meta name="description" content="Restore PreToolUse config from VCS, reapply tier definitions, re-enable Auto Mode, re-establish out-of-band channel.">
+<link rel="canonical" href="https://agenticcovenants.com/recover/approval-gating/client-side/">
+<meta property="og:title" content="Approval gating at the client side layer | Recover | Agentic Covenants">
+<meta property="og:description" content="Restore PreToolUse config from VCS, reapply tier definitions, re-enable Auto Mode, re-establish out-of-band channel.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/recover/approval-gating/client-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Recover</a> ›
+  <span>Approval gating</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Recover (RC) · Approval gating</p>
+  <h1>Approval gating <span class="at">at the</span> client side <span class="at">layer</span></h1>
+  <p class="strength strength-client-side"><strong>deterministic</strong> · Outside the model&#x27;s reasoning</p>
+  <blockquote class="q">How do I get back to a known-good state and not repeat this?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="here" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Restore PreToolUse config from VCS, reapply tier definitions, re-enable Auto Mode, re-establish out-of-band channel.</p></section>
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>agent-restore-approval-local</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/restorations/approval-gating/client-side/agent-restore-approval-local">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Local approval-gating rebuild. Restores tiered hook + tier-config from VCS, re-enables Auto Mode, re-enables escalation.
+# ABOUTME: Run from repo root; reads controls/approval-gating/client-side/ as source of truth.
+
+set -euo pipefail
+
+if [[ $# -lt 2 ]]; then
+  echo &quot;Usage: agent-restore-approval-local &lt;AGENT_NAME&gt; &lt;INCIDENT_ID&gt;&quot; &gt;&amp;2
+  exit 64
+fi
+
+AGENT_NAME=&quot;$1&quot;
+INCIDENT_ID=&quot;$2&quot;
+SOURCE_DIR=&quot;${SOURCE_DIR:-$(pwd)/controls/approval-gating/client-side}&quot;
+SETTINGS_PATH=&quot;/etc/agents/${AGENT_NAME}/settings.json&quot;
+ESCALATE_URL=&quot;${ESCALATE_URL:-https://escalate.example.com}&quot;
+
+# 1. Restore tiered hook from source.
+chattr -i /etc/agents/hooks/pre_tool_use.sh 2&gt;/dev/null || true
+if [[ -r &quot;$SOURCE_DIR/pre_tool_use_tiered.sh&quot; ]]; then
+  cp &quot;$SOURCE_DIR/pre_tool_use_tiered.sh&quot; /etc/agents/hooks/pre_tool_use.sh
+  chmod 0755 /etc/agents/hooks/pre_tool_use.sh
+fi
+
+# 2. Restore tier config.
+if [[ -r &quot;$SOURCE_DIR/tier-config.yaml&quot; ]]; then
+  install -m 0644 &quot;$SOURCE_DIR/tier-config.yaml&quot; /etc/agents/tier-config.yaml
+fi
+
+# 3. Re-enable Auto Mode and judgment-query escalation in settings.json.
+if [[ -r &quot;$SETTINGS_PATH&quot; ]]; then
+  TMPFILE=&quot;$(mktemp)&quot;
+  jq &#x27;.permissions.autoMode = true
+      | .permissions.requireOutOfBand = false
+      | .permissions.judgmentQueryEscalation = true&#x27; \
+      &quot;$SETTINGS_PATH&quot; &gt; &quot;$TMPFILE&quot;
+  mv &quot;$TMPFILE&quot; &quot;$SETTINGS_PATH&quot;
+  chmod 0644 &quot;$SETTINGS_PATH&quot;
+fi
+
+# 4. Re-enable judgment-query escalation channel.
+if [[ -n &quot;${BREAK_GLASS_TOKEN:-}&quot; ]]; then
+  curl -sS -X POST &quot;$ESCALATE_URL/api/enable&quot; \
+    -H &quot;Authorization: Bearer $BREAK_GLASS_TOKEN&quot; \
+    -H &quot;Content-Type: application/json&quot; \
+    -d &quot;$(jq -n --arg agent &quot;$AGENT_NAME&quot; --arg incident &quot;$INCIDENT_ID&quot; \
+            &#x27;{agent:$agent, incident:$incident}&#x27;)&quot; \
+    &gt;/dev/null || echo &quot;WARN: escalation-channel enable API call failed&quot; &gt;&amp;2
+fi
+
+logger -t agent-recovery -p user.notice \
+  &quot;$(jq -n \
+      --arg event &quot;approval_restored_local&quot; \
+      --arg agent &quot;$AGENT_NAME&quot; \
+      --arg incident &quot;$INCIDENT_ID&quot; \
+      --arg actor &quot;$(whoami)&quot; \
+      --arg ts &quot;$(date -Iseconds)&quot; \
+      &#x27;{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}&#x27;)&quot;
+
+echo &quot;Local approval gating restored for $AGENT_NAME&quot;
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Restorations, Approval gating / Client-side</h2>
+<p><strong>Precondition.</strong> Interventions L2-C4 has fired (deny-all hook, Auto Mode disabled, escalation channel disabled). Restorations identity and authorization rows complete.</p>
+<p><strong>Authority.</strong> On-call.</p>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-restore-approval-local"><code>agent-restore-approval-local</code></a>, runbook script. Restores the tiered hook from VCS, reapplies tier-config.yaml, sets <code>autoMode: true</code> and <code>requireOutOfBand: false</code> in <code>settings.json</code>, re-enables the judgment-query escalation channel via service API.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Auto Mode enabled
+jq &#x27;.permissions.autoMode&#x27; /etc/agents/claude-code-prod/settings.json
+# expected: true
+
+# 2. Hook is the operational tiered version
+md5sum /etc/agents/hooks/pre_tool_use.sh
+md5sum controls/approval-gating/client-side/pre_tool_use_tiered.sh
+# expected: identical
+
+# 3. Escalation channel enabled
+curl -sS https://escalate.example.com/api/status?agent=claude-code-prod
+# expected: disabled: false
+</code></pre>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 RC.RP-01. NIST AI RMF MANAGE 4.1. OWASP ASI09. EU AI Act Art. 14 (recovery dimension).</p></section>
+  
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RC.RP-01</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 4.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI09</td></tr><tr><th>OTHER</th><td>EU AI Act Art. 14 (recovery dimension)</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/recover/approval-gating/client-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

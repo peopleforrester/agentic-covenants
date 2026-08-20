@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supply chain at the client side layer | Protect | Agentic Covenants</title>
+<meta name="description" content="MCP server allowlist with hash pinning, Sigstore verification, lockfile pinning, pre-commit deps scan.">
+<link rel="canonical" href="https://agenticcovenants.com/protect/supply-chain/client-side/">
+<meta property="og:title" content="Supply chain at the client side layer | Protect | Agentic Covenants">
+<meta property="og:description" content="MCP server allowlist with hash pinning, Sigstore verification, lockfile pinning, pre-commit deps scan.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/protect/supply-chain/client-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Protect</a> ›
+  <span>Supply chain</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Protect (PR) · Supply chain</p>
+  <h1>Supply chain <span class="at">at the</span> client side <span class="at">layer</span></h1>
+  <p class="strength strength-client-side"><strong>deterministic</strong> · Outside the model&#x27;s reasoning</p>
+  <blockquote class="q">If the agent decides to violate this concern, what stops it at this layer?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="here" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>MCP server allowlist with hash pinning, Sigstore verification, lockfile pinning, pre-commit deps scan.</p></section>
+  <section class="artifacts"><h2>Artifacts (4)</h2><figure class="artifact"><figcaption><code>mcp-allowlist.json</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/client-side/mcp-allowlist.json">view on GitHub</a></figcaption><pre><code>{
+  &quot;version&quot;: 1,
+  &quot;_comment&quot;: &quot;Operator-owned. The agent&#x27;s user MUST NOT have write permission on this file. Update the sha256 fields after every legitimate version bump; mcp-launch refuses to start servers whose binary hash does not match.&quot;,
+  &quot;servers&quot;: {
+    &quot;filesystem&quot;: {
+      &quot;command&quot;: &quot;/usr/local/bin/mcp-filesystem&quot;,
+      &quot;args&quot;: [],
+      &quot;sha256&quot;: &quot;REPLACE_WITH_ACTUAL_SHA256_OF_BINARY&quot;,
+      &quot;tool_descriptions_sha256&quot;: &quot;REPLACE_AFTER_FIRST_HANDSHAKE&quot;,
+      &quot;cosign_certificate&quot;: &quot;/etc/agents/mcp-signing/mcp-filesystem.cert&quot;,
+      &quot;permissions&quot;: [&quot;read&quot;],
+      &quot;approved_at&quot;: &quot;2026-04-15T00:00:00Z&quot;,
+      &quot;approved_by&quot;: &quot;michael@example.com&quot;,
+      &quot;approval_notes&quot;: &quot;Read-only filesystem access scoped to /workspace by the launcher.&quot;
+    },
+    &quot;github&quot;: {
+      &quot;command&quot;: &quot;npx&quot;,
+      &quot;args&quot;: [&quot;-y&quot;, &quot;@modelcontextprotocol/server-github@1.4.2&quot;],
+      &quot;sha256&quot;: &quot;REPLACE_WITH_ACTUAL_SHA256_OF_PINNED_VERSION&quot;,
+      &quot;tool_descriptions_sha256&quot;: &quot;REPLACE_AFTER_FIRST_HANDSHAKE&quot;,
+      &quot;cosign_certificate&quot;: null,
+      &quot;permissions&quot;: [&quot;issues:read&quot;, &quot;pulls:read&quot;],
+      &quot;approved_at&quot;: &quot;2026-04-15T00:00:00Z&quot;,
+      &quot;approved_by&quot;: &quot;michael@example.com&quot;,
+      &quot;approval_notes&quot;: &quot;Read-only GitHub access; never approve a version that adds write permissions without re-review.&quot;
+    }
+  },
+  &quot;policy&quot;: {
+    &quot;_comment&quot;: &quot;Settings consumed by mcp-launch and mcp-verify-tools.py.&quot;,
+    &quot;require_signature&quot;: false,
+    &quot;fail_on_unsigned&quot;: false,
+    &quot;fail_on_tool_description_change&quot;: true,
+    &quot;rug_pull_grace_period_seconds&quot;: 0
+  }
+}
+</code></pre></figure><figure class="artifact"><figcaption><code>mcp-launch</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/client-side/mcp-launch">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Verifies an MCP server&#x27;s binary hash against the allowlist before exec, optionally checks Sigstore signature.
+# ABOUTME: Refuses to launch servers not in the allowlist or whose hash differs. Run as the user the MCP server should run as.
+
+set -euo pipefail
+
+ALLOWLIST=&quot;${MCP_ALLOWLIST:-/etc/agents/mcp-allowlist.json}&quot;
+SERVER_NAME=&quot;${1:-}&quot;
+
+if [[ -z &quot;$SERVER_NAME&quot; ]]; then
+  cat &lt;&lt;&#x27;USAGE&#x27; &gt;&amp;2
+Usage: mcp-launch &lt;server-name&gt; [args...]
+
+Reads /etc/agents/mcp-allowlist.json (or $MCP_ALLOWLIST), looks up the server,
+verifies the command&#x27;s sha256 against the recorded value, optionally verifies
+the Sigstore signature, then execs the command with the remaining args.
+USAGE
+  exit 64
+fi
+
+if [[ ! -r &quot;$ALLOWLIST&quot; ]]; then
+  echo &quot;BLOCKED: cannot read MCP allowlist at $ALLOWLIST&quot; &gt;&amp;2
+  exit 2
+fi
+
+EXPECTED_SHA=&quot;$(jq -r &quot;.servers[\&quot;$SERVER_NAME\&quot;].sha256 // \&quot;\&quot;&quot; &quot;$ALLOWLIST&quot;)&quot;
+COMMAND=&quot;$(jq -r &quot;.servers[\&quot;$SERVER_NAME\&quot;].command // \&quot;\&quot;&quot; &quot;$ALLOWLIST&quot;)&quot;
+ARGS_JSON=&quot;$(jq -r &quot;.servers[\&quot;$SERVER_NAME\&quot;].args // [] | @json&quot; &quot;$ALLOWLIST&quot;)&quot;
+COSIGN_CERT=&quot;$(jq -r &quot;.servers[\&quot;$SERVER_NAME\&quot;].cosign_certificate // \&quot;\&quot;&quot; &quot;$ALLOWLIST&quot;)&quot;
+REQUIRE_SIGNATURE=&quot;$(jq -r &#x27;.policy.require_signature // false&#x27; &quot;$ALLOWLIST&quot;)&quot;
+
+if [[ -z &quot;$EXPECTED_SHA&quot; || &quot;$EXPECTED_SHA&quot; == &quot;REPLACE_WITH_ACTUAL_SHA256_OF_BINARY&quot;* ]]; then
+  echo &quot;BLOCKED: $SERVER_NAME has no recorded sha256 (or placeholder still present)&quot; &gt;&amp;2
+  exit 2
+fi
+if [[ -z &quot;$COMMAND&quot; ]]; then
+  echo &quot;BLOCKED: $SERVER_NAME not in allowlist&quot; &gt;&amp;2
+  exit 2
+fi
+
+# Resolve the actual binary. For npx-style commands, the binary to hash is
+# the resolved package&#x27;s main. Operators must record the resolved sha256
+# (npm pack --json | jq .integrity), not the wrapper&#x27;s.
+if [[ -x &quot;$COMMAND&quot; ]]; then
+  ACTUAL_SHA=&quot;$(sha256sum &quot;$COMMAND&quot; | awk &#x27;{print $1}&#x27;)&quot;
+else
+  echo &quot;BLOCKED: $SERVER_NAME command $COMMAND is not an executable file&quot; &gt;&amp;2
+  echo &quot;  For npx-style commands, record the resolved package&#x27;s sha256 and ensure mcp-launch points to the resolved binary.&quot; &gt;&amp;2
+  exit 2
+fi
+
+if [[ &quot;$ACTUAL_SHA&quot; != &quot;$EXPECTED_SHA&quot; ]]; then
+  echo &quot;BLOCKED: $SERVER_NAME sha256 mismatch&quot; &gt;&amp;2
+  echo &quot;  expected: $EXPECTED_SHA&quot; &gt;&amp;2
+  echo &quot;  actual:   $ACTUAL_SHA&quot; &gt;&amp;2
+  echo &quot;  Re-approve with: mcp-approve $SERVER_NAME --sha $ACTUAL_SHA&quot; &gt;&amp;2
+  exit 2
+fi
+
+# Optional Sigstore signature verification.
+if [[ -n &quot;$COSIGN_CERT&quot; &amp;&amp; &quot;$COSIGN_CERT&quot; != &quot;null&quot; ]]; then
+  if command -v cosign &gt;/dev/null 2&gt;&amp;1; then
+    if cosign verify-blob \
+        --signature &quot;${COMMAND}.sig&quot; \
+        --certificate &quot;$COSIGN_CERT&quot; \
+        &quot;$COMMAND&quot; &gt;/dev/null 2&gt;&amp;1; then
+      echo &quot;OK: $SERVER_NAME cosign verified&quot; &gt;&amp;2
+    else
+      if [[ &quot;$REQUIRE_SIGNATURE&quot; == &quot;true&quot; ]]; then
+        echo &quot;BLOCKED: $SERVER_NAME cosign verification failed (required by policy)&quot; &gt;&amp;2
+        exit 2
+      else
+        echo &quot;WARN: $SERVER_NAME cosign verification failed (allowed by policy)&quot; &gt;&amp;2
+      fi
+    fi
+  fi
+fi
+
+# Successful pre-flight; exec the server with the remaining args.
+shift
+exec &quot;$COMMAND&quot; $(echo &quot;$ARGS_JSON&quot; | jq -r &#x27;.[]&#x27;) &quot;$@&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>mcp-verify-tools.py</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/client-side/mcp-verify-tools.py">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env python3
+# ABOUTME: Hashes MCP server tool descriptions in a canonical order and compares to the allowlist for rug-pull defense.
+# ABOUTME: Run after the MCP handshake. Mismatch causes the agent runtime to refuse the connection until the operator re-approves.
+
+import argparse
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+
+ALLOWLIST_PATH_DEFAULT = &quot;/etc/agents/mcp-allowlist.json&quot;
+
+
+def hash_tool_descriptions(tool_list: list) -&gt; str:
+    &quot;&quot;&quot;Stable hash over tool descriptions, ignoring ordering.
+
+    The canonical form sorts tools by name, normalizes the input schema by
+    sorting its keys, and concatenates with explicit separators so a tool
+    that contains the separator literally cannot collide with a different
+    tool whose name happens to match.
+    &quot;&quot;&quot;
+    canonical = sorted(
+        [
+            (
+                t.get(&quot;name&quot;, &quot;&quot;),
+                t.get(&quot;description&quot;, &quot;&quot;),
+                json.dumps(t.get(&quot;inputSchema&quot;, {}), sort_keys=True),
+            )
+            for t in tool_list
+        ],
+        key=lambda x: x[0],
+    )
+    h = hashlib.sha256()
+    for name, desc, schema in canonical:
+        h.update(name.encode())
+        h.update(b&quot;\x00&quot;)
+        h.update(desc.encode())
+        h.update(b&quot;\x00&quot;)
+        h.update(schema.encode())
+        h.update(b&quot;\xff&quot;)
+    return h.hexdigest()
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description=&quot;Hash MCP tool descriptions and compare to allowlist (rug-pull defense).&quot;
+    )
+    parser.add_argument(&quot;server_name&quot;, help=&quot;The MCP server name as it appears in the allowlist.&quot;)
+    parser.add_argument(
+        &quot;--allowlist&quot;,
+        default=ALLOWLIST_PATH_DEFAULT,
+        help=f&quot;Path to allowlist JSON (default: {ALLOWLIST_PATH_DEFAULT}).&quot;,
+    )
+    parser.add_argument(
+        &quot;--tools-from-stdin&quot;,
+        action=&quot;store_true&quot;,
+        help=&quot;Read the MCP tool list as JSON from stdin (default: true; given for clarity).&quot;,
+    )
+    args = parser.parse_args()
+
+    try:
+        tools = json.loads(sys.stdin.read())
+    except json.JSONDecodeError as exc:
+        print(f&quot;BLOCKED: {args.server_name} sent malformed tool list: {exc}&quot;, file=sys.stderr)
+        sys.exit(2)
+
+    if not isinstance(tools, list):
+        print(
+            f&quot;BLOCKED: {args.server_name} tool list is not a JSON array&quot;,
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
+    actual = hash_tool_descriptions(tools)
+
+    try:
+        allowlist = json.loads(Path(args.allowlist).read_text())
+    except FileNotFoundError:
+        print(f&quot;BLOCKED: allowlist not found at {args.allowlist}&quot;, file=sys.stderr)
+        sys.exit(2)
+
+    server_entry = allowlist.get(&quot;servers&quot;, {}).get(args.server_name)
+    if not server_entry:
+        print(f&quot;BLOCKED: {args.server_name} not in allowlist&quot;, file=sys.stderr)
+        sys.exit(2)
+
+    expected = server_entry.get(&quot;tool_descriptions_sha256&quot;)
+    fail_on_change = allowlist.get(&quot;policy&quot;, {}).get(&quot;fail_on_tool_description_change&quot;, True)
+
+    if not expected or expected.startswith(&quot;REPLACE_AFTER_FIRST_HANDSHAKE&quot;):
+        # First handshake; record-and-prompt rather than block.
+        print(
+            f&quot;FIRST-USE: {args.server_name} tool descriptions sha256 = {actual}&quot;,
+            file=sys.stderr,
+        )
+        print(
+            &quot;Update mcp-allowlist.json: set servers[&quot; + args.server_name + &quot;].tool_descriptions_sha256 = &quot; + actual,
+            file=sys.stderr,
+        )
+        sys.exit(0)
+
+    if actual != expected:
+        print(f&quot;BLOCKED: {args.server_name} tool descriptions changed (rug-pull?)&quot;, file=sys.stderr)
+        print(f&quot;  expected: {expected}&quot;, file=sys.stderr)
+        print(f&quot;  actual:   {actual}&quot;, file=sys.stderr)
+        print(
+            f&quot;  Re-approve with: mcp-approve {args.server_name} --tool-descriptions-sha {actual}&quot;,
+            file=sys.stderr,
+        )
+        if fail_on_change:
+            sys.exit(2)
+
+    print(f&quot;OK: {args.server_name} tool descriptions match allowlist&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre></figure><figure class="artifact"><figcaption><code>pre-commit-deps-scan.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/client-side/pre-commit-deps-scan.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: pre-commit framework hooks adding dependency vulnerability scans. Append to .pre-commit-config.yaml.
+# ABOUTME: pre-commit is bypassable with --no-verify; the server-side lockfile-integrity job is the real backstop.
+repos:
+  - repo: https://github.com/pypa/pip-audit
+    rev: v2.10.1
+    hooks:
+      - id: pip-audit
+        args: [&quot;--strict&quot;]
+        files: &#x27;^(requirements.*\.txt|pyproject\.toml|Pipfile\.lock|poetry\.lock)$&#x27;
+
+  # Trivy was compromised twice in 2026 (malicious v0.69.4, March 2026) — its own
+  # release pipeline is part of YOUR supply chain. Pin the rev, and in CI verify
+  # the binary by digest/signature rather than trusting the tag. See BYPASSES.md.
+  - repo: https://github.com/aquasecurity/trivy
+    rev: v0.71.1
+    hooks:
+      - id: trivy-fs
+        args: [&quot;--severity&quot;, &quot;HIGH,CRITICAL&quot;, &quot;--exit-code&quot;, &quot;1&quot;]
+
+  - repo: https://github.com/python-poetry/poetry
+    rev: 2.4.1
+    hooks:
+      - id: poetry-check
+        args: [&quot;--lock&quot;]   # poetry 2.x: `poetry check --lock` replaces the removed `poetry lock --check`
+
+  - repo: local
+    hooks:
+      - id: lockfile-not-edited-by-agent
+        name: Detect agent-style lockfile edits (heuristic)
+        # Heuristic: an agent that just edited the manifest also re-resolved
+        # the lock without running the package manager&#x27;s recommended command.
+        # This hook checks that lockfile changes accompany manifest changes
+        # and that the lockfile generation timestamp is recent. Tune for your
+        # ecosystem.
+        language: script
+        entry: ./scripts/lockfile-sanity-check.sh
+        files: &#x27;(package-lock\.json|requirements.*\.txt|Pipfile\.lock|poetry\.lock|go\.sum|Cargo\.lock)$&#x27;
+        always_run: false
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Supply chain / Client-side</h2>
+<p><strong>Control.</strong> MCP server allowlist with manifest hash pinning. Tool-description hashing on first approval (rug-pull defense). Sigstore signature verification before install. Lockfile pinning paired with server-side integrity validation. Pre-commit dependency scan. Reject unsigned MCP servers at handshake.</p>
+<p><strong>Strength.</strong> Deterministic for the artifacts named in the allowlist. Bypassable if the agent can write to <code>mcp-allowlist.json</code>, <code>package-lock.json</code>, or other lockfiles; through tool-description rug-pull when the MCP server&#x27;s descriptions are not re-hashed at every handshake; through <code>--no-verify</code> on pre-commit.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- <code>cosign</code> for Sigstore signature verification.</li>
+<li>- <code>syft</code> and <code>grype</code> (or Trivy) for SBOM and vulnerability scanning.</li>
+<li>- A skill-scanning tool: SkillCheck, ToxicSkills, SecureClaw, Snyk agent-scan, or <code>mcp-scanner</code>.</li>
+<li>- Lockfile linters: <code>npm-lockfile-fixed</code>, <code>pip-audit</code>, <code>cargo-audit</code>.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/mcp-allowlist.json"><code>mcp-allowlist.json</code></a>, declarative allowlist of approved MCP servers with binary <code>sha256</code>, <code>tool_descriptions_sha256</code>, and per-server <code>permissions</code> scope. Owned by the operator; the agent&#x27;s user must not have write permission on this file.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/mcp-launch"><code>mcp-launch</code></a>, wrapper that verifies the binary&#x27;s <code>sha256</code> against the allowlist before <code>exec</code>, and calls <code>cosign verify-blob</code> if a signature is present. Refuses to start if the server is not allowlisted or the hash mismatches.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/mcp-verify-tools.py"><code>mcp-verify-tools.py</code></a>, runs after the MCP handshake, hashes the returned tool descriptions in a canonical order, compares to <code>tool_descriptions_sha256</code> in the allowlist. Mismatch → block + re-approve flow. <strong>This is the rug-pull defense.</strong></li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/pre-commit-deps-scan.yaml"><code>pre-commit-deps-scan.yaml</code></a>, extension to <code>.pre-commit-config.yaml</code> adding <code>pip-audit</code> and <code>trivy-fs</code> hooks. The server-side lockfile-integrity job in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/server-side/lockfile-integrity.yml"><code>../server-side/lockfile-integrity.yml</code></a> is the backstop when <code>--no-verify</code> is used.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Allowlist enforcement
+mcp-launch unknown-server
+# expected: &quot;not in allowlist&quot;
+
+# 2. Hash mismatch detection
+echo &quot;extra byte&quot; &gt;&gt; /usr/local/bin/mcp-filesystem
+mcp-launch filesystem
+# expected: sha256 mismatch
+git checkout -- /usr/local/bin/mcp-filesystem  # revert
+
+# 3. Tool description rug-pull detection
+# Modify a tool description in a running MCP server&#x27;s source; restart;
+# verify mcp-verify-tools.py blocks with the expected/actual hashes.
+
+# 4. Pre-commit catches a known CVE
+echo &quot;django==1.0.0&quot; &gt;&gt; requirements.txt
+git add requirements.txt &amp;&amp; git commit -m &quot;test&quot;
+# expected: failure at pip-audit
+
+# 5. Cosign verification
+cosign verify-blob \
+  --signature /usr/local/bin/mcp-filesystem.sig \
+  --certificate /usr/local/bin/mcp-filesystem.cert \
+  /usr/local/bin/mcp-filesystem
+# expected: success against your signing key
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- Allowlist with no hash pinning. The supply-chain bypass is &quot;trusting npm publication&quot; (postmark-mcp, September 2025).</li>
+<li>- Tool-description hash captured but not re-checked at every handshake. The rug-pull works because day-7&#x27;s description is different from day-1&#x27;s.</li>
+<li>- Lockfile pinning without server-side integrity validation. The agent edits <code>package-lock.json</code> and pins a malicious version; without server-side validation, the malicious version is now self-attesting.</li>
+<li>- Pre-commit dependency scan that runs only on the operator&#x27;s machine. <code>--no-verify</code> skips it. The same scan must run server-side.</li>
+<li>- Skill allowlist that approves whole publishers. ClawHavoc (1,184+ malicious skills) demonstrated that publisher trust does not transfer to individual skills.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 PR.PS-02, PR.PS-01, GV.SC-07 (risks from suppliers identified, recorded, prioritized, assessed). NIST AI RMF MAP 4.1, MANAGE 3.1 (third-party risk treatment). OWASP LLM03 (Supply Chain), LLM04 (Data and Model Poisoning). OWASP ASI04 (Agentic Supply Chain Vulnerabilities), ASI06 (Memory &amp; Context Poisoning). NIST SP 800-218 v1.1 PS.2. NIST SP 800-218 Rev. 1 draft (Dec 17, 2025). NIST SP 800-218A (Generative AI Profile of SSDF). OWASP MCP01, MCP03, MCP04.</p></section>
+  <section class="risks"><h2>Primary bypasses</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>lockfile rewrite if agent has FS write</li><li>allowlist edited by agent</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>PR.PS-01, PR.PS-02, GV.SC-07</td></tr><tr><th>NIST AI RMF</th><td>MAP 4.1, MANAGE 3.1</td></tr><tr><th>OWASP LLM</th><td>LLM03, LLM04</td></tr><tr><th>OWASP AGENTIC</th><td>ASI04, ASI06</td></tr><tr><th>OTHER</th><td>NIST SP 800-218 PS.2, NIST SP 800-218A</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/protect/supply-chain/client-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blast radius at the client side layer | Protect | Agentic Covenants</title>
+<meta name="description" content="Sandbox at launch (Seatbelt, bubblewrap, gVisor), seccomp/AppArmor, --network none, read-only mounts, dry-run defaults.">
+<link rel="canonical" href="https://agenticcovenants.com/protect/blast-radius/client-side/">
+<meta property="og:title" content="Blast radius at the client side layer | Protect | Agentic Covenants">
+<meta property="og:description" content="Sandbox at launch (Seatbelt, bubblewrap, gVisor), seccomp/AppArmor, --network none, read-only mounts, dry-run defaults.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/protect/blast-radius/client-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Protect</a> ›
+  <span>Blast radius</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Protect (PR) · Blast radius</p>
+  <h1>Blast radius <span class="at">at the</span> client side <span class="at">layer</span></h1>
+  <p class="strength strength-client-side"><strong>deterministic</strong> · Outside the model&#x27;s reasoning</p>
+  <blockquote class="q">If the agent decides to violate this concern, what stops it at this layer?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="here" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Sandbox at launch (Seatbelt, bubblewrap, gVisor), seccomp/AppArmor, --network none, read-only mounts, dry-run defaults.</p></section>
+  <section class="artifacts"><h2>Artifacts (4)</h2><figure class="artifact"><figcaption><code>agent-bwrap</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/blast-radius/client-side/agent-bwrap">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Bubblewrap launcher that sandboxes the agent with inheritance enforcement and no direct network.
+# ABOUTME: Network access goes through /run/agent-egress.sock, an out-of-sandbox proxy that owns the allowlist.
+
+set -euo pipefail
+
+WORK_DIR=&quot;${1:-$PWD}&quot;
+shift || true
+
+if [[ ! -d &quot;$WORK_DIR&quot; ]]; then
+  echo &quot;agent-bwrap: workspace dir does not exist: $WORK_DIR&quot; &gt;&amp;2
+  exit 64
+fi
+
+EGRESS_SOCK=&quot;${EGRESS_SOCK:-/run/agent-egress.sock}&quot;
+SECCOMP_FILE=&quot;${SECCOMP_FILE:-/etc/agents/seccomp-claude.json}&quot;
+USE_NETWORK=&quot;${USE_NETWORK:-1}&quot;
+
+BWRAP_FLAGS=(
+  --ro-bind /usr /usr
+  --ro-bind /lib /lib
+  --ro-bind /lib64 /lib64
+  --ro-bind /etc /etc
+  --tmpfs /tmp
+  --tmpfs /var/tmp
+  --bind &quot;$WORK_DIR&quot; /workspace
+  --chdir /workspace
+  --proc /proc
+  --dev /dev
+  --unshare-uts
+  --unshare-ipc
+  --unshare-pid
+  --new-session
+  --die-with-parent
+  --cap-drop ALL
+)
+
+if [[ &quot;$USE_NETWORK&quot; == &quot;0&quot; ]]; then
+  BWRAP_FLAGS+=( --unshare-net )
+else
+  # Network through the egress proxy only. The proxy owns the allowlist and
+  # lives outside the sandbox; a compromised agent cannot rewrite it.
+  if [[ ! -S &quot;$EGRESS_SOCK&quot; ]]; then
+    echo &quot;agent-bwrap: egress socket missing: $EGRESS_SOCK&quot; &gt;&amp;2
+    echo &quot;Start the egress proxy or run with USE_NETWORK=0 for offline tasks.&quot; &gt;&amp;2
+    exit 1
+  fi
+  BWRAP_FLAGS+=(
+    --unshare-net
+    --bind &quot;$EGRESS_SOCK&quot; &quot;$EGRESS_SOCK&quot;
+    --setenv HTTPS_PROXY &quot;unix://${EGRESS_SOCK}&quot;
+    --setenv HTTP_PROXY &quot;unix://${EGRESS_SOCK}&quot;
+  )
+fi
+
+# Apply seccomp if the kernel and bubblewrap support --seccomp.
+# (Some distros&#x27; bubblewrap is built without seccomp support; we degrade
+# gracefully rather than fail the launch.)
+if [[ -r &quot;$SECCOMP_FILE&quot; ]] &amp;&amp; bwrap --help 2&gt;&amp;1 | grep -q -- &#x27;--seccomp&#x27;; then
+  # bubblewrap takes a binary BPF program on a file descriptor. Translate the
+  # OCI seccomp JSON into BPF using your runtime&#x27;s helper, or skip and rely on
+  # systemd-side SystemCallFilter= in the unit file.
+  :
+fi
+
+exec bwrap &quot;${BWRAP_FLAGS[@]}&quot; /usr/local/bin/claude &quot;$@&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>claude.sb</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/blast-radius/client-side/claude.sb">view on GitHub</a></figcaption><pre><code>;; ABOUTME: macOS Seatbelt sandbox profile for the agent. Run with sandbox-exec -D WORKSPACE=$PWD -D HOME=$HOME -f claude.sb.
+;; ABOUTME: Network egress is denied except through a unix-domain-socket proxy at /private/var/run/agent-egress.sock.
+
+(version 1)
+(deny default)
+
+;; Process management
+(allow process-fork)
+(allow process-exec
+  (literal &quot;/usr/local/bin/claude&quot;)
+  (subpath &quot;/usr/bin&quot;)
+  (subpath &quot;/bin&quot;)
+  (subpath &quot;/usr/local/bin&quot;))
+
+(allow signal (target self))
+
+;; Read-only system reads
+(allow file-read*
+  (subpath &quot;/usr&quot;)
+  (subpath &quot;/Library/Frameworks&quot;)
+  (subpath &quot;/System/Library&quot;)
+  (subpath &quot;/private/etc&quot;)
+  (literal &quot;/etc&quot;)
+  (literal &quot;/dev/random&quot;)
+  (literal &quot;/dev/urandom&quot;)
+  (literal &quot;/dev/null&quot;))
+
+;; Workspace is read-write. Substituted at launch time via -D WORKSPACE=...
+(allow file-read* file-write*
+  (subpath (param &quot;WORKSPACE&quot;)))
+
+;; Agent runtime config in the operator&#x27;s home dir is read-only. The
+;; credential file is owned by root, ACLed away from the agent&#x27;s user.
+(allow file-read*
+  (subpath (param &quot;HOME&quot;) &quot;/.claude&quot;))
+
+;; tmpfs equivalent for transient files
+(allow file-read* file-write*
+  (subpath &quot;/private/tmp&quot;)
+  (subpath &quot;/private/var/tmp&quot;))
+
+;; IPC for system services the agent must call
+(allow mach-lookup
+  (global-name &quot;com.apple.system.notification_center&quot;)
+  (global-name &quot;com.apple.system.opendirectoryd.api&quot;))
+
+;; Network: deny everything by default, allow only the egress proxy socket.
+(deny network*)
+(allow network-outbound
+  (literal &quot;/private/var/run/agent-egress.sock&quot;))
+
+;; Resource limits applied at sandbox layer (also enforced by launchd)
+(allow sysctl-read)
+</code></pre></figure><figure class="artifact"><figcaption><code>gvisor-runtimeclass-and-pod.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/blast-radius/client-side/gvisor-runtimeclass-and-pod.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: gVisor RuntimeClass and an example Pod using runsc for syscall-level isolation in Kubernetes.
+# ABOUTME: Pair with the projected-token Pod in controls/identity/server-side/. Substitute the image digest.
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: gvisor
+handler: runsc
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: claude-agent
+  namespace: agent-claude-prod
+  labels:
+    app: claude-code
+spec:
+  runtimeClassName: gvisor
+  serviceAccountName: claude-code
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: claude
+    # Pin by digest. Resolve current digest with: crane digest registry.example.com/claude-agent:v1
+    image: registry.example.com/claude-agent@sha256:REPLACE_WITH_DIGEST_FROM_CRANE
+    securityContext:
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 1000
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: [&quot;ALL&quot;]
+      seccompProfile:
+        type: RuntimeDefault
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 1
+        memory: 1Gi
+        ephemeral-storage: 1Gi
+    volumeMounts:
+    - name: agent-token
+      mountPath: /var/run/secrets/agents
+      readOnly: true
+    - name: workdir
+      mountPath: /workspace
+    - name: tmp
+      mountPath: /tmp
+  volumes:
+  - name: agent-token
+    projected:
+      sources:
+      - serviceAccountToken:
+          path: token
+          expirationSeconds: 900
+          audience: agent-claude-prod
+  - name: workdir
+    emptyDir:
+      sizeLimit: 500Mi
+  - name: tmp
+    emptyDir:
+      sizeLimit: 100Mi
+</code></pre></figure><figure class="artifact"><figcaption><code>seccomp-claude.json</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/blast-radius/client-side/seccomp-claude.json">view on GitHub</a></figcaption><pre><code>{
+  &quot;_comment&quot;: &quot;Illustrative seccomp profile for Claude Code. Derive your real allowlist with: strace -c -f /usr/local/bin/claude --some-real-task. Anthropic publishes a reference seccomp profile in their sandbox docs; consult the current list.&quot;,
+  &quot;defaultAction&quot;: &quot;SCMP_ACT_ERRNO&quot;,
+  &quot;defaultErrnoRet&quot;: 1,
+  &quot;archMap&quot;: [
+    {
+      &quot;architecture&quot;: &quot;SCMP_ARCH_X86_64&quot;,
+      &quot;subArchitectures&quot;: [&quot;SCMP_ARCH_X86&quot;, &quot;SCMP_ARCH_X32&quot;]
+    },
+    {
+      &quot;architecture&quot;: &quot;SCMP_ARCH_AARCH64&quot;,
+      &quot;subArchitectures&quot;: [&quot;SCMP_ARCH_ARM&quot;]
+    }
+  ],
+  &quot;syscalls&quot;: [
+    {
+      &quot;names&quot;: [
+        &quot;accept&quot;, &quot;accept4&quot;, &quot;access&quot;, &quot;alarm&quot;, &quot;bind&quot;, &quot;brk&quot;, &quot;chdir&quot;,
+        &quot;chmod&quot;, &quot;chown&quot;, &quot;clock_getres&quot;, &quot;clock_gettime&quot;, &quot;clock_nanosleep&quot;,
+        &quot;close&quot;, &quot;connect&quot;, &quot;creat&quot;, &quot;dup&quot;, &quot;dup2&quot;, &quot;dup3&quot;, &quot;epoll_create1&quot;,
+        &quot;epoll_ctl&quot;, &quot;epoll_wait&quot;, &quot;eventfd2&quot;, &quot;execve&quot;, &quot;exit&quot;, &quot;exit_group&quot;,
+        &quot;faccessat&quot;, &quot;fadvise64&quot;, &quot;fallocate&quot;, &quot;fchdir&quot;, &quot;fchmod&quot;, &quot;fchmodat&quot;,
+        &quot;fchown&quot;, &quot;fchownat&quot;, &quot;fcntl&quot;, &quot;fdatasync&quot;, &quot;flock&quot;, &quot;fstat&quot;,
+        &quot;fstatfs&quot;, &quot;fsync&quot;, &quot;ftruncate&quot;, &quot;futex&quot;, &quot;getcwd&quot;, &quot;getdents&quot;,
+        &quot;getdents64&quot;, &quot;getegid&quot;, &quot;geteuid&quot;, &quot;getgid&quot;, &quot;getgroups&quot;, &quot;getpeername&quot;,
+        &quot;getpgid&quot;, &quot;getpgrp&quot;, &quot;getpid&quot;, &quot;getppid&quot;, &quot;getpriority&quot;, &quot;getrandom&quot;,
+        &quot;getresgid&quot;, &quot;getresuid&quot;, &quot;getrlimit&quot;, &quot;getrusage&quot;, &quot;getsid&quot;,
+        &quot;getsockname&quot;, &quot;getsockopt&quot;, &quot;gettid&quot;, &quot;gettimeofday&quot;, &quot;getuid&quot;,
+        &quot;getxattr&quot;, &quot;ioctl&quot;, &quot;ioprio_get&quot;, &quot;ioprio_set&quot;, &quot;kill&quot;, &quot;lchown&quot;,
+        &quot;link&quot;, &quot;linkat&quot;, &quot;listen&quot;, &quot;lseek&quot;, &quot;lstat&quot;, &quot;madvise&quot;, &quot;memfd_create&quot;,
+        &quot;mkdir&quot;, &quot;mkdirat&quot;, &quot;mmap&quot;, &quot;mprotect&quot;, &quot;mremap&quot;, &quot;munmap&quot;, &quot;nanosleep&quot;,
+        &quot;newfstatat&quot;, &quot;open&quot;, &quot;openat&quot;, &quot;pause&quot;, &quot;pipe&quot;, &quot;pipe2&quot;, &quot;poll&quot;,
+        &quot;ppoll&quot;, &quot;prctl&quot;, &quot;pread64&quot;, &quot;preadv&quot;, &quot;preadv2&quot;, &quot;prlimit64&quot;,
+        &quot;pselect6&quot;, &quot;pwrite64&quot;, &quot;pwritev&quot;, &quot;pwritev2&quot;, &quot;read&quot;, &quot;readahead&quot;,
+        &quot;readlink&quot;, &quot;readlinkat&quot;, &quot;readv&quot;, &quot;recvfrom&quot;, &quot;recvmmsg&quot;, &quot;recvmsg&quot;,
+        &quot;rename&quot;, &quot;renameat&quot;, &quot;renameat2&quot;, &quot;rt_sigaction&quot;, &quot;rt_sigpending&quot;,
+        &quot;rt_sigprocmask&quot;, &quot;rt_sigqueueinfo&quot;, &quot;rt_sigreturn&quot;, &quot;rt_sigsuspend&quot;,
+        &quot;rt_sigtimedwait&quot;, &quot;rt_tgsigqueueinfo&quot;, &quot;sched_getaffinity&quot;,
+        &quot;sched_getparam&quot;, &quot;sched_getscheduler&quot;, &quot;sched_yield&quot;, &quot;select&quot;,
+        &quot;sendfile&quot;, &quot;sendmmsg&quot;, &quot;sendmsg&quot;, &quot;sendto&quot;, &quot;setfsgid&quot;, &quot;setfsuid&quot;,
+        &quot;setgid&quot;, &quot;setgroups&quot;, &quot;setitimer&quot;, &quot;setpgid&quot;, &quot;setpriority&quot;,
+        &quot;setregid&quot;, &quot;setresgid&quot;, &quot;setresuid&quot;, &quot;setreuid&quot;, &quot;setrlimit&quot;,
+        &quot;setsid&quot;, &quot;setsockopt&quot;, &quot;setuid&quot;, &quot;shutdown&quot;, &quot;signalfd4&quot;, &quot;socket&quot;,
+        &quot;socketpair&quot;, &quot;splice&quot;, &quot;stat&quot;, &quot;statfs&quot;, &quot;statx&quot;, &quot;symlink&quot;,
+        &quot;symlinkat&quot;, &quot;sync&quot;, &quot;sync_file_range&quot;, &quot;syncfs&quot;, &quot;sysinfo&quot;, &quot;tee&quot;,
+        &quot;tgkill&quot;, &quot;time&quot;, &quot;timer_create&quot;, &quot;timer_delete&quot;, &quot;timer_getoverrun&quot;,
+        &quot;timer_gettime&quot;, &quot;timer_settime&quot;, &quot;timerfd_create&quot;, &quot;timerfd_gettime&quot;,
+        &quot;timerfd_settime&quot;, &quot;times&quot;, &quot;tkill&quot;, &quot;truncate&quot;, &quot;umask&quot;, &quot;uname&quot;,
+        &quot;unlink&quot;, &quot;unlinkat&quot;, &quot;utime&quot;, &quot;utimensat&quot;, &quot;utimes&quot;, &quot;vfork&quot;, &quot;wait4&quot;,
+        &quot;waitid&quot;, &quot;write&quot;, &quot;writev&quot;
+      ],
+      &quot;action&quot;: &quot;SCMP_ACT_ALLOW&quot;
+    },
+    {
+      &quot;_comment&quot;: &quot;clone is allowed but with flag filtering; the agent must not create new namespaces.&quot;,
+      &quot;names&quot;: [&quot;clone&quot;, &quot;clone3&quot;],
+      &quot;action&quot;: &quot;SCMP_ACT_ALLOW&quot;,
+      &quot;args&quot;: [
+        {
+          &quot;index&quot;: 0,
+          &quot;value&quot;: 2114060288,
+          &quot;valueTwo&quot;: 0,
+          &quot;op&quot;: &quot;SCMP_CMP_MASKED_EQ&quot;
+        }
+      ]
+    },
+    {
+      &quot;_comment&quot;: &quot;Forbidden by omission: ptrace, mount, umount2, unshare, setns, kexec_load, init_module, finit_module, delete_module, reboot, swapon, swapoff, etc.&quot;,
+      &quot;names&quot;: [],
+      &quot;action&quot;: &quot;SCMP_ACT_ERRNO&quot;
+    }
+  ]
+}
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Blast radius / Client-side</h2>
+<p><strong>Control.</strong> Sandbox at process launch with inheritance enforcement. Linux: bubblewrap. macOS: Seatbelt. Containerized: gVisor. Network isolation via unix-domain-socket egress proxy. Seccomp or AppArmor profile applied at launch. <code>--network none</code> for non-network tasks. Read-only volume mounts. Dry-run defaults.</p>
+<p><strong>Strength.</strong> Deterministic for the syscall and filesystem surface covered by the profile. Bypass through unsandboxed children when inheritance is not enforced, profile gaps, kernel-level escape (rare), or read-only mounts that are read-only at the bind but writable elsewhere on the same FS via a different mountpoint.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- <code>bubblewrap</code> (Linux): <code>apt-get install bubblewrap</code> or <code>dnf install bubblewrap</code>. Version 0.10 or later.</li>
+<li>- Seatbelt (macOS): built into macOS as <code>sandbox-exec</code>.</li>
+<li>- gVisor (containers): <code>runsc</code> runtime. Install per gVisor docs.</li>
+<li>- <code>seccomp</code> (Linux): kernel feature; profiles via systemd <code>SystemCallFilter=</code> or container runtime <code>--security-opt seccomp=</code>.</li>
+<li>- AppArmor (Linux): kernel LSM; profiles in <code>/etc/apparmor.d/</code>.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-bwrap"><code>agent-bwrap</code></a>, bubblewrap launcher script. Drop in <code>/usr/local/bin/</code>. Wraps the agent in a sandbox with inheritance enforcement (<code>--die-with-parent</code>, <code>--new-session</code>), no network by default, capability dropping. The systemd unit in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/identity/client-side/claude-code-prod.service"><code>../../identity/client-side/claude-code-prod.service</code></a> can call this instead of <code>claude</code> directly.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/seccomp-claude.json"><code>seccomp-claude.json</code></a>, illustrative seccomp profile in OCI format. <strong>Use <code>strace -c</code> against your real workload to derive the actual minimal allowlist.</strong> Anthropic publishes a reference seccomp profile for Claude Code in their sandbox docs; consult the current list.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/claude.sb"><code>claude.sb</code></a>, Seatbelt sandbox profile for macOS. Run with <code>sandbox-exec -D WORKSPACE=&quot;$PWD&quot; -D HOME=&quot;$HOME&quot; -f claude.sb /usr/local/bin/claude</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/gvisor-runtimeclass-and-pod.yaml"><code>gvisor-runtimeclass-and-pod.yaml</code></a>, Kubernetes RuntimeClass declaring <code>runsc</code> and a sample Pod that uses it. Combines with the Pod from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/identity/server-side/pod-with-projected-token.yaml"><code>../../identity/server-side/pod-with-projected-token.yaml</code></a>.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Sandbox is active: a privileged read fails
+agent-bwrap /tmp -- /bin/sh -c &#x27;cat /etc/shadow&#x27;
+# expected: failure (file not bound or not readable)
+
+# 2. Network is blocked
+agent-bwrap /tmp -- curl -sS https://example.com
+# expected: connection refused or no network
+
+# 3. Child inheritance is enforced
+agent-bwrap /tmp -- /bin/sh -c &#x27;sh -c &quot;curl -sS https://example.com&quot;&#x27;
+# expected: also fails
+
+# 4. Seccomp profile is loaded (test inside a container)
+docker run --rm --security-opt seccomp=/etc/agents/seccomp-claude.json \
+  alpine /bin/sh -c &#x27;unshare -n /bin/sh&#x27;
+# expected: Operation not permitted if unshare not in allowlist
+
+# 5. gVisor runtime is in effect
+kubectl exec claude-agent -- dmesg | head
+# expected: runsc-specific output (&quot;Starting gVisor...&quot;)
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- Sandbox set on the parent only; child processes inherit nothing. Use <code>--die-with-parent</code> and <code>--new-session</code>.</li>
+<li>- <code>--unshare-net</code> plus a forgotten <code>--bind /run/network-namespace</code> that re-exposes networking.</li>
+<li>- Seccomp profile that allows <code>clone</code> without flag filtering. Agents spawn unsandboxed children via <code>clone(CLONE_NEWNS)</code>.</li>
+<li>- AppArmor profile in complain mode (logs but does not enforce). Confirm with <code>aa-status</code>.</li>
+<li>- Read-only mounts that are read-only at the bind but writable elsewhere on the same FS via a different mountpoint.</li>
+<li>- Egress proxy allowlist living inside the sandbox. The allowlist must live outside the sandbox so a compromised agent cannot rewrite it.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 PR.PS-01, PR.PS-05, PR.PS-06 (secure software development practices), PR.IR-01 (networks protected). NIST AI RMF MANAGE 2.4. OWASP LLM05, LLM10 (Unbounded Consumption). OWASP ASI05 (Unexpected Code Execution). NIST SP 800-160 Vol. 1 (defense in depth).</p></section>
+  <section class="risks"><h2>Primary bypasses</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>unsandboxed children when inheritance not enforced</li><li>profile gaps</li><li>kernel-level escape</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>PR.PS-01, PR.PS-05, PR.PS-06, PR.IR-01</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 2.4</td></tr><tr><th>OWASP LLM</th><td>LLM05, LLM10</td></tr><tr><th>OWASP AGENTIC</th><td>ASI02, ASI05</td></tr><tr><th>OTHER</th><td>NIST SP 800-160 Vol. 1</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/protect/blast-radius/client-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Authorization at the server side layer | Detect | Agentic Covenants</title>
+<meta name="description" content="RBAC denial events from K8s audit; IAM Access Analyzer findings; Kyverno PolicyReports; OPA decision logs centralized.">
+<link rel="canonical" href="https://agenticcovenants.com/detect/authorization/server-side/">
+<meta property="og:title" content="Authorization at the server side layer | Detect | Agentic Covenants">
+<meta property="og:description" content="RBAC denial events from K8s audit; IAM Access Analyzer findings; Kyverno PolicyReports; OPA decision logs centralized.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/detect/authorization/server-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Detect</a> ›
+  <span>Authorization</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Detect (DE) · Authorization</p>
+  <h1>Authorization <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
+  <blockquote class="q">If this concern is breached, how do we know?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>RBAC denial events from K8s audit; IAM Access Analyzer findings; Kyverno PolicyReports; OPA decision logs centralized.</p></section>
+  <section class="artifacts"><h2>Artifacts (4)</h2><figure class="artifact"><figcaption><code>access-analyzer-eventbridge.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/authorization/server-side/access-analyzer-eventbridge.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Wires AWS IAM Access Analyzer findings to EventBridge to a SIEM-shipping Lambda.
+# ABOUTME: Run per-region (Access Analyzer is regional). Requires events:PutRule and events:PutTargets in the operator&#x27;s profile.
+
+set -euo pipefail
+
+REGION=&quot;${AWS_REGION:-us-east-1}&quot;
+RULE_NAME=&quot;${RULE_NAME:-access-analyzer-findings}&quot;
+LAMBDA_ARN=&quot;${LAMBDA_ARN:-}&quot;
+
+if [[ -z &quot;${AWS_PROFILE:-}&quot; ]]; then
+  echo &quot;Set AWS_PROFILE to a profile with events:PutRule.&quot; &gt;&amp;2
+  exit 1
+fi
+if [[ -z &quot;$LAMBDA_ARN&quot; ]]; then
+  echo &quot;Set LAMBDA_ARN to the SIEM-shipping Lambda&#x27;s ARN.&quot; &gt;&amp;2
+  exit 1
+fi
+
+aws --profile &quot;$AWS_PROFILE&quot; --region &quot;$REGION&quot; events put-rule \
+  --name &quot;$RULE_NAME&quot; \
+  --description &quot;Access Analyzer findings to SIEM&quot; \
+  --event-pattern &#x27;{&quot;source&quot;:[&quot;aws.access-analyzer&quot;],&quot;detail-type&quot;:[&quot;Access Analyzer Finding&quot;]}&#x27; \
+  --state ENABLED
+
+aws --profile &quot;$AWS_PROFILE&quot; --region &quot;$REGION&quot; events put-targets \
+  --rule &quot;$RULE_NAME&quot; \
+  --targets &quot;Id=1,Arn=$LAMBDA_ARN&quot;
+
+# Lambda must have permission to be invoked by EventBridge. Add this once per
+# Lambda, not per region.
+aws --profile &quot;$AWS_PROFILE&quot; --region &quot;$REGION&quot; lambda add-permission \
+  --function-name &quot;$LAMBDA_ARN&quot; \
+  --statement-id &quot;${RULE_NAME}-invoke&quot; \
+  --action lambda:InvokeFunction \
+  --principal events.amazonaws.com \
+  --source-arn &quot;arn:aws:events:${REGION}:$(aws --profile &quot;$AWS_PROFILE&quot; sts get-caller-identity --query Account --output text):rule/${RULE_NAME}&quot; \
+  2&gt;/dev/null || true   # idempotent: already-exists is fine
+
+echo &quot;EventBridge rule $RULE_NAME wired to $LAMBDA_ARN in $REGION.&quot;
+echo &quot;Repeat for every region where Access Analyzer is enabled.&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>opa-decision-log-config.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/authorization/server-side/opa-decision-log-config.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: OPA config that streams decision logs to the SIEM, filtered to deny decisions only.
+# ABOUTME: Without filtering, OPA emits one event per admission decision and floods the SIEM.
+decision_logs:
+  console: false
+  service: siem
+  reporting:
+    min_delay_seconds: 5
+    max_delay_seconds: 30
+  # Drop allow decisions; keep only denies. Tune per your alerting needs.
+  mask_decision: |
+    package system.log
+    mask[&quot;/result&quot;] {
+      input.result == true
+    }
+
+services:
+  - name: siem
+    url: https://siem.example.com:9200/opa-decisions/_doc
+    credentials:
+      bearer:
+        token: ${SIEM_TOKEN}
+    # Index per day so retention rotation works.
+    response_header_timeout_seconds: 5
+</code></pre></figure><figure class="artifact"><figcaption><code>ship-policy-reports.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/authorization/server-side/ship-policy-reports.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: CronJob that ships Kyverno PolicyReports with summary.fail &gt; 0 to the SIEM every 5 minutes.
+# ABOUTME: kubectl image is pinned by digest; replace before applying. SIEM_TOKEN comes from a Secret.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kyverno-reporter
+  namespace: kyverno
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno-reporter-read
+rules:
+- apiGroups: [&quot;wgpolicyk8s.io&quot;]
+  resources: [&quot;policyreports&quot;, &quot;clusterpolicyreports&quot;]
+  verbs: [&quot;get&quot;, &quot;list&quot;, &quot;watch&quot;]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kyverno-reporter-read
+subjects:
+- kind: ServiceAccount
+  name: kyverno-reporter
+  namespace: kyverno
+roleRef:
+  kind: ClusterRole
+  name: kyverno-reporter-read
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: siem-credentials
+  namespace: kyverno
+type: Opaque
+stringData:
+  SIEM_TOKEN: &quot;REPLACE_WITH_BEARER_TOKEN&quot;
+  SIEM_URL: &quot;https://siem.example.com:9200/agent-sentinel-policy/_doc&quot;
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ship-policy-reports
+  namespace: kyverno
+spec:
+  schedule: &quot;*/5 * * * *&quot;
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: kyverno-reporter
+          restartPolicy: OnFailure
+          containers:
+          - name: shipper
+            # Pin by digest. Resolve current digest with: crane digest bitnami/kubectl:1.34
+            image: bitnami/kubectl@sha256:REPLACE_WITH_DIGEST_FROM_CRANE
+            envFrom:
+            - secretRef:
+                name: siem-credentials
+            command: [&quot;/bin/sh&quot;, &quot;-c&quot;]
+            args:
+            - |
+              set -eu
+              kubectl get policyreports,clusterpolicyreports -A -o json \
+              | jq -c &#x27;.items[] | select(.summary.fail &gt; 0) | {
+                  event: &quot;policy_report&quot;,
+                  namespace: (.metadata.namespace // &quot;cluster&quot;),
+                  policy: (.metadata.labels.&quot;policy.kyverno.io/policy-name&quot; // &quot;&quot;),
+                  failed: .summary.fail,
+                  results: [.results[] | select(.result == &quot;fail&quot;)],
+                  ts: (now | strftime(&quot;%Y-%m-%dT%H:%M:%SZ&quot;))
+                }&#x27; \
+              | while IFS= read -r line; do
+                  curl -sS -X POST &quot;$SIEM_URL&quot; \
+                    -H &quot;Authorization: Bearer $SIEM_TOKEN&quot; \
+                    -H &quot;Content-Type: application/json&quot; \
+                    -d &quot;$line&quot;
+                done
+</code></pre></figure><figure class="artifact"><figcaption><code>sigma-rbac-denial-spike.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/authorization/server-side/sigma-rbac-denial-spike.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Sigma rule firing when an agent namespace accumulates &gt;10 RBAC denials within 5 minutes.
+# ABOUTME: Probing or misconfiguration indicator. Filter on auth-can-i checks if those flood at baseline.
+title: RBAC denial spike in agent namespace
+id: 8c1d2e3f-4a5b-6c7d-8e9f-0a1b2c3d4e5f
+status: experimental
+description: &gt;
+  Detects more than 10 RBAC denials within a 5-minute window in any single
+  agent namespace. Either an agent probing for a permission gap or an
+  in-progress misconfiguration. The rule excludes &quot;kubectl auth can-i&quot; style
+  preflight checks because those denial-by-design events are baseline noise.
+references:
+  - https://github.com/peopleforrester/agentic-covenants/blob/main/SENTINELS_MATRIX.md
+author: agentic-covenants
+date: 2026/05/08
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    user.username|startswith: &#x27;system:serviceaccount:agent-&#x27;
+    annotations.authorization.k8s.io/decision: &#x27;forbid&#x27;
+  filter_can_i:
+    requestURI|contains: &#x27;/access-review&#x27;
+  timeframe: 5m
+  condition: (selection and not filter_can_i) | count(objectRef.namespace) &gt; 10
+falsepositives:
+  - First-deploy of a new agent (the missing permissions show up as a wave).
+  - Operator running an exploratory script under the agent SA (treat as a tuning signal).
+level: medium
+tags:
+  - agent
+  - authorization
+  - sentinels
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Sentinels, Authorization / Server-side</h2>
+<p><strong>Control.</strong> RBAC denial events from Kubernetes audit. IAM Access Analyzer findings reporting unused permissions. Kyverno PolicyReports surface admission failures. OPA decision logs centralized.</p>
+<p><strong>Strength.</strong> Deterministic and external. Failure modes: Kyverno in <code>Audit</code> mode (logs but does not enforce; the violation already happened); OPA decision log streams everything (floods SIEM unless filtered); Access Analyzer is regional (configure per-region).</p>
+<h3>Tooling</h3>
+<ul>
+<li>- Kyverno 1.18+ Reports controller.</li>
+<li>- OPA Gatekeeper with decision logging configured.</li>
+<li>- AWS IAM Access Analyzer enabled per region.</li>
+<li>- A SIEM with field-level filtering.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/ship-policy-reports.yaml"><code>ship-policy-reports.yaml</code></a>, CronJob that reads Kyverno PolicyReports across all namespaces every 5 minutes, filters for <code>summary.fail &gt; 0</code>, and ships each failure to the SIEM as a structured event.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/opa-decision-log-config.yaml"><code>opa-decision-log-config.yaml</code></a>, OPA config snippet that streams decision logs to the SIEM. Filters on <code>decision == false</code> so the SIEM is not flooded with allow events.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/access-analyzer-eventbridge.sh"><code>access-analyzer-eventbridge.sh</code></a>, wires AWS IAM Access Analyzer findings to EventBridge → Lambda → SIEM.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sigma-rbac-denial-spike.yaml"><code>sigma-rbac-denial-spike.yaml</code></a>, SIEM rule firing when more than 10 RBAC denials occur in a single namespace within 5 minutes.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Trigger a Kyverno deny, find it in PolicyReport
+kubectl apply -f - &lt;&lt;EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: bad-binding-test
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: claude-code
+  namespace: agent-claude-prod
+EOF
+# expected: rejected; PolicyReport in kyverno namespace shows fail entry
+
+# 2. Ingestion job runs and ships
+kubectl logs -n kyverno -l job-name=ship-policy-reports --tail=50
+
+# 3. Access Analyzer surfaces unused permission
+aws accessanalyzer list-findings --analyzer-arn $ANALYZER_ARN \
+  --filter &#x27;{&quot;status&quot;:{&quot;eq&quot;:[&quot;ACTIVE&quot;]},&quot;resourceType&quot;:{&quot;eq&quot;:[&quot;AWS::IAM::Role&quot;]}}&#x27; \
+  | jq &#x27;.findings[].principalArn&#x27;
+# expected: agent role ARN if it has unused permissions
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- Kyverno running in <code>Audit</code> mode silently logs but does not enforce. Always pair the policies you care about with <code>Enforce</code>.</li>
+<li>- OPA decision log streams everything, including allows. Filter at the OPA side or the SIEM is unusable.</li>
+<li>- Access Analyzer is regional. Configure per-region if multi-region.</li>
+<li>- RBAC denials from <code>kubectl auth can-i</code> checks count as denials in audit log. Filter on <code>verb</code> and <code>resource</code> to avoid noise.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 DE.CM-01, DE.CM-09, DE.AE-02. NIST SP 800-207.</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>Kyverno in Audit mode (logs but does not enforce)</li><li>OPA decision log streams everything (floods SIEM)</li><li>Access Analyzer is regional; multi-region misses</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>DE.CM-01, DE.CM-09, DE.AE-02</td></tr><tr><th>OTHER</th><td>NIST SP 800-207</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/detect/authorization/server-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

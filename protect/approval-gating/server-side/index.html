@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Approval gating at the server side layer | Protect | Agentic Covenants</title>
+<meta name="description" content="Branch protection + PR review, CODEOWNERS, multi-party prod approval, plan-and-apply split, deployment freezes.">
+<link rel="canonical" href="https://agenticcovenants.com/protect/approval-gating/server-side/">
+<meta property="og:title" content="Approval gating at the server side layer | Protect | Agentic Covenants">
+<meta property="og:description" content="Branch protection + PR review, CODEOWNERS, multi-party prod approval, plan-and-apply split, deployment freezes.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/protect/approval-gating/server-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Protect</a> ›
+  <span>Approval gating</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Protect (PR) · Approval gating</p>
+  <h1>Approval gating <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
+  <blockquote class="q">If the agent decides to violate this concern, what stops it at this layer?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Branch protection + PR review, CODEOWNERS, multi-party prod approval, plan-and-apply split, deployment freezes.</p></section>
+  <section class="artifacts"><h2>Artifacts (4)</h2><figure class="artifact"><figcaption><code>CODEOWNERS</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/approval-gating/server-side/CODEOWNERS">view on GitHub</a></figcaption><pre><code># ABOUTME: Template CODEOWNERS. Substitute @your-org/team-name placeholders. Place at .github/CODEOWNERS or repo root.
+
+# Default owner for everything not otherwise covered.
+*                               @your-org/platform-team
+
+# Infrastructure-as-code is owned by platform.
+/infrastructure/                @your-org/platform-team @your-org/security-team
+/terraform/                     @your-org/platform-team @your-org/security-team
+
+# Production-specific changes need senior platform engineers.
+/infrastructure/prod/           @your-org/platform-leads @your-org/security-team
+/k8s/prod/                      @your-org/platform-leads @your-org/security-team
+
+# CI configuration is supply-chain-adjacent; security-team review required.
+/.github/workflows/             @your-org/security-team @your-org/platform-leads
+/.github/CODEOWNERS             @your-org/security-leads
+/.github/branch-protection-expected.json  @your-org/security-leads
+
+# Secrets, key material, sealed secrets.
+/secrets/                       @your-org/security-leads
+*.tfvars                        @your-org/security-team
+**/*.encrypted                  @your-org/security-team
+**/*.sops.yaml                  @your-org/security-team
+
+# Agent runtime configuration. The agent must NOT be a CODEOWNER for these.
+/.claude/                       @your-org/platform-team @your-org/security-team
+/etc/agents/                    @your-org/platform-team @your-org/security-team
+/.mcp.json                      @your-org/security-team
+
+# Database migrations and schema.
+/db/migrations/                 @your-org/platform-leads @your-org/data-platform
+/schema/                        @your-org/data-platform
+
+# Public-facing API contracts. Both backend and SRE need to sign off.
+/api/                           @your-org/api-team @your-org/sre-team
+/openapi.yaml                   @your-org/api-team
+</code></pre></figure><figure class="artifact"><figcaption><code>apply-branch-protection.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/approval-gating/server-side/apply-branch-protection.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Applies the desired branch-protection state via gh api. Asserts enforce_admins=true and refuses without it.
+# ABOUTME: Run once per repo. UI clicks are not auditable; this script is.
+
+set -euo pipefail
+
+REPO=&quot;${1:-}&quot;
+BRANCH=&quot;${2:-main}&quot;
+EXPECTED_JSON=&quot;${3:-$(dirname &quot;$0&quot;)/branch-protection-expected.json}&quot;
+
+if [[ -z &quot;$REPO&quot; ]]; then
+  cat &lt;&lt;&#x27;USAGE&#x27; &gt;&amp;2
+Usage: apply-branch-protection.sh &lt;owner/repo&gt; [branch] [expected-json-path]
+
+Example:
+  apply-branch-protection.sh peopleforrester/agentic-covenants main ./branch-protection-expected.json
+
+The script reads the expected JSON, asserts enforce_admins=true (refuses
+otherwise), and applies the configuration via gh api. After applying it
+re-reads the live state and diffs it against the expected JSON.
+USAGE
+  exit 64
+fi
+
+if [[ ! -r &quot;$EXPECTED_JSON&quot; ]]; then
+  echo &quot;Cannot read expected JSON at $EXPECTED_JSON&quot; &gt;&amp;2
+  exit 1
+fi
+
+ENFORCE_ADMINS=&quot;$(jq -r &#x27;.enforce_admins&#x27; &quot;$EXPECTED_JSON&quot;)&quot;
+if [[ &quot;$ENFORCE_ADMINS&quot; != &quot;true&quot; ]]; then
+  echo &quot;REFUSING: expected JSON has enforce_admins=$ENFORCE_ADMINS.&quot; &gt;&amp;2
+  echo &quot;enforce_admins=true is the load-bearing flag for branch protection.&quot; &gt;&amp;2
+  echo &quot;Edit $EXPECTED_JSON to set it true before applying.&quot; &gt;&amp;2
+  exit 1
+fi
+
+REQ_REVIEWERS=&quot;$(jq -r &#x27;.required_pull_request_reviews.required_approving_review_count // 0&#x27; &quot;$EXPECTED_JSON&quot;)&quot;
+if [[ &quot;$REQ_REVIEWERS&quot; -lt 2 ]]; then
+  echo &quot;REFUSING: required_approving_review_count=$REQ_REVIEWERS.&quot; &gt;&amp;2
+  echo &quot;One reviewer plus the agent operating the keyboard equals zero adversarial review.&quot; &gt;&amp;2
+  echo &quot;Set required_approving_review_count to at least 2.&quot; &gt;&amp;2
+  exit 1
+fi
+
+echo &quot;Applying branch protection on $REPO@$BRANCH from $EXPECTED_JSON ...&quot;
+
+# gh api PUT on the protection endpoint accepts the full JSON body.
+gh api -X PUT \
+  &quot;repos/$REPO/branches/$BRANCH/protection&quot; \
+  --input &quot;$EXPECTED_JSON&quot;
+
+echo &quot;Applied. Re-reading live state for verification...&quot;
+
+LIVE=&quot;$(gh api &quot;repos/$REPO/branches/$BRANCH/protection&quot;)&quot;
+
+# Verify a small set of critical fields.
+LIVE_ENFORCE_ADMINS=&quot;$(echo &quot;$LIVE&quot; | jq -r &#x27;.enforce_admins.enabled&#x27;)&quot;
+LIVE_REQ_REVIEWERS=&quot;$(echo &quot;$LIVE&quot; | jq -r &#x27;.required_pull_request_reviews.required_approving_review_count&#x27;)&quot;
+LIVE_CODEOWNERS=&quot;$(echo &quot;$LIVE&quot; | jq -r &#x27;.required_pull_request_reviews.require_code_owner_reviews&#x27;)&quot;
+
+PASS=0
+FAIL=0
+check() { if [[ &quot;$2&quot; == &quot;$3&quot; ]]; then echo &quot;PASS: $1 = $2&quot;; PASS=$((PASS+1)); else echo &quot;FAIL: $1: expected $3, got $2&quot;; FAIL=$((FAIL+1)); fi; }
+
+check &quot;enforce_admins.enabled&quot;                                    &quot;$LIVE_ENFORCE_ADMINS&quot; &quot;true&quot;
+check &quot;required_pull_request_reviews.required_approving_review_count&quot; &quot;$LIVE_REQ_REVIEWERS&quot;  &quot;$REQ_REVIEWERS&quot;
+check &quot;required_pull_request_reviews.require_code_owner_reviews&quot;  &quot;$LIVE_CODEOWNERS&quot;     &quot;true&quot;
+
+echo &quot;&quot;
+echo &quot;Summary: $PASS passed, $FAIL failed&quot;
+exit &quot;$FAIL&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>branch-protection-expected.json</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/approval-gating/server-side/branch-protection-expected.json">view on GitHub</a></figcaption><pre><code>{
+  &quot;required_status_checks&quot;: {
+    &quot;strict&quot;: true,
+    &quot;contexts&quot;: [
+      &quot;ci/build&quot;,
+      &quot;ci/test&quot;,
+      &quot;ci/security&quot;,
+      &quot;lockfile-integrity&quot;
+    ]
+  },
+  &quot;enforce_admins&quot;: true,
+  &quot;required_pull_request_reviews&quot;: {
+    &quot;required_approving_review_count&quot;: 2,
+    &quot;dismiss_stale_reviews&quot;: true,
+    &quot;require_code_owner_reviews&quot;: true,
+    &quot;require_last_push_approval&quot;: true,
+    &quot;bypass_pull_request_allowances&quot;: null
+  },
+  &quot;required_linear_history&quot;: true,
+  &quot;allow_force_pushes&quot;: false,
+  &quot;allow_deletions&quot;: false,
+  &quot;block_creations&quot;: false,
+  &quot;required_conversation_resolution&quot;: true,
+  &quot;lock_branch&quot;: false,
+  &quot;allow_fork_syncing&quot;: false,
+  &quot;restrictions&quot;: {
+    &quot;users&quot;: [],
+    &quot;teams&quot;: [&quot;release-managers&quot;],
+    &quot;apps&quot;: []
+  }
+}
+</code></pre></figure><figure class="artifact"><figcaption><code>freeze.yml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/approval-gating/server-side/freeze.yml">view on GitHub</a></figcaption><pre><code># ABOUTME: Workflow that polls PagerDuty for active incidents and sets the DEPLOY_FREEZE repo variable.
+# ABOUTME: The IaC pipeline reads vars.DEPLOY_FREEZE and refuses to apply when true. Drop in .github/workflows/.
+name: Deployment Freeze
+
+on:
+  schedule:
+    # Poll every minute. PagerDuty&#x27;s free tier rate-limit easily accommodates 1/min.
+    - cron: &#x27;* * * * *&#x27;
+  workflow_dispatch:
+    inputs:
+      override:
+        description: &quot;Manual override: &#x27;freeze&#x27; or &#x27;unfreeze&#x27;&quot;
+        required: true
+        default: &#x27;unfreeze&#x27;
+
+permissions:
+  contents: read
+  actions: write   # to set repo variables
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Manual override
+        id: override
+        if: github.event_name == &#x27;workflow_dispatch&#x27;
+        run: |
+          case &quot;${{ inputs.override }}&quot; in
+            freeze)   echo &quot;value=true&quot; &gt;&gt; $GITHUB_OUTPUT ;;
+            unfreeze) echo &quot;value=false&quot; &gt;&gt; $GITHUB_OUTPUT ;;
+            *)        echo &quot;::error::override must be &#x27;freeze&#x27; or &#x27;unfreeze&#x27;&quot;; exit 1 ;;
+          esac
+
+      - name: Check PagerDuty for active incidents
+        id: pd
+        if: github.event_name == &#x27;schedule&#x27;
+        env:
+          PD_TOKEN: ${{ secrets.PAGERDUTY_TOKEN }}
+          PD_SERVICE_ID: ${{ secrets.PAGERDUTY_SERVICE_ID }}
+        run: |
+          ACTIVE=$(curl -sS -H &quot;Authorization: Token token=$PD_TOKEN&quot; \
+            -H &quot;Accept: application/vnd.pagerduty+json;version=2&quot; \
+            &quot;https://api.pagerduty.com/incidents?statuses[]=triggered&amp;statuses[]=acknowledged&amp;service_ids[]=$PD_SERVICE_ID&quot; \
+            | jq &#x27;.incidents | length&#x27;)
+          if [[ &quot;$ACTIVE&quot; -gt 0 ]]; then
+            echo &quot;value=true&quot;  &gt;&gt; $GITHUB_OUTPUT
+          else
+            echo &quot;value=false&quot; &gt;&gt; $GITHUB_OUTPUT
+          fi
+
+      - name: Set DEPLOY_FREEZE repo variable
+        env:
+          GH_TOKEN: ${{ secrets.PLATFORM_PAT }}
+        run: |
+          DESIRED=&quot;${{ steps.override.outputs.value || steps.pd.outputs.value }}&quot;
+          if [[ -z &quot;$DESIRED&quot; ]]; then
+            echo &quot;::error::No DESIRED value computed (this should not happen)&quot;
+            exit 1
+          fi
+          CURRENT=&quot;$(gh variable get DEPLOY_FREEZE -R &quot;${{ github.repository }}&quot; 2&gt;/dev/null || echo unset)&quot;
+          if [[ &quot;$CURRENT&quot; == &quot;$DESIRED&quot; ]]; then
+            echo &quot;DEPLOY_FREEZE already $DESIRED; no change.&quot;
+          else
+            gh variable set DEPLOY_FREEZE -b &quot;$DESIRED&quot; -R &quot;${{ github.repository }}&quot;
+            echo &quot;DEPLOY_FREEZE: $CURRENT -&gt; $DESIRED&quot;
+          fi
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Approval gating / Server-side</h2>
+<p><strong>Control.</strong> Branch protection requiring PR review. CODEOWNERS on critical paths. Multi-party approval on prod merges. IaC pipeline runs <code>plan</code> only; separate gated job runs <code>apply</code>. Deployment freezes during incident windows enforced by pipeline, not policy. <strong>&quot;Do not allow bypassing the above settings&quot;</strong> must be enabled.</p>
+<p><strong>Strength.</strong> Deterministic. Bypass requires admin-override (which <code>enforce_admins=true</code> blocks), collusion between two reviewers, social-engineering through a persuasive PR description, or paths not covered by CODEOWNERS.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- GitHub branch protection rules (or GitLab protected branches, or Bitbucket equivalents).</li>
+<li>- A CODEOWNERS file in <code>.github/CODEOWNERS</code> (or <code>docs/CODEOWNERS</code>, or <code>CODEOWNERS</code> at root).</li>
+<li>- GitHub environments with required reviewers (configured against the IaC pipeline&#x27;s <code>apply</code> job from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/blast-radius/server-side/iac-gated-pipeline.yml"><code>../../blast-radius/server-side/iac-gated-pipeline.yml</code></a>).</li>
+<li>- A deployment-freeze automation: PagerDuty event hook or a cron-driven config flip.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/apply-branch-protection.sh"><code>apply-branch-protection.sh</code></a>, wraps the <code>gh api</code> call that sets every branch-protection field correctly. Run once per repo. The script asserts <code>enforce_admins=true</code> and refuses to apply without it.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/branch-protection-expected.json"><code>branch-protection-expected.json</code></a>, declarative target state for branch protection. The detection job in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/approval-gating/server-side/"><code>../../../sentinels/approval-gating/server-side/</code></a> compares this to the live state and alerts on drift.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/CODEOWNERS"><code>CODEOWNERS</code></a>, template CODEOWNERS file. Drop at <code>.github/CODEOWNERS</code> and substitute team names.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/freeze.yml"><code>freeze.yml</code></a>, workflow that polls PagerDuty every minute and sets the <code>DEPLOY_FREEZE</code> repo variable. The <code>apply</code> job in the IaC pipeline reads the variable and refuses to run when true.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Confirm enforce_admins (the load-bearing flag)
+gh api repos/peopleforrester/agentic-covenants/branches/main/protection \
+  --jq &#x27;.enforce_admins.enabled&#x27;
+# expected: true
+
+# 2. Confirm required reviews and CODEOWNERS
+gh api repos/peopleforrester/agentic-covenants/branches/main/protection/required_pull_request_reviews \
+  --jq &#x27;{count: .required_approving_review_count, codeowners: .require_code_owner_reviews}&#x27;
+# expected: count &gt;= 2, codeowners: true
+
+# 3. Confirm bypass is not allowed
+# Open a PR as an admin without approvals and try to merge:
+gh pr merge --admin
+# expected: failure (&quot;required pull request review&quot;)
+
+# 4. Confirm freeze actually freezes
+gh variable set DEPLOY_FREEZE -b true
+# (next apply run skips with &quot;Deployment freeze active&quot;)
+gh variable set DEPLOY_FREEZE -b false
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- <code>enforce_admins: false</code> (the GitHub default historically). Anyone with admin role on the repo walks through every other rule. <strong>The most common branch-protection failure.</strong></li>
+<li>- CODEOWNERS file in the wrong path. Must be at <code>.github/CODEOWNERS</code>, <code>docs/CODEOWNERS</code>, or <code>CODEOWNERS</code> at root. Anywhere else is treated as data, not code-ownership.</li>
+<li>- Required reviewers count of 1. One reviewer plus the agent operating the keyboard equals zero adversarial review.</li>
+<li>- Freeze controlled by a UI toggle that the on-call engineer can flip. The freeze should require a PR to disable.</li>
+<li>- Required status checks named in protection but never wired up in CI; the rule passes vacuously because the check never runs.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 PR.AA-05 (least privilege, separation of duties), PR.PS-01, GV.RR-02. NIST AI RMF GOVERN 4.1 (organizational practices supporting AI risk management), MANAGE 4.1. OWASP LLM06. OWASP ASI02, ASI03. EU AI Act Art. 14 (human oversight), Art. 26 (deployer obligations). ISO/IEC 42001 §A.4. NIST SP 800-160 Vol. 1 (separation of duties as a security principle).</p></section>
+  <section class="risks"><h2>Primary bypasses</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>persuasive PR description influencing reviewers</li><li>admin force-push override</li><li>bot accounts approving via misconfigured CODEOWNERS</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>PR.AA-05, PR.PS-01, GV.RR-02, GV.SC-04</td></tr><tr><th>NIST AI RMF</th><td>GOVERN 4.1, MANAGE 4.1</td></tr><tr><th>OWASP LLM</th><td>LLM06</td></tr><tr><th>OWASP AGENTIC</th><td>ASI02, ASI03</td></tr><tr><th>OTHER</th><td>NIST SP 800-160 Vol. 1</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/protect/approval-gating/server-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

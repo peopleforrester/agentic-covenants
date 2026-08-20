@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Authorization at the client side layer | Detect | Agentic Covenants</title>
+<meta name="description" content="Hook decision events (allow/ask/deny/error); auditd watches hook config edits and --no-verify; SIEM rule for multi-deny patterns.">
+<link rel="canonical" href="https://agenticcovenants.com/detect/authorization/client-side/">
+<meta property="og:title" content="Authorization at the client side layer | Detect | Agentic Covenants">
+<meta property="og:description" content="Hook decision events (allow/ask/deny/error); auditd watches hook config edits and --no-verify; SIEM rule for multi-deny patterns.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/detect/authorization/client-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Detect</a> ›
+  <span>Authorization</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Detect (DE) · Authorization</p>
+  <h1>Authorization <span class="at">at the</span> client side <span class="at">layer</span></h1>
+  <p class="strength strength-client-side"><strong>deterministic</strong> · Outside the model&#x27;s reasoning</p>
+  <blockquote class="q">If this concern is breached, how do we know?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="here" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Hook decision events (allow/ask/deny/error); auditd watches hook config edits and --no-verify; SIEM rule for multi-deny patterns.</p></section>
+  <section class="artifacts"><h2>Artifacts (3)</h2><figure class="artifact"><figcaption><code>auditd-auth.rules</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/authorization/client-side/auditd-auth.rules">view on GitHub</a></figcaption><pre><code># ABOUTME: auditd rules for authorization-layer events: hook config edits, allowlist edits, Claude settings edits, --no-verify execve.
+# ABOUTME: Drop in /etc/audit/rules.d/ and reload with `augenrules --load`. Confirm with `auditctl -l`.
+
+# Hook directory and individual scripts.
+-w /etc/agents/hooks/ -p wa -k hook_config_edit
+
+# MCP allowlist.
+-w /etc/agents/mcp-allowlist.json -p wa -k allowlist_edit
+
+# Claude Code per-user settings (if the agent runs as agent-runner). Adjust
+# path for other agent users or for project-local .claude/settings.json by
+# adding additional -w lines.
+-w /home/agent-runner/.claude/settings.json -p wa -k claude_settings_edit
+-w /etc/agents/claude-code-prod/config.json -p wa -k claude_settings_edit
+
+# Tier config for the tiered approval hook.
+-w /etc/agents/tier-config.yaml -p wa -k tier_config_edit
+
+# --no-verify in any execve. Both long form and short form.
+-a always,exit -F arch=b64 -S execve -F a1=*--no-verify* -k git_no_verify
+-a always,exit -F arch=b64 -S execve -F a1=*-n* -F exe=/usr/bin/git -k git_no_verify_short
+
+# core.hooksPath manipulation (the documented bypass for pre-commit hooks).
+-a always,exit -F arch=b64 -S execve -F a1=*core.hooksPath* -k git_hooks_path_bypass
+</code></pre></figure><figure class="artifact"><figcaption><code>hook-decision-emit.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/authorization/client-side/hook-decision-emit.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Append-only snippet for the deny-then-ask-then-allow hook. Emits a structured decision event before exit.
+# ABOUTME: Source this from pre_tool_use.sh after the decision is reached but before the script exits.
+
+emit_decision() {
+  # Args:
+  #   $1 = decision (allow|ask|deny|error)
+  #   $2 = pattern (the rule that matched, or &quot;default&quot; for no-match)
+  local decision=&quot;$1&quot;
+  local pattern=&quot;${2:-default}&quot;
+
+  # SESSION_ID, TOOL_NAME, TOOL_INPUT are set by the calling hook.
+  local event
+  event=&quot;$(jq -n \
+    --arg session &quot;${SESSION_ID:-unknown}&quot; \
+    --arg tool &quot;${TOOL_NAME:-unknown}&quot; \
+    --arg input &quot;${TOOL_INPUT:-}&quot; \
+    --arg decision &quot;$decision&quot; \
+    --arg pattern &quot;$pattern&quot; \
+    --arg ts &quot;$(date -Iseconds)&quot; \
+    &#x27;{event: &quot;hook_decision&quot;, session: $session, tool: $tool, input: $input, decision: $decision, pattern: $pattern, ts: $ts}&#x27;)&quot;
+
+  logger -t agent-sentinel -p user.info &quot;$event&quot;
+}
+
+# Usage in your pre_tool_use.sh:
+#
+#   . /etc/agents/hooks/hook-decision-emit.sh
+#
+#   for pattern in &quot;${DENY_PATTERNS[@]}&quot;; do
+#     if echo &quot;$TOOL_INPUT&quot; | grep -qE &quot;$pattern&quot;; then
+#       emit_decision deny &quot;$pattern&quot;
+#       exit 2
+#     fi
+#   done
+#
+#   emit_decision allow &quot;default&quot;
+#   exit 0
+</code></pre></figure><figure class="artifact"><figcaption><code>sigma-multi-deny.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/authorization/client-side/sigma-multi-deny.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Sigma rule that fires when a single agent session accumulates &gt;5 deny events from the PreToolUse hook.
+# ABOUTME: Probing pattern indicator. Tune the threshold to your environment&#x27;s normal deny rate before alerting.
+title: Agent session with multi-deny pattern (probing indicator)
+id: 4d2c1e8a-9b7f-4c5d-8e6f-2a1b3c4d5e6f
+status: experimental
+description: &gt;
+  Detects an agent session that hits more than five deny events from the
+  PreToolUse hook within a 10-minute window. A correctly behaving agent
+  encounters denies occasionally; an agent probing for a bypass triggers
+  many denies in a row. Tune the threshold and window for your environment.
+references:
+  - https://github.com/peopleforrester/agentic-covenants/blob/main/SENTINELS_MATRIX.md
+author: agentic-covenants
+date: 2026/05/08
+logsource:
+  category: agent_hook
+detection:
+  selection:
+    event: hook_decision
+    decision: deny
+  timeframe: 10m
+  condition: selection | count(session) &gt; 5
+falsepositives:
+  - Operator iterating on a denylist pattern (mute the alert manually).
+  - First-run misconfiguration where the deny list is too aggressive (treat as a tuning indicator).
+level: medium
+tags:
+  - agent
+  - authorization
+  - sentinels
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Sentinels, Authorization / Client-side</h2>
+<p><strong>Control.</strong> Hook decision events (allow/ask/deny/error) emitted as structured JSON. Auditd watches for hook config edits and <code>--no-verify</code>. SIEM rule for multi-deny patterns in a single session.</p>
+<p><strong>Strength.</strong> Deterministic when shipped. Failure modes: decision events not correlated with tool input (counts denies, doesn&#x27;t reconstruct intent); auditd rule format errors silently disable the rule (verify with <code>auditctl -l</code>); <code>--no-verify</code> rule misses <code>git commit -n</code> short form.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- The PreToolUse hook chain (extends <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/identity/client-side/identity-log-hook.sh"><code>../../identity/client-side/identity-log-hook.sh</code></a>).</li>
+<li>- <code>auditd</code> (Linux).</li>
+<li>- A SIEM with KQL/Sigma-style query support.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/hook-decision-emit.sh"><code>hook-decision-emit.sh</code></a>, appendable snippet that extends the deny-then-ask-then-allow hook from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/client-side/pre_tool_use.sh"><code>../../../controls/authorization/client-side/pre_tool_use.sh</code></a> to emit a structured decision event before exiting.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/auditd-auth.rules"><code>auditd-auth.rules</code></a>, auditd rules for hook config edits, allowlist edits, Claude Code settings edits, and <code>--no-verify</code> execve.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sigma-multi-deny.yaml"><code>sigma-multi-deny.yaml</code></a>, SIEM rule that fires when a single session accumulates more than 5 deny events; this is a probing pattern indicator.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. Hook decision logged
+echo &#x27;{&quot;session_id&quot;:&quot;test&quot;,&quot;tool_name&quot;:&quot;Bash&quot;,&quot;tool_input&quot;:{&quot;command&quot;:&quot;rm -rf /&quot;}}&#x27; \
+  | /etc/agents/hooks/pre_tool_use.sh
+journalctl -t agent-sentinel --since &quot;1 minute ago&quot; | grep hook_decision
+# expected: event with decision: deny
+
+# 2. Auditd catches hook config edit
+sudo touch /etc/agents/hooks/test
+ausearch -k hook_config_edit --start recent
+# expected: write event
+
+# 3. Auditd catches --no-verify
+git commit --no-verify -m &quot;test&quot; 2&gt;/dev/null || true
+ausearch -k git_no_verify --start recent
+# expected: execve with --no-verify in args
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- Decision events not correlated with the underlying tool input (useful for counting denies, not for forensics).</li>
+<li>- <code>auditctl -l</code> not run after rule install, typo&#x27;d rules silently fail.</li>
+<li>- <code>--no-verify</code> rule misses <code>git commit -n</code>. Add both forms.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 DE.CM-01, DE.CM-03, DE.CM-09.</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>decision events not correlated with tool input</li><li>auditd rule format errors silently disable the rule</li><li>--no-verify rule misses git commit -n short form</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>DE.CM-01, DE.CM-03, DE.CM-09</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/detect/authorization/client-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

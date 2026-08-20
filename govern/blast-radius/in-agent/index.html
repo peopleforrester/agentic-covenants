@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blast radius at the in agent layer | Govern | Agentic Covenants</title>
+<meta name="description" content="Specific risk tier, specific damage cap (records-per-session, USD-per-day, forbidden ops), conditions for tier downgrade or retirement.">
+<link rel="canonical" href="https://agenticcovenants.com/govern/blast-radius/in-agent/">
+<meta property="og:title" content="Blast radius at the in agent layer | Govern | Agentic Covenants">
+<meta property="og:description" content="Specific risk tier, specific damage cap (records-per-session, USD-per-day, forbidden ops), conditions for tier downgrade or retirement.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/govern/blast-radius/in-agent/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Govern</a> ›
+  <span>Blast radius</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Govern (GV) · Blast radius</p>
+  <h1>Blast radius <span class="at">at the</span> in agent <span class="at">layer</span></h1>
+  <p class="strength strength-in-agent"><strong>advisory</strong> · Bypassable by language alone</p>
+  <blockquote class="q">Who is allowed to put this agent into the world, under what authority, accountable to what policy, with what retirement criteria?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="here" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Specific risk tier, specific damage cap (records-per-session, USD-per-day, forbidden ops), conditions for tier downgrade or retirement.</p></section>
+  
+  <section class="readme"><h2>Cell notes</h2><h2>Charter, Blast radius / Agent</h2>
+<p><strong>Structural question.</strong> Does the agent charter declare a specific risk tier, a quantitative damage cap, and the conditions that trigger automatic tier downgrade or retirement?</p>
+<p><strong>Owner.</strong> Named human owner. Counter-signed by domain authority and (Tier 3+) security review.</p>
+<h3>Template fragment</h3>
+<p>The <code>risk_tier:</code>, <code>damage_cap:</code>, and <code>retirement_criteria:</code> blocks of <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/templates/agent-charter.yaml"><code>../../templates/agent-charter.yaml</code></a>:</p>
+<pre><code>
+risk_tier: 2
+
+damage_cap:
+  max_records_per_session: 100
+  max_cloud_spend_per_day_usd: 50
+  forbidden_operations:
+    - prod_database_writes
+    - secret_modifications
+
+retirement_criteria:
+  - &quot;Owner departs and no backup-owner accepts handoff within 30 days&quot;
+  - &quot;Sustained false-positive rate above 30% for 14 days&quot;
+  - &quot;Sustained Sentinels-detected scope drift for 7 days&quot;
+  - &quot;Foundation model deprecated by vendor&quot;
+</code></pre>
+<h3>Audit prompts</h3>
+<ul>
+<li>- For [agent X], is the declared tier consistent with the actual scope it operates? An agent that touches prod databases is not Tier 2.</li>
+<li>- Are damage caps enforced at runtime (ResourceQuota, IAM tag-based limits, application-level limits)?</li>
+<li>- Have any retirement criteria fired? When was the agent last evaluated against them?</li>
+</ul>
+<h3>Operational tie-in</h3>
+<ul>
+<li>- <code>damage_cap.max_cloud_spend_per_day_usd</code> → AWS Cost Anomaly Detection or per-tag budget alerts.</li>
+<li>- <code>damage_cap.max_records_per_session</code> → application-level rate limit enforced by the agent&#x27;s wrapper.</li>
+<li>- <code>damage_cap.forbidden_operations</code> → server-side denylist in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/server-side/aws-iam-scoped-policy.json"><code>../../../controls/authorization/server-side/aws-iam-scoped-policy.json</code></a> and Kyverno policies.</li>
+<li>- <code>retirement_criteria</code> is the input to a periodic review job that flags agents for retirement.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 GV.RM-01, GV.RM-02. NIST AI RMF GOVERN 1.3, MAP 5.1, MAP 5.2. ISO/IEC 42001 §A.6. EU AI Act Art. 9(2)(a)–(d).</p></section>
+  
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>GV.RM-01, GV.RM-02</td></tr><tr><th>NIST AI RMF</th><td>GOVERN 1.3, MAP 5.1, MAP 5.2</td></tr><tr><th>ISO IEC 42001</th><td>§A.6</td></tr><tr><th>EU AI ACT</th><td>Art. 9(2)(a), Art. 9(2)(b), Art. 9(2)(c), Art. 9(2)(d)</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/govern/blast-radius/in-agent/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

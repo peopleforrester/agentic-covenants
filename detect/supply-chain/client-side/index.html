@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supply chain at the client side layer | Detect | Agentic Covenants</title>
+<meta name="description" content="MCP allowlist violation events; tool-description hash mismatch alerting; lockfile diff in CI logs centralized; pre-commit dependency scan results.">
+<link rel="canonical" href="https://agenticcovenants.com/detect/supply-chain/client-side/">
+<meta property="og:title" content="Supply chain at the client side layer | Detect | Agentic Covenants">
+<meta property="og:description" content="MCP allowlist violation events; tool-description hash mismatch alerting; lockfile diff in CI logs centralized; pre-commit dependency scan results.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/detect/supply-chain/client-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Detect</a> ›
+  <span>Supply chain</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Detect (DE) · Supply chain</p>
+  <h1>Supply chain <span class="at">at the</span> client side <span class="at">layer</span></h1>
+  <p class="strength strength-client-side"><strong>deterministic</strong> · Outside the model&#x27;s reasoning</p>
+  <blockquote class="q">If this concern is breached, how do we know?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="here" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>MCP allowlist violation events; tool-description hash mismatch alerting; lockfile diff in CI logs centralized; pre-commit dependency scan results.</p></section>
+  <section class="artifacts"><h2>Artifacts (3)</h2><figure class="artifact"><figcaption><code>ci-lockfile-diff.yml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/supply-chain/client-side/ci-lockfile-diff.yml">view on GitHub</a></figcaption><pre><code># ABOUTME: Workflow step shipping truncated lockfile diff to SIEM on every PR. Add to lockfile-integrity.yml.
+# ABOUTME: Diff is truncated to first 200 lines so a huge PR does not flood the SIEM payload; full diff is in CI artifacts.
+- name: Ship lockfile diff to SIEM
+  if: always() &amp;&amp; github.event_name == &#x27;pull_request&#x27;
+  env:
+    SIEM_TOKEN: ${{ secrets.SIEM_TOKEN }}
+    SIEM_URL: ${{ vars.SIEM_URL }}
+  run: |
+    DIFF=$(git diff origin/${{ github.base_ref }} -- \
+      package-lock.json requirements.txt requirements*.txt \
+      Pipfile.lock poetry.lock go.sum Cargo.lock 2&gt;/dev/null \
+      | head -200)
+    if [[ -n &quot;$DIFF&quot; ]]; then
+      DIFF_JSON=$(printf &#x27;%s&#x27; &quot;$DIFF&quot; | jq -R -s .)
+      curl -sS -X POST &quot;$SIEM_URL/agent-sentinel-ci/_doc&quot; \
+        -H &quot;Authorization: Bearer $SIEM_TOKEN&quot; \
+        -H &quot;Content-Type: application/json&quot; \
+        -d &quot;{
+          \&quot;event\&quot;: \&quot;lockfile_diff\&quot;,
+          \&quot;repo\&quot;: \&quot;${{ github.repository }}\&quot;,
+          \&quot;pr\&quot;: ${{ github.event.pull_request.number }},
+          \&quot;actor\&quot;: \&quot;${{ github.actor }}\&quot;,
+          \&quot;diff\&quot;: $DIFF_JSON,
+          \&quot;ts\&quot;: \&quot;$(date -Iseconds)\&quot;
+        }&quot;
+    fi
+</code></pre></figure><figure class="artifact"><figcaption><code>mcp-launch-emit.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/supply-chain/client-side/mcp-launch-emit.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Snippet that the mcp-launch wrapper sources to emit a structured per-connection event with status and hash.
+# ABOUTME: Source from controls/supply-chain/client-side/mcp-launch immediately after the hash check.
+
+emit_mcp_connect() {
+  # Args:
+  #   $1 = server name
+  #   $2 = status (ok | hash_mismatch | not_in_allowlist | signature_failed)
+  #   $3 = actual sha256 (or &quot;&quot; if not computed)
+  local name=&quot;$1&quot; status=&quot;$2&quot; sha=&quot;${3:-}&quot;
+
+  local event
+  event=&quot;$(jq -n \
+    --arg server &quot;$name&quot; \
+    --arg status &quot;$status&quot; \
+    --arg sha &quot;$sha&quot; \
+    --arg ts &quot;$(date -Iseconds)&quot; \
+    &#x27;{event: &quot;mcp_connect&quot;, server: $server, status: $status, hash: $sha, ts: $ts}&#x27;)&quot;
+  logger -t agent-sentinel -p user.info &quot;$event&quot;
+}
+
+# Usage in mcp-launch:
+#
+#   . /etc/agents/hooks/mcp-launch-emit.sh
+#
+#   if [[ -z &quot;$EXPECTED_SHA&quot; || ... ]]; then
+#     emit_mcp_connect &quot;$SERVER_NAME&quot; &quot;not_in_allowlist&quot; &quot;&quot;
+#     exit 2
+#   fi
+#   if [[ &quot;$ACTUAL_SHA&quot; != &quot;$EXPECTED_SHA&quot; ]]; then
+#     emit_mcp_connect &quot;$SERVER_NAME&quot; &quot;hash_mismatch&quot; &quot;$ACTUAL_SHA&quot;
+#     exit 2
+#   fi
+#   emit_mcp_connect &quot;$SERVER_NAME&quot; &quot;ok&quot; &quot;$ACTUAL_SHA&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>tool-desc-mismatch-emit.py</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/supply-chain/client-side/tool-desc-mismatch-emit.py">view on GitHub</a></figcaption><pre><code># ABOUTME: Patch fragment for mcp-verify-tools.py that emits a structured event when the tool-description hash mismatches.
+# ABOUTME: This is the rug-pull alert. Add the import + call inside the existing mismatch branch.
+
+import json
+import syslog
+
+
+def _emit_tool_desc_mismatch(server_name: str, expected_hash: str, actual_hash: str) -&gt; None:
+    &quot;&quot;&quot;Emit a structured rug-pull event to local syslog tagged agent-sentinel.
+
+    Call this from `mcp-verify-tools.py` inside the `if expected and actual != expected:`
+    branch, before `sys.exit(2)`.
+    &quot;&quot;&quot;
+    syslog.openlog(&quot;agent-sentinel&quot;)
+    syslog.syslog(
+        syslog.LOG_WARNING,
+        json.dumps(
+            {
+                &quot;event&quot;: &quot;mcp_tool_desc_mismatch&quot;,
+                &quot;server&quot;: server_name,
+                &quot;expected_hash&quot;: expected_hash,
+                &quot;actual_hash&quot;: actual_hash,
+            }
+        ),
+    )
+
+
+# Patch fragment to apply in mcp-verify-tools.py:
+#
+#     if expected and actual != expected:
+#         _emit_tool_desc_mismatch(server_name, expected, actual)
+#         print(f&quot;BLOCKED: {server_name} tool descriptions changed&quot;, file=sys.stderr)
+#         ...
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Sentinels, Supply chain / Client-side</h2>
+<p><strong>Control.</strong> mcp-launch wrapper logs every connection attempt with status (<code>ok | hash_mismatch | not_in_allowlist</code>). Tool-description hash mismatch alerts on rug-pull. Lockfile diff in CI shipped to SIEM. Pre-commit dependency scan results centralized.</p>
+<p><strong>Strength.</strong> Deterministic when emit happens. Failure modes: MCP wrapper logs only successful connections (failures and rejections are the interesting events); lockfile diff log includes the entire diff for huge PRs (truncate to first 200 lines); tool-description hash mismatch suppressed on legitimate update (the mismatch is the alert; reapproval is a separate workflow).</p>
+<h3>Tooling</h3>
+<ul>
+<li>- The mcp-launch wrapper from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/client-side/mcp-launch"><code>../../../controls/supply-chain/client-side/mcp-launch</code></a>.</li>
+<li>- The mcp-verify-tools.py script from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/client-side/mcp-verify-tools.py"><code>../../../controls/supply-chain/client-side/mcp-verify-tools.py</code></a>.</li>
+<li>- The lockfile-integrity workflow from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/server-side/lockfile-integrity.yml"><code>../../../controls/supply-chain/server-side/lockfile-integrity.yml</code></a>.</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/mcp-launch-emit.sh"><code>mcp-launch-emit.sh</code></a>, append-only snippet that the mcp-launch wrapper sources to emit a structured per-connection event including status and hash.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/tool-desc-mismatch-emit.py"><code>tool-desc-mismatch-emit.py</code></a>, patch fragment for <code>mcp-verify-tools.py</code> that emits a structured event on hash mismatch (the rug-pull alert).</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/ci-lockfile-diff.yml"><code>ci-lockfile-diff.yml</code></a>, workflow extension that ships the truncated lockfile diff to SIEM on every PR that touches a lockfile.</li>
+</ul>
+<h3>Verification</h3>
+<pre><code>
+# 1. MCP allowlist violation logged
+mcp-launch unknown-server || true
+journalctl -t agent-sentinel --since &quot;1 minute ago&quot; | grep mcp_connect
+# expected: status: not_in_allowlist event
+
+# 2. Tool-description mismatch logged
+# Modify a tool description in a running MCP server&#x27;s source; restart.
+journalctl -t agent-sentinel | grep mcp_tool_desc_mismatch
+
+# 3. Lockfile diff in SIEM
+# Open a PR with a lockfile change; check SIEM for the lockfile_diff event.
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- MCP wrapper logs only successful connections. The interesting events are failures and rejections.</li>
+<li>- Lockfile diff log includes the entire diff for huge PRs. Truncate to first 200 lines.</li>
+<li>- Tool-description hash mismatch suppressed on legitimate update. The mismatch is the alert; reapproval is a separate workflow.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 DE.CM-09, ID.RA-09. OWASP MCP08, MCP09.</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>MCP wrapper logs only successful connections (failures are interesting events)</li><li>lockfile diff log includes full diff for huge PRs (truncate)</li><li>tool-description hash mismatch suppressed on legitimate update</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>DE.CM-09, ID.RA-09</td></tr><tr><th>OWASP MCP</th><td>MCP08, MCP09</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/detect/supply-chain/client-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

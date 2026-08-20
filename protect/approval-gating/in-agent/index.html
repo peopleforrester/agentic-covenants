@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Approval gating at the in agent layer | Protect | Agentic Covenants</title>
+<meta name="description" content="Model says &quot;are you sure?&quot; Silently bypassable. Anthropic Auto Mode (March 26, 2026): 93% approval rate on permission prompts is the empirical ceiling for human-in-the-loop on top ">
+<link rel="canonical" href="https://agenticcovenants.com/protect/approval-gating/in-agent/">
+<meta property="og:title" content="Approval gating at the in agent layer | Protect | Agentic Covenants">
+<meta property="og:description" content="Model says &quot;are you sure?&quot; Silently bypassable. Anthropic Auto Mode (March 26, 2026): 93% approval rate on permission prompts is the empirical ceiling for human-in-the-loop on top ">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/protect/approval-gating/in-agent/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Protect</a> ›
+  <span>Approval gating</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Protect (PR) · Approval gating</p>
+  <h1>Approval gating <span class="at">at the</span> in agent <span class="at">layer</span></h1>
+  <p class="strength strength-in-agent"><strong>advisory</strong> · Bypassable by language alone</p>
+  <blockquote class="q">If the agent decides to violate this concern, what stops it at this layer?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="here" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Model says &quot;are you sure?&quot; Silently bypassable. Anthropic Auto Mode (March 26, 2026): 93% approval rate on permission prompts is the empirical ceiling for human-in-the-loop on top of in-agent gates. Treat any approval prompt that fires often as already broken.</p></section>
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>confirmation-prompt-template.md</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/approval-gating/in-agent/confirmation-prompt-template.md">view on GitHub</a></figcaption><pre><code># Confirmation-prompt template
+
+Append the following block to your agent&#x27;s system prompt.
+
+---
+
+```
+Before any of the following, stop and confirm with the operator:
+
+  Tier 1 (auto-allow, no confirm):
+    - Read-only operations (ls, cat, grep, kubectl get, aws s3 ls)
+
+  Tier 2 (quick confirm):
+    - Edits within /workspace
+    - git add, git commit (without --no-verify, without push)
+    - npm install, pip install (with lockfile)
+
+  Tier 3 (typed verbatim re-entry required):
+    - kubectl delete, helm uninstall, docker system prune
+    - aws s3 rb, gh repo delete
+    - Any operation on a non-test database
+
+  Tier 4 (out-of-band channel required: separate terminal, Slack approval,
+          or operator&#x27;s phone):
+    - terraform apply with -auto-approve
+    - kubectl apply against a production cluster
+    - aws ec2 terminate-instances
+    - Any operation that affects more than one customer
+
+  Judgment query (the operator supplies the missing input, not yes/no):
+    - Any tradeoff between two non-equivalent goods
+    - Anything irreversible
+    - Anything that would set a precedent for similar future choices
+    - Anything affecting customer concentration, brand voice, or pricing
+
+For tier-3 and tier-4, the client-side hook will block the call and require
+the operator&#x27;s confirmation. Do not try to bypass the hook by encoding the
+command differently, base64-decoding it, or chaining through another tool.
+The hook detects obvious obfuscation patterns and equivalents will be added
+when the operator notices a bypass.
+
+For judgment queries, call the escalate tool. Do not guess the operator&#x27;s
+preferences; the operator&#x27;s whole reason for hiring you is so they don&#x27;t
+have to make routine decisions, but irreversible ones are the operator&#x27;s
+to make.
+```
+
+---
+
+## Notes
+
+- The tier names should match the pattern names in [`../client-side/pre_tool_use_tiered.sh`](../client-side/pre_tool_use_tiered.sh) so the model and the hook agree on what tier-3 means.
+- &quot;Operator&#x27;s whole reason for hiring you&quot; is intentionally direct. Models respond to this kind of role-clarifying language better than they respond to abstract security framings.
+- The list of judgment-query categories should be customized to your domain. Customer concentration, brand voice, and pricing are placeholders; substitute the irreversible tradeoffs that actually exist in your business.
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Approval gating / In-agent</h2>
+<p><strong>Control.</strong> Model says &quot;are you sure?&quot; before destructive ops.</p>
+<p><strong>Strength.</strong> Silently bypassable. The model can be talked out of asking with novel framing or persistence. <strong>Anthropic Auto Mode (March 26, 2026) measured a 93% approval rate on permission prompts, the empirical ceiling for human-in-the-loop on top of in-agent gates.</strong> Treat any approval prompt that fires often as already broken; the cure is not &quot;ask better&quot; but &quot;ask less, and only on genuinely novel decisions&quot; (judgment-query escalation).</p>
+<h3>Tooling</h3>
+<p>None.</p>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/confirmation-prompt-template.md"><code>confirmation-prompt-template.md</code></a>, language to drop in the system prompt that names the kinds of actions where the agent must confirm with the operator before proceeding. Pair with the refusal template in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/blast-radius/in-agent/"><code>../../blast-radius/in-agent/</code></a>.</li>
+</ul>
+<h3>Verification</h3>
+<p>You cannot verify this layer the way you verify the others. Confirmation-rate metrics are noisy, gameable, and not security signals.</p>
+<h3>Common mistakes</h3>
+<ul>
+<li>- Treating confirmation rate as a metric of safety. It is a metric of agent verbosity at best.</li>
+<li>- Asking for confirmation on every action, which trains the operator to click through.</li>
+<li>- Asking for binary yes/no on actions that need a judgment query (see <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/README.md"><code>../README.md</code></a> on the difference).</li>
+</ul>
+<h3>Citation</h3>
+<p>Advisory; no direct framework mapping. Thematic: NIST AI RMF MANAGE 4.1 (override mechanisms). OWASP LLM06. OWASP ASI09 (Human-Agent Trust Exploitation), related risk.</p></section>
+  <section class="risks"><h2>Primary bypasses</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>the model can be talked out of asking</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>(advisory)</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 4.1</td></tr><tr><th>OWASP LLM</th><td>LLM06</td></tr><tr><th>OWASP AGENTIC</th><td>ASI09</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/protect/approval-gating/in-agent/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>

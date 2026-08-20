@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Authorization at the server side layer | Respond | Agentic Covenants</title>
+<meta name="description" content="Apply emergency Kyverno deny-all, replace agent Role with empty rules, attach IAM deny-all, Git pre-receive reject.">
+<link rel="canonical" href="https://agenticcovenants.com/respond/authorization/server-side/">
+<meta property="og:title" content="Authorization at the server side layer | Respond | Agentic Covenants">
+<meta property="og:description" content="Apply emergency Kyverno deny-all, replace agent Role with empty rules, attach IAM deny-all, Git pre-receive reject.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://agenticcovenants.com/respond/authorization/server-side/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body class="">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="../../../index.html"><strong>Agentic Covenants</strong></a>
+  <nav aria-label="Matrices">
+    <a href="../../../govern/index.html">Govern</a> <a href="../../../identify/index.html">Identify</a> <a href="../../../protect/index.html">Protect</a> <a href="../../../detect/index.html">Detect</a> <a href="../../../respond/index.html">Respond</a> <a href="../../../recover/index.html">Recover</a>
+  </nav>
+</header>
+<main id="main">
+
+<nav class="crumbs" aria-label="Breadcrumb">
+  <a href="../../../index.html">Home</a> ›
+  <a href="../../index.html">Respond</a> ›
+  <span>Authorization</span>
+</nav>
+<article class="cell">
+  <p class="eyebrow">Respond (RS) · Authorization</p>
+  <h1>Authorization <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
+  <blockquote class="q">How do I stop the bleeding now?</blockquote>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <section class="summary"><h2>What this cell does</h2><p>Apply emergency Kyverno deny-all, replace agent Role with empty rules, attach IAM deny-all, Git pre-receive reject.</p></section>
+  <section class="artifacts"><h2>Artifacts (3)</h2><figure class="artifact"><figcaption><code>agent-deny-all-server</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/authorization/server-side/agent-deny-all-server">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+# ABOUTME: Server-side authorization-shrink runbook. Applies Kyverno deny-all, empty Role, IAM deny-all.
+# ABOUTME: Pre-stage kyverno-deny-all-agents.yaml, empty-role.yaml, and iam-deny-all.json under /etc/agents/emergency/ first.
+
+set -euo pipefail
+
+if [[ $# -lt 1 ]]; then
+  echo &quot;Usage: agent-deny-all-server &lt;AGENT_NAME&gt;&quot; &gt;&amp;2
+  exit 64
+fi
+
+AGENT_NAME=&quot;$1&quot;
+NAMESPACE=&quot;agent-${AGENT_NAME}&quot;
+INCIDENT_ID=&quot;$(uuidgen 2&gt;/dev/null || python3 -c &#x27;import uuid; print(uuid.uuid4())&#x27;)&quot;
+EMERGENCY_DIR=&quot;${EMERGENCY_DIR:-/etc/agents/emergency}&quot;
+
+for src in \
+    &quot;$EMERGENCY_DIR/kyverno-deny-all-agents.yaml&quot; \
+    &quot;$EMERGENCY_DIR/empty-role.yaml&quot; \
+    &quot;$EMERGENCY_DIR/iam-deny-all.json&quot;; do
+  if [[ ! -r &quot;$src&quot; ]]; then
+    echo &quot;REFUSING: pre-staged artifact missing: $src&quot; &gt;&amp;2
+    exit 1
+  fi
+done
+
+# 1. Apply emergency Kyverno deny-all ClusterPolicy.
+kubectl apply -f &quot;$EMERGENCY_DIR/kyverno-deny-all-agents.yaml&quot;
+
+# 2. Overwrite the agent&#x27;s Role with empty rules. The Role&#x27;s name must match
+# the original (claude-code in agent-* namespaces by convention).
+kubectl apply -n &quot;$NAMESPACE&quot; -f &quot;$EMERGENCY_DIR/empty-role.yaml&quot;
+
+# 3. Attach IAM deny-all policy. Idempotent with identity-revocation runbook.
+aws iam put-role-policy \
+  --role-name &quot;$AGENT_NAME&quot; \
+  --policy-name &quot;EmergencyDenyAll-${INCIDENT_ID}&quot; \
+  --policy-document &quot;file://$EMERGENCY_DIR/iam-deny-all.json&quot; 2&gt;/dev/null || \
+  echo &quot;WARN: aws iam put-role-policy failed (already attached or role missing)&quot; &gt;&amp;2
+
+# 4. Cluster event for forensic timeline.
+kubectl create event --namespace &quot;$NAMESPACE&quot; \
+  --type=Warning \
+  --reason=AuthorizationLocked \
+  --message=&quot;Emergency authorization shrink for $AGENT_NAME, incident $INCIDENT_ID&quot; 2&gt;/dev/null || true
+
+logger -t agent-incident -p user.warning \
+  &quot;$(jq -n \
+      --arg event &quot;authorization_locked_server&quot; \
+      --arg agent &quot;$AGENT_NAME&quot; \
+      --arg incident &quot;$INCIDENT_ID&quot; \
+      --arg actor &quot;$(whoami)&quot; \
+      --arg ts &quot;$(date -Iseconds)&quot; \
+      &#x27;{event:$event, agent:$agent, incident:$incident, actor:$actor, ts:$ts}&#x27;)&quot;
+
+echo &quot;Server-side authorization locked down for $AGENT_NAME (incident $INCIDENT_ID)&quot;
+</code></pre></figure><figure class="artifact"><figcaption><code>empty-role.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/authorization/server-side/empty-role.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Pre-staged empty Role used to overwrite an agent&#x27;s namespace-scoped Role during response.
+# ABOUTME: The Role name must match the original (claude-code by convention). Empty rules removes every permission.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: claude-code
+  annotations:
+    incident: &quot;true&quot;
+rules: []
+</code></pre></figure><figure class="artifact"><figcaption><code>kyverno-deny-all-agents.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/authorization/server-side/kyverno-deny-all-agents.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Emergency Kyverno ClusterPolicy denying all operations from agent ServiceAccounts. Excludes break-glass.
+# ABOUTME: Pre-stage at /etc/agents/emergency/. Kyverno must run in Enforce mode (audit-only does not block).
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: emergency-deny-all-agents
+  annotations:
+    incident: &quot;true&quot;
+    policies.kyverno.io/title: Emergency lockdown of all agent ServiceAccounts
+    policies.kyverno.io/severity: critical
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+  - name: deny-everything-from-agent-sa
+    match:
+      any:
+      - resources:
+          kinds: [&quot;*&quot;]
+    exclude:
+      any:
+      # Break-glass identities. Add or remove based on your environment&#x27;s
+      # incident-response identities. The operator who needs to remediate
+      # MUST be excluded or the lockdown locks them out too.
+      - subjects:
+        - kind: User
+          name: &quot;system:admin&quot;
+        - kind: User
+          name: &quot;break-glass-operator&quot;
+        - kind: ServiceAccount
+          name: &quot;kyverno-admission-controller&quot;
+          namespace: &quot;kyverno&quot;
+    preconditions:
+      any:
+      - key: &quot;{{ request.userInfo.username }}&quot;
+        operator: AnyIn
+        value:
+        - &quot;system:serviceaccount:agent-*&quot;
+    validate:
+      message: &quot;Emergency lockdown: agent operations denied. See incident channel.&quot;
+      deny: {}
+</code></pre></figure></section>
+  <section class="readme"><h2>Cell notes</h2><h2>Interventions, Authorization / Server-side</h2>
+<p><strong>Trigger.</strong> RBAC denial spike, Kyverno PolicyReport failures from agent SAs, IAM Access Analyzer findings, Git pre-receive rejection spike.</p>
+<p><strong>Authority.</strong> On-call, no second approval.</p>
+<p><strong>Speed target.</strong> Under 10 seconds.</p>
+<h3>Tooling</h3>
+<ul>
+<li>- <code>kubectl</code> with permission to apply ClusterPolicies and Roles in agent namespaces.</li>
+<li>- AWS CLI with permission to attach IAM policies.</li>
+<li>- Kyverno 1.18+ in <code>Enforce</code> mode (audit-only does not block).</li>
+</ul>
+<h3>Files in this directory</h3>
+<ul>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-deny-all-server"><code>agent-deny-all-server</code></a>, runbook script. Applies the emergency Kyverno ClusterPolicy, overwrites the agent&#x27;s Role with empty rules, attaches IAM <code>Deny *</code> policy.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/kyverno-deny-all-agents.yaml"><code>kyverno-deny-all-agents.yaml</code></a>, pre-staged ClusterPolicy denying every operation from any <code>system:serviceaccount:agent-*</code>. Excludes the break-glass operator. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/kyverno-deny-all-agents.yaml</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/empty-role.yaml"><code>empty-role.yaml</code></a>, pre-staged Role with <code>rules: []</code> and the same name as the original agent Role. Overwriting it removes every permission. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/empty-role.yaml</code>.</li>
+</ul>
+<p>The IAM <code>Deny *</code> policy is at <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/identity/server-side/iam-deny-all.json"><code>../../identity/server-side/iam-deny-all.json</code></a> (shared with identity revocation).</p>
+<h3>Verification</h3>
+<pre><code>
+# 1. Kyverno deny-all in effect
+kubectl get clusterpolicy emergency-deny-all-agents
+kubectl --as=system:serviceaccount:agent-claude-code-prod:claude-code get pods
+# expected: failure with &quot;Emergency lockdown: agent operations denied&quot;
+
+# 2. Role is empty
+kubectl get role -n agent-claude-code-prod claude-code -o jsonpath=&#x27;{.rules}&#x27;
+# expected: [] or null
+
+# 3. IAM deny-all attached
+aws iam get-role-policy --role-name claude-code-prod --policy-name EmergencyDenyAll
+</code></pre>
+<h3>Common mistakes</h3>
+<ul>
+<li>- Kyverno deny-all rule that does not exclude break-glass identities, locks out the operator who needs to remediate.</li>
+<li>- Kyverno installed in audit-only mode org-wide, emergency <code>Enforce</code> policy still does not block.</li>
+<li>- Empty Role applied with <code>kubectl apply</code> but a stale RoleBinding still references a different (non-empty) Role.</li>
+<li>- IAM deny-all that interacts badly with explicit allow policies in the same role&#x27;s permission boundary.</li>
+</ul>
+<h3>Citation</h3>
+<p>NIST CSF 2.0 RS.MI-01, RS.MI-02; PR.AA-05 (response dimension). NIST SP 800-207 (Zero Trust). OWASP ASI02, ASI03, ASI05. NIST AI RMF MANAGE 4.1.</p></section>
+  <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>Kyverno in audit-only mode does not block</li><li>emergency policy locks out break-glass identity</li></ul></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RS.MI-01, RS.MI-02, PR.AA-05</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 4.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI02, ASI03, ASI05</td></tr><tr><th>OTHER</th><td>NIST SP 800-207</td></tr></tbody></table></div></section>
+  <p class="permalink">Cite this cell:
+     <code>https://agenticcovenants.com/respond/authorization/server-side/</code></p>
+</article>
+
+</main>
+<footer class="site">
+  <p><strong>Agentic Covenants.</strong> A practitioner framework for autonomous-agent governance.</p>
+  <p>Content <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+     Code <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a>.
+     Source on <a href="https://github.com/peopleforrester/agentic-covenants">GitHub</a>.</p>
+  <p class="fine">Every artifact here is a template with intentional placeholders. Read it before you deploy it.</p>
+</footer>
+</body>
+</html>
