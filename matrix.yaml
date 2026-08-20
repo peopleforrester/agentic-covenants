@@ -34,6 +34,14 @@ concerns:
   - id: supply-chain
     label: Supply chain
     intent: Every dependency, MCP server, registry, and tool call verified before trusted.
+  - id: content-integrity
+    label: Content integrity
+    intent: The agent is not manipulated by the text it reads, and does not leak through the text it writes.
+    control_class: probabilistic
+    note: >-
+      The only concern here whose controls score and threshold rather than admit and deny.
+      Its server-side column is deliberately weak: nothing server-side can distinguish an
+      injection from the document it arrived in. Stated as a boundary, not an omission.
 
 cells:
   # ---- IDENTITY ----
@@ -251,3 +259,66 @@ cells:
       - signing infrastructure compromise
       - signature stripping at registry mirror
       - signed-but-malicious images
+
+  # ---- CONTENT INTEGRITY ----
+  # Added 2026-08-17. The one concern whose controls are probabilistic rather
+  # than deterministic; see the scope boundary in README.md.
+  - concern: content-integrity
+    layer: in-agent
+    summary: >-
+      System-prompt hardening, instruction hierarchy, and provenance framing of untrusted
+      content with a per-fetch nonce. Advisory, and weaker here than anywhere else in this
+      matrix: prompt injection is an attack aimed precisely at this layer, so it is the one
+      surface an adversary directly optimizes against. Reduces low-effort attacks so
+      downstream scanners have less to score. Never cite it as a mitigation in a risk register.
+    controls_path: controls/content-integrity/in-agent/
+    citations:
+      nist_csf_2_0: ["(advisory)"]
+      nist_ai_rmf: ["MEASURE 2.7"]
+      owasp_llm: ["LLM01"]
+      owasp_agentic: ["ASI02"]
+    primary_bypasses:
+      - delimiter spoofing
+      - multi-turn setup
+      - cross-content collusion
+
+  - concern: content-integrity
+    layer: client-side
+    summary: >-
+      Input scanning before the model sees fetched content, output scanning before a response
+      or tool argument leaves, tool-result sanitization stripping zero-width, bidi, tag-block
+      and ANSI sequences plus the wrapping nonce. Probabilistic: these score and threshold, so
+      false positives and false negatives are inherent. Never block on input scores, which is
+      how a control gets switched off next quarter; block on output, where a false positive
+      costs a retry and a false negative costs a secret.
+    controls_path: controls/content-integrity/client-side/
+    citations:
+      nist_csf_2_0: ["DE.CM-09", "PR.DS-02"]
+      nist_ai_rmf: ["MEASURE 2.7", "MANAGE 2.2"]
+      owasp_llm: ["LLM01", "LLM02", "LLM05"]
+      owasp_agentic: ["ASI02"]
+    primary_bypasses:
+      - encoding (base64, homoglyphs, zero-width joiners)
+      - translation into an untrained language
+      - indirection via a second fetched resource
+      - semantic paraphrase against a public training corpus
+
+  - concern: content-integrity
+    layer: server-side
+    summary: >-
+      Egress NetworkPolicy so exfiltration has nowhere to post, DLP at the boundary, and
+      send-side audit written outside the agent's reach. Deliberately the weakest server-side
+      cell in the framework: it catches the consequence, not the manipulation. The control that
+      actually works is not a content control at all. A scoped credential, deny-by-default RBAC,
+      and default-deny egress make a successful injection worthless, so injection is an
+      authorization and blast-radius problem wearing a content costume.
+    controls_path: controls/content-integrity/server-side/
+    citations:
+      nist_csf_2_0: ["PR.DS-02", "DE.CM-01", "PR.IR-01"]
+      nist_ai_rmf: ["MANAGE 2.2"]
+      owasp_llm: ["LLM02"]
+      owasp_agentic: ["ASI02"]
+    primary_bypasses:
+      - exfiltration through an allowlisted write-capable host
+      - DNS and timing channels
+      - end-to-end encrypted destinations defeating DLP

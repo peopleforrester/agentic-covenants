@@ -419,7 +419,31 @@ def _have(tool: str) -> bool:
     return shutil.which(tool) is not None
 
 
+def check_site(staged: bool) -> Findings:
+    """The site generator must still consume the YAML it reads.
+
+    The site is a second surface over the same source, so a schema change in
+    any matrix file breaks it silently. This runs the generator's own input
+    validation, which writes nothing.
+    """
+    findings = Findings("site")
+    builder = REPO_ROOT / "site" / "build.py"
+    if not builder.is_file():
+        return findings
+
+    result = subprocess.run(
+        [sys.executable, str(builder), "--check"],
+        cwd=REPO_ROOT, capture_output=True, text=True, check=False,
+    )
+    if result.returncode != 0:
+        for line in (result.stderr or result.stdout).splitlines():
+            if line.strip():
+                findings.add(builder, None, line.strip().replace("PROBLEM ", ""))
+    return findings
+
+
 CHECKS: dict[str, Callable[[bool], Findings]] = {
+    "site": check_site,
     "links": check_links,
     "yaml": check_yaml,
     "json": check_json,

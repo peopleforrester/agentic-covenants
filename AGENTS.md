@@ -4,7 +4,7 @@ _Repo context file for AI coding CLIs (Claude Code, Codex, OpenCode, Gemini, etc
 
 ## What this is
 
-A practitioner framework for autonomous-agent governance: **six matrices mapped to the six NIST CSF 2.0 functions**, each with working artifacts in every populated cell. Charter (Govern) authorizes → Inventory (Identify) tracks → Covenants (Protect) binds → Sentinels (Detect) watches → Interventions (Respond) stops → Restorations (Recover) rebuilds. Every matrix is five concerns (identity, authorization, blast-radius, approval-gating, supply-chain) × three layers.
+A practitioner framework for autonomous-agent governance: **six matrices mapped to the six NIST CSF 2.0 functions**, each with working artifacts in every populated cell. Charter (Govern) authorizes → Inventory (Identify) tracks → Covenants (Protect) binds → Sentinels (Detect) watches → Interventions (Respond) stops → Restorations (Recover) rebuilds. Every matrix is five concerns (identity, authorization, blast-radius, approval-gating, supply-chain) × three layers. Covenants carries a sixth, content-integrity, whose controls are probabilistic rather than deterministic; see the scope boundary in README.md.
 
 This is **not** a code project. There is no build, no test suite, no package manifest. The deliverables are Markdown (framework essays, per-cell READMEs, citations) and copy-ready **template artifacts** (Kubernetes/Kyverno YAML, RBAC, seccomp/AppArmor profiles, PreToolUse hooks, Terraform, cosign policies, Falco/Sigma rules, runbook shell scripts). Placeholders like `agent-claude-prod`, `123456789012`, and `sha256:REPLACE_WITH_DIGEST` are intentional. They are meant to be substituted by the person adopting a cell.
 

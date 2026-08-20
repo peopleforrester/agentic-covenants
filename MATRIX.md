@@ -1,6 +1,6 @@
 # The Agentic Covenants Matrix
 
-A prevention framework for agent governance. Three layers of enforcement, five concerns, fifteen cells, every cell populated honestly. Every control mapped to authoritative governmental and standards-body citations in [`CITATIONS.md`](./CITATIONS.md), with known bypass paths catalogued in [`BYPASSES.md`](./BYPASSES.md). Designed to be walked left-to-right by a platform engineer asking one question per row: *if the agent decides to violate this concern, what stops it at this layer?*
+A prevention framework for agent governance. Three layers of enforcement, six concerns, eighteen cells, every cell populated honestly. Every control mapped to authoritative governmental and standards-body citations in [`CITATIONS.md`](./CITATIONS.md), with known bypass paths catalogued in [`BYPASSES.md`](./BYPASSES.md). Designed to be walked left-to-right by a platform engineer asking one question per row: *if the agent decides to violate this concern, what stops it at this layer?*
 
 ## What this is not
 

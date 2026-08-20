@@ -37,7 +37,7 @@ This is the strongest available evidence that the agentic gap is an infrastructu
 
 ### The regulatory clock is now a cost line
 
-From **2 August 2026**, EU AI Act Article 73 requires serious-incident reporting: 15 days generally, 10 days where a death may have been caused, and **2 days** for a widespread infringement or serious and irreversible disruption of critical infrastructure. Verify how the Digital Omnibus deferral of the high-risk obligations interacts with your specific system class before relying on this timeline.
+**Since 2 August 2026**, EU AI Act Article 73 has required serious-incident reporting: 15 days generally, 10 days where a death may have been caused, and **2 days** for a widespread infringement or serious and irreversible disruption of critical infrastructure. Verify how the Digital Omnibus deferral of the high-risk obligations interacts with your specific system class before relying on this timeline.
 
 The two-day clock converts detection from a maturity nicety into a compliance dependency. An organization that detects agent misbehavior in thirty days cannot report it in two, and the failure to report is separately actionable from the incident itself.
 

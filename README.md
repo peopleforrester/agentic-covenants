@@ -26,7 +26,7 @@ The threat is no longer hypothetical on either side of the wire.
 
 - **You govern agents.** In July 2026, near-autonomous agents built from publicly available tooling mapped 21 Taiwanese government systems, cracked 85 accounts, and exfiltrated roughly 2,500 personnel records in four days, then expanded to a nuclear safety agency and seven energy companies. Widely reported as the first known largely autonomous attack on government agencies.
 - **Agents are also the attacker.** The same class of tooling that runs inside your perimeter is being pointed at perimeters. Defensive posture and offensive capability are converging on identical technology.
-- **Regulators started counting.** EU AI Act Article 73 serious-incident reporting is expected to apply from 2 August 2026, with a two-day clock for serious and irreversible disruption of critical infrastructure. You cannot report in two days what you cannot detect.
+- **Regulators started counting, and the clock is already running.** EU AI Act Article 73 serious-incident reporting has been **in force since 2 August 2026**, with a two-day clock for serious and irreversible disruption of critical infrastructure. You cannot report in two days what you cannot detect.
 - **The gap is measured, and it is infrastructure.** Of organizations that reported a security incident involving an AI model or application, **92% were missing role-based access, MFA, and similar controls** on it (IBM Cost of a Data Breach 2026, 29 July 2026). Those are not exotic controls. The same organizations apply them to their databases. They did not apply them to the agent.
 
 ## The core idea

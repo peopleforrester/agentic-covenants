@@ -24,7 +24,7 @@ That single difference breaks the assumption every existing control rests on. Yo
 
 1. **Can you list every agent running against our systems, and who is accountable for each?** If the answer takes more than a day, the exposure is unmeasured rather than small.
 2. **If an agent tried to do the worst thing it could do, what would stop it, and is that thing outside the agent?** "It would refuse" is not an answer. "The IAM policy denies it" is.
-3. **Would we know within two days?** From 2 August 2026, EU AI Act Article 73 sets a two-day reporting clock for serious and irreversible disruption of critical infrastructure, and 15 days generally.
+3. **Would we know within two days?** EU AI Act Article 73 has set a two-day reporting clock for serious and irreversible disruption of critical infrastructure since 2 August 2026, and 15 days generally. That obligation is live now, not pending.
 
 ## The numbers
 

@@ -2,8 +2,8 @@
 # ABOUTME: Ensures what left the boundary is recorded outside the agent's reach.
 #
 # Evidence, not prevention. The EU AI Act Article 73 reporting clocks (2 days
-# for serious disruption of critical infrastructure, 15 days generally, from
-# 2 August 2026) are unmeetable without a record that survives the agent.
+# for serious disruption of critical infrastructure, 15 days generally, in
+# force since 2 August 2026) are unmeetable without a record that survives the agent.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:

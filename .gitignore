@@ -43,3 +43,6 @@ claude-ai-context/
 # Harvested session transcripts (landed here by the session-harvest tooling; not part of this repo).
 transcripts/
 _INBOX.md
+
+# Generated site output; published to the gh-pages branch, not tracked on main.
+site/dist/
