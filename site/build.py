@@ -206,10 +206,19 @@ def read_cell_readme(rel_dir: str) -> str:
     p = REPO / rel_dir / "README.md"
     if not p.is_file():
         return ""
-    return md_to_html(p.read_text(encoding="utf-8"))
+    return md_to_html(p.read_text(encoding="utf-8"), base=rel_dir)
 
 
-def md_inline(s: str) -> str:
+def md_inline(s: str, base: str = "") -> str:
+    """Render inline markdown.
+
+    Args:
+        s: The markdown fragment.
+        base: Repository-relative directory the text was read from. Relative
+            links resolve against it. Without this a link written inside
+            controls/blast-radius/client-side/README.md as (agent-bwrap)
+            resolves to blob/main/agent-bwrap, which does not exist.
+    """
     s = esc(s)
     s = re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
     s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
@@ -218,14 +227,29 @@ def md_inline(s: str) -> str:
     def link(m: re.Match) -> str:
         text, href = m.group(1), m.group(2)
         if not href.startswith(("http://", "https://", "#")):
+            rel = href.lstrip("./")
+            # Resolve against the filesystem rather than guessing. A cell README
+            # may link either repo-relative (controls/x/y/) or relative to its
+            # own directory (agent-bwrap). Prefixing blindly breaks the first
+            # form; not prefixing at all breaks the second.
+            if base and not (REPO / rel).exists():
+                # Walk up from the cell directory. A README may link relative to
+                # its own directory, to its matrix root, or repo-relative. Try
+                # each and take the first that exists on disk.
+                parts = base.rstrip("/").split("/")
+                for depth in range(len(parts), 0, -1):
+                    candidate = "/".join(parts[:depth]) + "/" + rel
+                    if (REPO / candidate).exists():
+                        rel = candidate
+                        break
             href = ("https://github.com/peopleforrester/agentic-covenants/blob/main/"
-                    + href.lstrip("./"))
+                    + rel)
         return f'<a href="{href}">{text}</a>'
 
     return re.sub(r"\[([^\]]+)\]\(([^)]+)\)", link, s)
 
 
-def md_to_html(text: str) -> str:
+def md_to_html(text: str, base: str = "") -> str:
     out: list[str] = []
     in_code = False
     in_list = False
@@ -257,7 +281,7 @@ def md_to_html(text: str) -> str:
         if stripped.startswith("#"):
             close_blocks()
             level = min(len(stripped) - len(stripped.lstrip("#")), 6)
-            out.append(f"<h{level + 1}>{md_inline(stripped.lstrip('#').strip())}</h{level + 1}>")
+            out.append(f"<h{level + 1}>{md_inline(stripped.lstrip('#').strip(), base)}</h{level + 1}>")
             continue
 
         if stripped.startswith("|"):
@@ -267,7 +291,7 @@ def md_to_html(text: str) -> str:
             if not in_table:
                 close_blocks()
                 out.append('<div class="tw"><table><tbody>'); in_table = True
-            row = "".join(f"<td>{md_inline(c)}</td>" for c in cells)
+            row = "".join(f"<td>{md_inline(c, base)}</td>" for c in cells)
             out.append(f"<tr>{row}</tr>")
             continue
 
@@ -276,11 +300,11 @@ def md_to_html(text: str) -> str:
                 out.append("</tbody></table></div>"); in_table = False
             if not in_list:
                 out.append("<ul>"); in_list = True
-            out.append(f"<li>{md_inline(re.sub(r'^([-*+]|\\d+\\.)\\s+', '', stripped))}</li>")
+            out.append(f"<li>{md_inline(re.sub(r'^([-*+]|\\d+\\.)\\s+', '', stripped), base)}</li>")
             continue
 
         close_blocks()
-        out.append(f"<p>{md_inline(stripped)}</p>")
+        out.append(f"<p>{md_inline(stripped, base)}</p>")
 
     if in_code:
         out.append("</code></pre>")
