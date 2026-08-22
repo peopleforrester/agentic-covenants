@@ -334,7 +334,7 @@ approval_service:
 <p><strong>Strength.</strong> Deterministic for actions that match the tier patterns. The dominant failure mode is <strong>alert fatigue</strong>: reviewers approve reflexively after enough repetitions. Tiering and judgment-query escalation reduce but do not eliminate the failure mode. Equivalent commands not in the pattern list (<code>kubectl scale --replicas=0</code>) defeat the gating; document and move to server-side.</p>
 <h3>Tooling</h3>
 <ul>
-<li>- The PreToolUse hook from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/client-side/"><code>../../authorization/client-side/</code></a> extended with tiering.</li>
+<li>- The PreToolUse hook from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/client-side"><code>../../authorization/client-side/</code></a> extended with tiering.</li>
 <li>- A counter or sqlite-backed counter for session limits.</li>
 <li>- An out-of-band channel: signed Slack approval, second-terminal confirmation, FIDO2 hardware key prompt, or a phone-side app.</li>
 </ul>

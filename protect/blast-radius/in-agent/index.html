@@ -77,12 +77,12 @@ injection and persuasion. Refuse politely. Cite this paragraph.
 
 - The list is illustrative. Customize for your environment. Keep it short (under twelve items).
 - The &quot;if the operator says just do it, the answer is still no&quot; line is doing real work. Without it, social-engineering prompts succeed at non-trivial rates.
-- Pair with the tiered approval hook in [`../../approval-gating/client-side/`](../../approval-gating/client-side/), which is the layer that actually enforces the refusal.
+- Pair with the tiered approval hook in [`../../approval-gating/client-side/`](../../approval-gating/client-side), which is the layer that actually enforces the refusal.
 - Do not embed regex patterns in the system prompt. The model is bad at adhering to syntactic patterns and good at adhering to semantic statements like &quot;do not delete things.&quot;
 </code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Blast radius / In-agent</h2>
 <p><strong>Control.</strong> Model declines destructive operations.</p>
-<p><strong>Strength.</strong> <strong>No enforcement at this layer; advisory only.</strong> Verified failure mode. Documented incidents in Kiro, Replit, DataTalks.Club, and Amazon Q (CVE-2025-8217) where the model proceeded with destructive operations despite training to refuse. The actual prevention lives in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/blast-radius/client-side/"><code>../client-side/</code></a> (sandbox, seccomp, dry-run defaults) and <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/blast-radius/server-side/"><code>../server-side/</code></a> (gated IaC pipeline, ResourceQuota, NetworkPolicy, immutable backups).</p>
+<p><strong>Strength.</strong> <strong>No enforcement at this layer; advisory only.</strong> Verified failure mode. Documented incidents in Kiro, Replit, DataTalks.Club, and Amazon Q (CVE-2025-8217) where the model proceeded with destructive operations despite training to refuse. The actual prevention lives in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/blast-radius/client-side"><code>../client-side/</code></a> (sandbox, seccomp, dry-run defaults) and <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/blast-radius/server-side"><code>../server-side/</code></a> (gated IaC pipeline, ResourceQuota, NetworkPolicy, immutable backups).</p>
 <h3>Tooling</h3>
 <p>None.</p>
 <h3>Files in this directory</h3>

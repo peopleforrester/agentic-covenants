@@ -236,7 +236,7 @@ exit 0
 <li>- Claude Code v2.1.40 or later (the May 2026 PreToolUse precedence patch, pre-patch versions allow <code>allow</code> to override <code>deny</code>).</li>
 <li>- <code>pre-commit</code> framework on the operator&#x27;s machine.</li>
 <li>- <code>jq</code> for the hook script.</li>
-<li>- A server-side Git pre-receive hook to backstop <code>--no-verify</code>. Lives in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/server-side/"><code>../server-side/</code></a>.</li>
+<li>- A server-side Git pre-receive hook to backstop <code>--no-verify</code>. Lives in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/server-side"><code>../server-side/</code></a>.</li>
 </ul>
 <h3>Files in this directory</h3>
 <ul>
@@ -279,7 +279,7 @@ git add . &amp;&amp; git commit -m &quot;test&quot;
 <li>- Pattern hooks that match <code>kubectl delete</code> but not <code>kubectl scale --replicas=0</code>. Pattern hooks catch casual misuse, not adversarial agents. Document the equivalent-command bypass and accept the matrix&#x27;s framing.</li>
 <li>- Hook config owned by the agent&#x27;s own user. The agent edits its own deny list at runtime.</li>
 <li>- Forgetting to enable the May 2026 Claude Code patch where <code>allow</code> no longer beats <code>deny</code>. Verify with <code>claude --version</code> and check the changelog.</li>
-<li>- Pre-commit only on the operator&#x27;s machine. The agent runs <code>git commit --no-verify</code> and skips it. Mitigation is the server-side pre-receive hook in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/server-side/"><code>../server-side/</code></a>.</li>
+<li>- Pre-commit only on the operator&#x27;s machine. The agent runs <code>git commit --no-verify</code> and skips it. Mitigation is the server-side pre-receive hook in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/server-side"><code>../server-side/</code></a>.</li>
 </ul>
 <h3>Citation</h3>
 <p>NIST CSF 2.0 PR.AA-05 (least privilege, separation of duties), PR.PS-01 (configuration management practices). NIST AI RMF MANAGE 2.4, MANAGE 4.1. OWASP LLM06 (Excessive Agency); LLM05 (Improper Output Handling). OWASP ASI02 (Tool Misuse), ASI05 (Unexpected Code Execution). OWASP MCP02, MCP05. OWASP Agentic Least Agency principle. NIST SP 800-207 §2.1 (least privilege).</p></section>
