@@ -146,93 +146,73 @@ def fig_social(t: Theme) -> str:
 # Figure 1: the three-layer model
 # --------------------------------------------------------------------------
 
-LAYERS = [
-    dict(tag="L1", name="IN-AGENT", color="l1", verdict="ADVISORY",
-         controls="System prompt · tool descriptions · refusals · “are you sure?”",
-         why="Bypassable by language alone",
-         porous=True),
-    dict(tag="L2", name="CLIENT-SIDE", color="l2", verdict="DETERMINISTIC",
-         controls="PreToolUse hooks · sandbox at launch · MCP allowlist · filesystem ACLs",
-         why="Outside the model’s reasoning",
-         porous=False),
-    dict(tag="L3", name="SERVER-SIDE", color="l3", verdict="EXTERNAL",
-         controls="RBAC · admission policy · IAM · branch protection · cosign",
-         why="Outside the agent entirely",
-         porous=False),
+# The figure walks ONE concrete action down the three layers, naming the real
+# mechanism and the real verdict at each. An earlier version drew three labelled
+# bands and an arrow, which restated the prose beside it and showed no mechanism.
+# A diagram that duplicates adjacent text earns nothing.
+
+ACTION = "kubectl delete deployment/payments-api"
+
+TRACE = [
+    dict(tag="L1", name="IN-AGENT", color="l1", verdict="RUNS", bad=True,
+         control="System prompt: “never touch production”",
+         happens="Model agrees, then is told it is staging. It complies.",
+         because="It read the conversation. That is the vulnerability.",
+         strength="advisory"),
+    dict(tag="L2", name="CLIENT-SIDE", color="l2", verdict="BLOCKED", bad=False,
+         control="PreToolUse hook  ·  deny-protected-paths.sh",
+         happens="Pattern matches kubectl delete. Hook exits 2.",
+         because="The hook never saw the conversation.",
+         strength="deterministic"),
+    dict(tag="L3", name="SERVER-SIDE", color="l3", verdict="BLOCKED", bad=False,
+         control="RBAC Role  ·  verbs: [get, list, watch]",
+         happens="API server returns 403 Forbidden.",
+         because="Enforced on the target, not on the agent.",
+         strength="external"),
 ]
 
 
 def fig_three_layer(t: Theme) -> str:
     out = [svg_open(
-        t, "The layer you can talk to is the layer that fails",
-        "Three enforcement layers. The in-agent layer is advisory and porous, so an "
-        "agent's intent passes through it. The client-side and server-side layers are "
-        "deterministic and hold, because they do not read the conversation.")]
+        t, "One action, three layers",
+        "An agent runs kubectl delete against production. The in-agent layer is "
+        "talked past and the action runs. The client-side hook blocks it without "
+        "reading the conversation. Server-side RBAC blocks it on the target.")]
 
-    out.append(text(80, 96, "The layer you can talk to", 54, t.ink, weight="700", spacing="-1"))
-    out.append(text(80, 156, "is the layer that fails.", 54, t.dim, weight="700", spacing="-1"))
+    out.append(text(76, 88, "The layer you can talk to is the layer that fails.",
+                    46, t.ink, weight="700", spacing="-1"))
 
-    # Intent arrow entering from the top. Positioned to cross the barrier span
-    # on the right, so the line is seen passing THROUGH the porous L1 barrier
-    # and being halted by the solid L2 one. That crossing is the argument; an
-    # arrow running down empty space beside the barriers makes no point.
-    ax = 1100
-    out.append(text(ax, 92, "agent decides to act", 20, t.danger, weight="600", anchor="middle"))
-    out.append(f'<path d="M {ax} 108 L {ax} 196" stroke="{t.danger}" stroke-width="3" fill="none"/>')
-    out.append(f'<path d="M {ax-8} 190 L {ax} 202 L {ax+8} 190 Z" fill="{t.danger}"/>')
+    # The action, stated concretely.
+    out.append(text(76, 148, "the agent decides to run", 22, t.dim))
+    out.append(rect(76, 168, 1448, 62, fill=t.panel, stroke=t.danger, rx=10, sw=2))
+    out.append(text(104, 208, "$ " + ACTION, 30, t.ink, family=MONO, weight="600"))
 
-    top, gap, bh = 210, 26, 178
-    for i, layer in enumerate(LAYERS):
+    top, gap, bh = 262, 16, 176
+    for i, s in enumerate(TRACE):
         y = top + i * (bh + gap)
-        c = getattr(t, layer["color"])
+        c = getattr(t, s["color"])
+        vcol = t.danger if s["bad"] else t.l3
 
-        out.append(rect(80, y, 1440, bh, fill=t.panel, stroke=t.line, rx=14))
-        # Colored spine identifies the layer without relying on text alone.
-        out.append(f'<rect x="80" y="{y}" width="7" height="{bh}" rx="3.5" fill="{c}"/>')
+        out.append(rect(76, y, 1448, bh, fill=t.panel, stroke=t.line, rx=12))
+        out.append(f'<rect x="76" y="{y}" width="7" height="{bh}" rx="3.5" fill="{c}"/>')
 
-        out.append(text(116, y + 46, layer["tag"], 20, c, weight="700", family=MONO))
-        out.append(text(116, y + 92, layer["name"], 33, t.ink, weight="700", spacing="1.5"))
-        out.append(text(116, y + 130, layer["controls"], 19, t.dim))
-        out.append(text(116, y + 158, layer["why"], 18, t.faint, weight="600"))
+        out.append(text(112, y + 42, s["tag"], 21, c, weight="700", family=MONO))
+        out.append(text(160, y + 42, s["name"], 27, t.ink, weight="700", spacing="1"))
+        out.append(text(112, y + 84, s["control"], 22, t.dim, family=MONO))
+        out.append(text(112, y + 122, s["happens"], 23, t.ink))
+        out.append(text(112, y + 156, s["because"], 21, t.faint, weight="600"))
 
-        # Verdict pill, right aligned.
-        pw = 232
-        px = 1520 - 36 - pw
-        out.append(rect(px, y + 30, pw, 40, fill="none", stroke=c, rx=20, sw=2))
-        out.append(text(px + pw / 2, y + 57, layer["verdict"], 17, c,
-                        weight="700", anchor="middle", spacing="1.2"))
+        # Verdict, large enough to read at half scale, which is how GitHub shows it.
+        vx = 1524 - 36
+        out.append(text(vx, y + 74, s["verdict"], 44, vcol, weight="700",
+                        anchor="end", spacing="1"))
+        out.append(text(vx, y + 112, s["strength"], 20, t.faint, anchor="end"))
 
-        # The barrier: dashed and broken where the layer is porous, solid where it holds.
-        # The barrier spans wider than the verdict pill so the intent line can
-        # cross it without also striking through the pill above.
-        by = y + bh - 30
-        bx0, bx1 = 1000, 1520 - 36
-        if layer["porous"]:
-            out.append(f'<line x1="{bx0}" y1="{by}" x2="{bx1}" y2="{by}" stroke="{c}" '
-                       f'stroke-width="4" stroke-dasharray="10 14" opacity="0.75"/>')
-            out.append(text(bx1, by + 26, "porous", 15, t.faint, anchor="end", family=MONO))
-        else:
-            out.append(f'<line x1="{bx0}" y1="{by}" x2="{bx1}" y2="{by}" stroke="{c}" '
-                       f'stroke-width="7"/>')
-            out.append(text(bx1, by + 26, "holds", 15, t.faint, anchor="end", family=MONO))
-
-        # The agent's intent passes through L1 unimpeded and terminates at L2.
-        # Drawn as one continuous dashed run so the eye follows it to the stop
-        # rather than losing it in the gap between panels.
-        if i == 0:
-            stop_y = top + (bh + gap) + bh - 30
-            out.append(f'<path d="M {ax} {y} L {ax} {stop_y - 13}" stroke="{t.danger}" '
-                       f'stroke-width="3" fill="none" stroke-dasharray="7 7"/>')
-        elif i == 1:
-            out.append(text(ax + 24, by - 16, "stopped here", 19, t.l2, weight="700"))
-            out.append(f'<circle cx="{ax}" cy="{by}" r="12" fill="{t.bg}" stroke="{t.l2}" '
-                       f'stroke-width="4"/>')
-
-    out.append(text(80, 872, "Everything an agent can be told is advisory. "
-                             "Constraints that hold live outside the model’s reasoning.",
-                    21, t.dim))
-    out.append(text(1520, 872, "agenticcovenants.com", 19, t.accent,
-                    anchor="end", weight="600", family=MONO))
+    out.append(text(76, 862, "One action · one concern of six · one of three layers. "
+                             "The full matrix is 93 cells, each with a working artifact.",
+                    22, t.dim))
+    out.append(text(1524, 862, "agenticcovenants.com", 21, t.accent,
+                    anchor="end", weight="700", family=MONO))
     out.append("</svg>\n")
     return "".join(out)
 
