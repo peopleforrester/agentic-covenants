@@ -81,13 +81,65 @@ def rect(x: float, y: float, w: float, h: float, *, fill: str = "none",
             f'fill="{fill}" stroke="{stroke}" stroke-width="{sw}"{d}/>')
 
 
-def svg_open(t: Theme, title: str, desc: str) -> str:
+def svg_open(t: Theme, title: str, desc: str, w: int = W, h: int = H) -> str:
     return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" '
-        f'width="{W}" height="{H}" role="img" aria-labelledby="t d">\n'
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" '
+        f'width="{w}" height="{h}" role="img" aria-labelledby="t d">\n'
         f'<title id="t">{esc(title)}</title>\n<desc id="d">{esc(desc)}</desc>\n'
-        f'<rect width="{W}" height="{H}" fill="{t.bg}"/>\n'
+        f'<rect width="{w}" height="{h}" fill="{t.bg}"/>\n'
     )
+
+
+# --------------------------------------------------------------------------
+# Figure 3: social preview card
+# --------------------------------------------------------------------------
+# GitHub renders this at roughly 600px wide in a feed and crops nothing, so the
+# constraint is legibility at half size rather than density. Everything here is
+# deliberately larger than it needs to be at 1:1.
+
+SOCIAL_W, SOCIAL_H = 1280, 640
+
+
+def fig_social(t: Theme) -> str:
+    w, h = SOCIAL_W, SOCIAL_H
+    out = [svg_open(t, "Agentic Covenants",
+                    "Governance for autonomous agents, enforced by infrastructure "
+                    "instead of by prompt.", w, h)]
+
+    # Accent rule at the top, in the three layer colours, so the card carries
+    # the framework's own visual key even at thumbnail size.
+    for i, c in enumerate((t.l1, t.l2, t.l3)):
+        out.append(f'<rect x="{i * w / 3:.1f}" y="0" width="{w / 3:.1f}" height="9" fill="{c}"/>')
+
+    out.append(text(72, 132, "AGENTIC COVENANTS", 30, t.accent,
+                    weight="700", family=MONO, spacing="3"))
+
+    out.append(text(72, 236, "The layer you can talk to", 62, t.ink,
+                    weight="700", spacing="-1.5"))
+    out.append(text(72, 310, "is the layer that fails.", 62, t.dim,
+                    weight="700", spacing="-1.5"))
+
+    out.append(text(72, 374, "Governance for autonomous agents, enforced by "
+                             "infrastructure instead of by prompt.", 24, t.dim))
+
+    # Three compact layer chips restating the model.
+    chips = [("IN-AGENT", "advisory", t.l1), ("CLIENT-SIDE", "deterministic", t.l2),
+             ("SERVER-SIDE", "external", t.l3)]
+    cw, cgap = 356, 20
+    cy = 428
+    for i, (name, verdict, c) in enumerate(chips):
+        cx = 72 + i * (cw + cgap)
+        out.append(rect(cx, cy, cw, 96, fill=t.panel, stroke=t.line, rx=12))
+        out.append(f'<rect x="{cx}" y="{cy}" width="6" height="96" rx="3" fill="{c}"/>')
+        out.append(text(cx + 26, cy + 42, name, 24, t.ink, weight="700", spacing="0.8"))
+        out.append(text(cx + 26, cy + 72, verdict, 19, c, weight="600"))
+
+    out.append(text(72, 592, "Six matrices · NIST CSF 2.0 · 93 cells · working artifacts",
+                    22, t.faint))
+    out.append(text(w - 72, 592, "agenticcovenants.com", 23, t.accent,
+                    anchor="end", weight="700", family=MONO))
+    out.append("</svg>\n")
+    return "".join(out)
 
 
 # --------------------------------------------------------------------------
@@ -271,6 +323,7 @@ def fig_six_matrices(t: Theme) -> str:
 FIGURES = {
     "three-layer-model": fig_three_layer,
     "six-matrices": fig_six_matrices,
+    "social-card": fig_social,
 }
 
 
