@@ -58,6 +58,8 @@ footer.site p{margin:.35em 0}
   border-radius:8px;padding:14px 16px;max-width:70ch}
 .evidence .src{color:var(--faint);font-size:.85rem;display:block;margin-top:.35em}
 
+.figure{display:block;margin:2em 0}
+.figure img{width:100%;height:auto;border:1px solid var(--line);border-radius:12px;display:block}
 .lgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
 .l{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;
    border-top:3px solid var(--line)}

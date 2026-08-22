@@ -395,13 +395,13 @@ echo &quot;retention window.&quot;
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/iac-gated-pipeline.yml"><code>iac-gated-pipeline.yml</code></a>, split-stage Terraform pipeline. The <code>plan</code> job runs on every PR and push with read-only credentials; the <code>apply</code> job runs only on <code>main</code> push and requires manual approval via a GitHub environment with required reviewers. Drop in <code>.github/workflows/</code>.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/networkpolicy-default-deny.yaml"><code>networkpolicy-default-deny.yaml</code></a>, namespace-wide default deny on ingress and egress.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/networkpolicy-allowlist.yaml"><code>networkpolicy-allowlist.yaml</code></a>, explicit allow rules layered over the default deny: kube-dns, public HTTPS to non-RFC1918 ranges only.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/resourcequota.yaml"><code>resourcequota.yaml</code></a>, namespace-level quota on CPU, memory, pods, PVCs, LoadBalancer/NodePort services (set to 0).</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/limitrange.yaml"><code>limitrange.yaml</code></a>, per-container default and max requests/limits.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/s3-immutable-backups.sh"><code>s3-immutable-backups.sh</code></a>, provisions an S3 bucket with Object Lock in compliance mode and a 30-day default retention.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/cross-account-providers.tf"><code>cross-account-providers.tf</code></a>, Terraform provider blocks demonstrating the cross-account separation pattern: agent role lives in the non-prod account and explicitly cannot AssumeRole into prod.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/blast-radius/server-side/iac-gated-pipeline.yml"><code>iac-gated-pipeline.yml</code></a>, split-stage Terraform pipeline. The <code>plan</code> job runs on every PR and push with read-only credentials; the <code>apply</code> job runs only on <code>main</code> push and requires manual approval via a GitHub environment with required reviewers. Drop in <code>.github/workflows/</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/blast-radius/server-side/networkpolicy-default-deny.yaml"><code>networkpolicy-default-deny.yaml</code></a>, namespace-wide default deny on ingress and egress.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/blast-radius/server-side/networkpolicy-allowlist.yaml"><code>networkpolicy-allowlist.yaml</code></a>, explicit allow rules layered over the default deny: kube-dns, public HTTPS to non-RFC1918 ranges only.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/blast-radius/server-side/resourcequota.yaml"><code>resourcequota.yaml</code></a>, namespace-level quota on CPU, memory, pods, PVCs, LoadBalancer/NodePort services (set to 0).</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/blast-radius/server-side/limitrange.yaml"><code>limitrange.yaml</code></a>, per-container default and max requests/limits.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/blast-radius/server-side/s3-immutable-backups.sh"><code>s3-immutable-backups.sh</code></a>, provisions an S3 bucket with Object Lock in compliance mode and a 30-day default retention.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/blast-radius/server-side/cross-account-providers.tf"><code>cross-account-providers.tf</code></a>, Terraform provider blocks demonstrating the cross-account separation pattern: agent role lives in the non-prod account and explicitly cannot AssumeRole into prod.</li>
 </ul>
 <h3>Verification</h3>
 <pre><code>

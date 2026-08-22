@@ -125,7 +125,7 @@ echo &quot;Local supply chain quarantined for $AGENT_NAME (suspect: $SUSPECT, qu
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-quarantine-supply-chain-local"><code>agent-quarantine-supply-chain-local</code></a>, runbook script. Removes the suspect server from <code>mcp-allowlist.json</code>, moves suspect package files to <code>/var/quarantine/&lt;incident&gt;/</code>, sets <code>chattr +i</code> on lockfiles, pins runtime to last-known-good, kills the agent so the new state applies.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/supply-chain/client-side/agent-quarantine-supply-chain-local"><code>agent-quarantine-supply-chain-local</code></a>, runbook script. Removes the suspect server from <code>mcp-allowlist.json</code>, moves suspect package files to <code>/var/quarantine/&lt;incident&gt;/</code>, sets <code>chattr +i</code> on lockfiles, pins runtime to last-known-good, kills the agent so the new state applies.</li>
 </ul>
 <h3>Verification</h3>
 <pre><code>

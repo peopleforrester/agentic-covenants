@@ -244,10 +244,10 @@ tags:
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/audit-policy.yaml"><code>audit-policy.yaml</code></a>, Kubernetes audit policy that captures every agent SA action at RequestResponse level for mutations and Metadata level for reads. Identity-binding events (RoleBindings, ServiceAccount creation) are captured at full body.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/enable-cloudtrail.sh"><code>enable-cloudtrail.sh</code></a>, provisions a multi-region CloudTrail trail with log file validation enabled, delivering to an Object-Lock S3 bucket (provisioned in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/blast-radius/server-side/s3-immutable-backups.sh"><code>../../../controls/blast-radius/server-side/s3-immutable-backups.sh</code></a>).</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sigma-out-of-hours.yaml"><code>sigma-out-of-hours.yaml</code></a>, Sigma rule firing when an agent SA is used outside the expected business-hours window.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sigma-unexpected-source-ip.yaml"><code>sigma-unexpected-source-ip.yaml</code></a>, Sigma rule firing when the source IP of an agent action is outside the known agent-egress IP set.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/identity/server-side/audit-policy.yaml"><code>audit-policy.yaml</code></a>, Kubernetes audit policy that captures every agent SA action at RequestResponse level for mutations and Metadata level for reads. Identity-binding events (RoleBindings, ServiceAccount creation) are captured at full body.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/identity/server-side/enable-cloudtrail.sh"><code>enable-cloudtrail.sh</code></a>, provisions a multi-region CloudTrail trail with log file validation enabled, delivering to an Object-Lock S3 bucket (provisioned in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/blast-radius/server-side/s3-immutable-backups.sh"><code>../../../controls/blast-radius/server-side/s3-immutable-backups.sh</code></a>).</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/identity/server-side/sigma-out-of-hours.yaml"><code>sigma-out-of-hours.yaml</code></a>, Sigma rule firing when an agent SA is used outside the expected business-hours window.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/identity/server-side/sigma-unexpected-source-ip.yaml"><code>sigma-unexpected-source-ip.yaml</code></a>, Sigma rule firing when the source IP of an agent action is outside the known agent-egress IP set.</li>
 </ul>
 <h3>Verification</h3>
 <pre><code>

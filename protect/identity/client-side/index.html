@@ -225,9 +225,9 @@ exit &quot;$FAIL&quot;
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/provision-credential.sh"><code>provision-credential.sh</code></a>, creates a per-agent credential directory, locks down ownership, applies an ACL so the agent&#x27;s own user cannot read the file at rest. Run as root.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/claude-code-prod.service"><code>claude-code-prod.service</code></a>, systemd unit that loads the per-agent env file and runs the agent as a dedicated user. Drop in <code>/etc/systemd/system/</code>.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/verify.sh"><code>verify.sh</code></a>, three checks: credential not in process listing, agent cannot read its own credential file at rest, every agent has a unique credential hash.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/identity/client-side/provision-credential.sh"><code>provision-credential.sh</code></a>, creates a per-agent credential directory, locks down ownership, applies an ACL so the agent&#x27;s own user cannot read the file at rest. Run as root.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/identity/client-side/claude-code-prod.service"><code>claude-code-prod.service</code></a>, systemd unit that loads the per-agent env file and runs the agent as a dedicated user. Drop in <code>/etc/systemd/system/</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/identity/client-side/verify.sh"><code>verify.sh</code></a>, three checks: credential not in process listing, agent cannot read its own credential file at rest, every agent has a unique credential hash.</li>
 </ul>
 <h3>Verification</h3>
 <p>Run <code>verify.sh</code>. All three checks must pass.</p>

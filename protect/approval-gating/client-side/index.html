@@ -334,15 +334,15 @@ approval_service:
 <p><strong>Strength.</strong> Deterministic for actions that match the tier patterns. The dominant failure mode is <strong>alert fatigue</strong>: reviewers approve reflexively after enough repetitions. Tiering and judgment-query escalation reduce but do not eliminate the failure mode. Equivalent commands not in the pattern list (<code>kubectl scale --replicas=0</code>) defeat the gating; document and move to server-side.</p>
 <h3>Tooling</h3>
 <ul>
-<li>- The PreToolUse hook from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/authorization/client-side/"><code>../../authorization/client-side/</code></a> extended with tiering.</li>
+<li>- The PreToolUse hook from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/client-side/"><code>../../authorization/client-side/</code></a> extended with tiering.</li>
 <li>- A counter or sqlite-backed counter for session limits.</li>
 <li>- An out-of-band channel: signed Slack approval, second-terminal confirmation, FIDO2 hardware key prompt, or a phone-side app.</li>
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/pre_tool_use_tiered.sh"><code>pre_tool_use_tiered.sh</code></a>, the deny-then-ask-then-allow hook from Authorization, plus tier-3 typed verbatim confirmation, tier-4 out-of-band approval flow with timeout-deny default, session destructive-action counter (default cap: 10 per session).</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/tier-config.yaml"><code>tier-config.yaml</code></a>, declarative tier definitions consumed by the hook. The hook reads pattern lists from here so operators can update tiers without editing the script.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/escalate.py"><code>escalate.py</code></a>, judgment-query escalation tool. Distinct from approval: the operator supplies the missing input rather than a yes/no.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/approval-gating/client-side/pre_tool_use_tiered.sh"><code>pre_tool_use_tiered.sh</code></a>, the deny-then-ask-then-allow hook from Authorization, plus tier-3 typed verbatim confirmation, tier-4 out-of-band approval flow with timeout-deny default, session destructive-action counter (default cap: 10 per session).</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/approval-gating/client-side/tier-config.yaml"><code>tier-config.yaml</code></a>, declarative tier definitions consumed by the hook. The hook reads pattern lists from here so operators can update tiers without editing the script.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/approval-gating/client-side/escalate.py"><code>escalate.py</code></a>, judgment-query escalation tool. Distinct from approval: the operator supplies the missing input rather than a yes/no.</li>
 </ul>
 <h3>Verification</h3>
 <pre><code>

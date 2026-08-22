@@ -158,8 +158,8 @@ echo &quot;Cross-reference each line above with PR review records. Any commit la
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-restore-approval-server"><code>agent-restore-approval-server</code></a>, runbook script. Restores branch protection from source (verifies <code>enforce_admins: true</code>), re-enables every workflow, audits bypass events from the incident window, unfreezes deployments <strong>only when explicitly authorized</strong> via the <code>--unfreeze</code> flag.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/audit-bypass-events.sh"><code>audit-bypass-events.sh</code></a>, helper that lists every push to a protected branch during the incident window with <code>forced: true</code> or admin-bypass markers. Output must be reviewed manually before declaring approval-gating recovered.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/restorations/approval-gating/server-side/agent-restore-approval-server"><code>agent-restore-approval-server</code></a>, runbook script. Restores branch protection from source (verifies <code>enforce_admins: true</code>), re-enables every workflow, audits bypass events from the incident window, unfreezes deployments <strong>only when explicitly authorized</strong> via the <code>--unfreeze</code> flag.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/restorations/approval-gating/server-side/audit-bypass-events.sh"><code>audit-bypass-events.sh</code></a>, helper that lists every push to a protected branch during the incident window with <code>forced: true</code> or admin-bypass markers. Output must be reviewed manually before declaring approval-gating recovered.</li>
 </ul>
 <h3>Verification</h3>
 <pre><code>
