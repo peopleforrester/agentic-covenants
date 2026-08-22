@@ -454,6 +454,12 @@ def index_page(loaded: dict[str, dict], totals: dict) -> str:
   artifact in every populated one.</p>
   <p class="cta"><a class="btn" href="protect/index.html">Start with Protect</a>
      <a class="btn ghost" href="https://github.com/peopleforrester/agentic-covenants">Source on GitHub</a></p>
+  <picture class="figure">
+    <source media="(prefers-color-scheme: light)" srcset="assets/three-layer-model-light.svg">
+    <img src="assets/three-layer-model-dark.svg" alt="Three enforcement layers. An agent&#39;s
+      intent passes straight through the advisory in-agent layer and is stopped at the
+      deterministic client-side layer.">
+  </picture>
 </section>
 
 <section class="opening">
@@ -490,6 +496,11 @@ def index_page(loaded: dict[str, dict], totals: dict) -> str:
 
 <section class="functions">
   <h2>Six matrices, one per NIST CSF 2.0 function</h2>
+  <picture class="figure">
+    <source media="(prefers-color-scheme: light)" srcset="assets/six-matrices-light.svg">
+    <img src="assets/six-matrices-dark.svg" alt="Charter authorizes, Inventory tracks,
+      Covenants binds, Sentinels watches, Interventions stops, Restorations rebuilds.">
+  </picture>
   <div class="fgrid">{flow}</div>
   <p class="note">Charter authorizes, Inventory tracks, Covenants binds, Sentinels watches,
   Interventions stops, Restorations rebuilds. Recovery feeds back into prevention.</p>
@@ -566,6 +577,15 @@ def build(out: Path, check_only: bool = False) -> int:
     out.mkdir(parents=True)
 
     (out / "style.css").write_text(STYLE, encoding="utf-8")
+
+    # The figures are shared with the README rather than duplicated. Copying
+    # keeps assets/ the single source and the published site self-contained.
+    assets_src = REPO / "assets"
+    if assets_src.is_dir():
+        assets_out = out / "assets"
+        assets_out.mkdir(parents=True, exist_ok=True)
+        for svg in assets_src.glob("*.svg"):
+            shutil.copy2(svg, assets_out / svg.name)
     # Pages serves this repo at a custom domain; CNAME must sit at the root.
     (out / "CNAME").write_text("agenticcovenants.com\n", encoding="utf-8")
     # Tell Pages not to run Jekyll over the output.
@@ -669,6 +689,8 @@ footer.site p{margin:.35em 0}
   border-radius:8px;padding:14px 16px;max-width:70ch}
 .evidence .src{color:var(--faint);font-size:.85rem;display:block;margin-top:.35em}
 
+.figure{display:block;margin:2em 0}
+.figure img{width:100%;height:auto;border:1px solid var(--line);border-radius:12px;display:block}
 .lgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
 .l{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;
    border-top:3px solid var(--line)}

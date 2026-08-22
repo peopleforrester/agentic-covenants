@@ -8,6 +8,11 @@ Six matrices mapped to the six NIST CSF 2.0 functions. Ninety-three cells. Worki
 [![Dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen)](#what-this-is-not)
 [![Cells: 93](https://img.shields.io/badge/cells-93-informational)](#the-six-matrices)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/three-layer-model-dark.svg">
+  <img alt="Three enforcement layers. An agent's intent passes straight through the advisory in-agent layer and is stopped at the deterministic client-side layer." src="assets/three-layer-model-light.svg">
+</picture>
+
 ---
 
 ## The 30-second version
@@ -114,6 +119,11 @@ Full essay: **[`MATRIX.md`](./MATRIX.md)** · Bypass surface for every control: 
 | **Already breached** | [`interventions/`](./interventions/), kill-switch runbooks, five-second blast-radius target |
 
 ## The six matrices
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/six-matrices-dark.svg">
+  <img alt="Charter authorizes, Inventory tracks, Covenants binds, Sentinels watches, Interventions stops, Restorations rebuilds, mapped to the six NIST CSF 2.0 functions." src="assets/six-matrices-light.svg">
+</picture>
 
 Covenants is one of six. Each maps to a NIST CSF 2.0 function, and each is five concerns by three layers.
 

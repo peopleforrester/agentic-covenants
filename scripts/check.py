@@ -442,7 +442,32 @@ def check_site(staged: bool) -> Findings:
     return findings
 
 
+def check_diagrams(staged: bool) -> Findings:
+    """Committed SVGs must match what assets/build-diagrams.py produces.
+
+    The figures restate claims that also appear in the prose. A diagram that
+    has drifted from its generator is the same failure as a README number that
+    no longer matches the tree, and it is harder to notice because nobody
+    diffs an image.
+    """
+    findings = Findings("diagrams")
+    builder = REPO_ROOT / "assets" / "build-diagrams.py"
+    if not builder.is_file():
+        return findings
+
+    result = subprocess.run(
+        [sys.executable, str(builder), "--check"],
+        cwd=REPO_ROOT, capture_output=True, text=True, check=False,
+    )
+    if result.returncode != 0:
+        for line in (result.stderr or result.stdout).splitlines():
+            if line.strip():
+                findings.add(builder, None, line.strip())
+    return findings
+
+
 CHECKS: dict[str, Callable[[bool], Findings]] = {
+    "diagrams": check_diagrams,
     "site": check_site,
     "links": check_links,
     "yaml": check_yaml,
