@@ -159,12 +159,12 @@ if __name__ == &quot;__main__&quot;:
 <p><strong>Strength.</strong> Forensic for the trace. Real-time for the lethal-trifecta detector, but only because the detector runs in the wrapper, not in the agent. The agent itself cannot be trusted to surface a violation it is participating in.</p>
 <h3>Tooling</h3>
 <ul>
-<li>- The transcript-shipping pipeline from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/identity/in-agent/"><code>../../identity/in-agent/</code></a>.</li>
-<li>- A wrapper that intercepts tool calls and inspects the in-context state. The reference implementation is in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/blast-radius/in-agent/lethal-trifecta-detector.py"><code>lethal-trifecta-detector.py</code></a>.</li>
+<li>- The transcript-shipping pipeline from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/identity/in-agent/"><code>../../identity/in-agent/</code></a>.</li>
+<li>- A wrapper that intercepts tool calls and inspects the in-context state. The reference implementation is in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/lethal-trifecta-detector.py"><code>lethal-trifecta-detector.py</code></a>.</li>
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/blast-radius/in-agent/lethal-trifecta-detector.py"><code>lethal-trifecta-detector.py</code></a>, minimal reference implementation of the detector. Tags inputs as private/untrusted/external as they enter the context window; alerts when all three classes are simultaneously present and the agent attempts a tool call. Intended to wrap the agent runtime; deployment is platform-specific.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/lethal-trifecta-detector.py"><code>lethal-trifecta-detector.py</code></a>, minimal reference implementation of the detector. Tags inputs as private/untrusted/external as they enter the context window; alerts when all three classes are simultaneously present and the agent attempts a tool call. Intended to wrap the agent runtime; deployment is platform-specific.</li>
 </ul>
 <h3>Verification</h3>
 <pre><code>

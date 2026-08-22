@@ -417,7 +417,7 @@ if __name__ == &quot;__main__&quot;:
 <div class="tw"><table><tbody>
 <tr><td>Stage</td><td>Runs</td><td>Purpose</td></tr>
 <tr><td><strong>Input scan</strong></td><td>Before the model sees fetched content</td><td>Score retrieved documents, web pages, and tool results for injection patterns</td></tr>
-<tr><td><strong>Provenance tagging</strong></td><td>At fetch time</td><td>Wrap untrusted content so the model has a chance to treat it as data. See <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/content-integrity/in-agent/untrusted-content-framing.md"><code>../in-agent/untrusted-content-framing.md</code></a></td></tr>
+<tr><td><strong>Provenance tagging</strong></td><td>At fetch time</td><td>Wrap untrusted content so the model has a chance to treat it as data. See <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/in-agent/untrusted-content-framing.md"><code>../in-agent/untrusted-content-framing.md</code></a></td></tr>
 <tr><td><strong>Output scan</strong></td><td>Before a response or tool argument leaves</td><td>Detect secrets, PII, and encoded exfiltration in what the agent is about to send</td></tr>
 <tr><td><strong>Tool-result sanitization</strong></td><td>Between tool and context</td><td>Strip control sequences, zero-width characters, and delimiter spoofing attempts</td></tr>
 </tbody></table></div>
@@ -434,8 +434,8 @@ if __name__ == &quot;__main__&quot;:
 <h3>Artifacts</h3>
 <div class="tw"><table><tbody>
 <tr><td>File</td><td>What it does</td></tr>
-<tr><td><a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/content-integrity/client-side/scan-pipeline.py"><code>scan-pipeline.py</code></a></td><td>Reference input/output scanning pipeline with pluggable scanners and an explicit threshold policy</td></tr>
-<tr><td><a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/content-integrity/client-side/sanitize-tool-result.py"><code>sanitize-tool-result.py</code></a></td><td>Strips control characters, zero-width codepoints, and delimiter-spoofing attempts from tool results</td></tr>
+<tr><td><a href="https://github.com/peopleforrester/agentic-covenants/blob/main/scan-pipeline.py"><code>scan-pipeline.py</code></a></td><td>Reference input/output scanning pipeline with pluggable scanners and an explicit threshold policy</td></tr>
+<tr><td><a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sanitize-tool-result.py"><code>sanitize-tool-result.py</code></a></td><td>Strips control characters, zero-width codepoints, and delimiter-spoofing attempts from tool results</td></tr>
 </tbody></table></div>
 <p>Both are dependency-free reference implementations that show the <strong>shape</strong> of the control and where a real scanner plugs in. They deliberately do not bundle a model. Substituting LLM Guard, Presidio, or Prompt Guard for the placeholder scanner is the adoption step.</p>
 <h3>Bypasses</h3>

@@ -107,13 +107,13 @@ echo &quot;Local approval gating locked down for $AGENT_NAME (incident $INCIDENT
 <p><strong>Speed target.</strong> Under 10 seconds.</p>
 <h3>Tooling</h3>
 <ul>
-<li>- The hook layout from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/authorization/client-side/"><code>../../authorization/client-side/</code></a> (this runbook re-uses the deny-all hook).</li>
+<li>- The hook layout from <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/authorization/client-side/"><code>../../authorization/client-side/</code></a> (this runbook re-uses the deny-all hook).</li>
 <li>- <code>jq</code> for editing <code>settings.json</code> in place.</li>
 <li>- API access to your judgment-query escalation service to disable it.</li>
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/approval-gating/client-side/agent-approval-lockdown-local"><code>agent-approval-lockdown-local</code></a>, runbook script. Replaces the approval hook with the deny-all hook (shared with authorization client-side), disables Auto Mode in <code>settings.json</code>, sets <code>requireOutOfBand: true</code>, disables the judgment-query escalation channel, kills the agent.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-approval-lockdown-local"><code>agent-approval-lockdown-local</code></a>, runbook script. Replaces the approval hook with the deny-all hook (shared with authorization client-side), disables Auto Mode in <code>settings.json</code>, sets <code>requireOutOfBand: true</code>, disables the judgment-query escalation channel, kills the agent.</li>
 </ul>
 <h3>Verification</h3>
 <pre><code>

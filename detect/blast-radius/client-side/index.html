@@ -116,13 +116,13 @@ END {
 <h3>Tooling</h3>
 <ul>
 <li>- <code>bpftrace</code> and kernel headers, or Falco userspace (<code>falco --userspace</code>) for portability.</li>
-<li>- <code>auditd</code> (already configured in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/identity/client-side/auditd-agent.rules"><code>../../identity/client-side/auditd-agent.rules</code></a>).</li>
+<li>- <code>auditd</code> (already configured in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/identity/client-side/auditd-agent.rules"><code>../../identity/client-side/auditd-agent.rules</code></a>).</li>
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/blast-radius/client-side/network-attempt.bt"><code>network-attempt.bt</code></a>, bpftrace one-liner that prints <code>agent_network_attempt</code> for any <code>connect()</code> syscall from a process tree rooted at the agent. Adjust <code>comm</code> filter for your runtime&#x27;s actual process names.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/blast-radius/client-side/falco-agent-host.yaml"><code>falco-agent-host.yaml</code></a>, Falco userspace rules for unsandboxed agent children and writes outside <code>/workspace</code>/<code>/tmp</code>.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/blast-radius/client-side/bubblewrap-with-logging.sh"><code>bubblewrap-with-logging.sh</code></a>, wrapper that tees bubblewrap stderr to syslog so EPERM events surface in the SIEM.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/network-attempt.bt"><code>network-attempt.bt</code></a>, bpftrace one-liner that prints <code>agent_network_attempt</code> for any <code>connect()</code> syscall from a process tree rooted at the agent. Adjust <code>comm</code> filter for your runtime&#x27;s actual process names.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/falco-agent-host.yaml"><code>falco-agent-host.yaml</code></a>, Falco userspace rules for unsandboxed agent children and writes outside <code>/workspace</code>/<code>/tmp</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/bubblewrap-with-logging.sh"><code>bubblewrap-with-logging.sh</code></a>, wrapper that tees bubblewrap stderr to syslog so EPERM events surface in the SIEM.</li>
 </ul>
 <h3>Verification</h3>
 <pre><code>

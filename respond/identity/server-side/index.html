@@ -132,8 +132,8 @@ echo &quot;Server-side identity revoked for $AGENT_NAME (incident $INCIDENT_ID)&
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/identity/server-side/agent-revoke-server"><code>agent-revoke-server</code></a>, runbook script. Disables ServiceAccount automount, force-deletes pods to break token mounts, attaches an IAM <code>Deny *</code> policy to the agent role, terminates active OIDC sessions.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/identity/server-side/iam-deny-all.json"><code>iam-deny-all.json</code></a>, pre-staged IAM policy document used by the runbook. <code>Deny <em></code> on <code></em></code>. <strong>Pre-stage this file</strong> at <code>/etc/agents/emergency/iam-deny-all.json</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-revoke-server"><code>agent-revoke-server</code></a>, runbook script. Disables ServiceAccount automount, force-deletes pods to break token mounts, attaches an IAM <code>Deny *</code> policy to the agent role, terminates active OIDC sessions.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/iam-deny-all.json"><code>iam-deny-all.json</code></a>, pre-staged IAM policy document used by the runbook. <code>Deny <em></code> on <code></em></code>. <strong>Pre-stage this file</strong> at <code>/etc/agents/emergency/iam-deny-all.json</code>.</li>
 </ul>
 <h3>Verification</h3>
 <pre><code>

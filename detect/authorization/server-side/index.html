@@ -228,10 +228,10 @@ tags:
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/authorization/server-side/ship-policy-reports.yaml"><code>ship-policy-reports.yaml</code></a>, CronJob that reads Kyverno PolicyReports across all namespaces every 5 minutes, filters for <code>summary.fail &gt; 0</code>, and ships each failure to the SIEM as a structured event.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/authorization/server-side/opa-decision-log-config.yaml"><code>opa-decision-log-config.yaml</code></a>, OPA config snippet that streams decision logs to the SIEM. Filters on <code>decision == false</code> so the SIEM is not flooded with allow events.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/authorization/server-side/access-analyzer-eventbridge.sh"><code>access-analyzer-eventbridge.sh</code></a>, wires AWS IAM Access Analyzer findings to EventBridge → Lambda → SIEM.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/authorization/server-side/sigma-rbac-denial-spike.yaml"><code>sigma-rbac-denial-spike.yaml</code></a>, SIEM rule firing when more than 10 RBAC denials occur in a single namespace within 5 minutes.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/ship-policy-reports.yaml"><code>ship-policy-reports.yaml</code></a>, CronJob that reads Kyverno PolicyReports across all namespaces every 5 minutes, filters for <code>summary.fail &gt; 0</code>, and ships each failure to the SIEM as a structured event.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/opa-decision-log-config.yaml"><code>opa-decision-log-config.yaml</code></a>, OPA config snippet that streams decision logs to the SIEM. Filters on <code>decision == false</code> so the SIEM is not flooded with allow events.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/access-analyzer-eventbridge.sh"><code>access-analyzer-eventbridge.sh</code></a>, wires AWS IAM Access Analyzer findings to EventBridge → Lambda → SIEM.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sigma-rbac-denial-spike.yaml"><code>sigma-rbac-denial-spike.yaml</code></a>, SIEM rule firing when more than 10 RBAC denials occur in a single namespace within 5 minutes.</li>
 </ul>
 <h3>Verification</h3>
 <pre><code>

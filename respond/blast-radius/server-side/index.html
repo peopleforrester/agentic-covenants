@@ -148,9 +148,9 @@ spec:
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/blast-radius/server-side/agent-contain-server"><code>agent-contain-server</code></a>, runbook script. Applies emergency NetworkPolicy default-deny, scales agent Deployments to zero, force-deletes pods, optionally cordons and drains nodes, and blocks egress at the cloud firewall.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/blast-radius/server-side/networkpolicy-emergency-deny.yaml"><code>networkpolicy-emergency-deny.yaml</code></a>, pre-staged default-deny NetworkPolicy with no allow rules. Applied to the agent namespace. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/networkpolicy-emergency-deny.yaml</code>.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/blast-radius/server-side/sg-deny-all-egress.json"><code>sg-deny-all-egress.json</code></a>, pre-staged AWS Security Group egress-rule descriptions used by the runbook to update the agent&#x27;s SG. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/sg-deny-all-egress.json</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/agent-contain-server"><code>agent-contain-server</code></a>, runbook script. Applies emergency NetworkPolicy default-deny, scales agent Deployments to zero, force-deletes pods, optionally cordons and drains nodes, and blocks egress at the cloud firewall.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/networkpolicy-emergency-deny.yaml"><code>networkpolicy-emergency-deny.yaml</code></a>, pre-staged default-deny NetworkPolicy with no allow rules. Applied to the agent namespace. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/networkpolicy-emergency-deny.yaml</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sg-deny-all-egress.json"><code>sg-deny-all-egress.json</code></a>, pre-staged AWS Security Group egress-rule descriptions used by the runbook to update the agent&#x27;s SG. <strong>Pre-stage</strong> at <code>/etc/agents/emergency/sg-deny-all-egress.json</code>.</li>
 </ul>
 <h3>Verification</h3>
 <pre><code>

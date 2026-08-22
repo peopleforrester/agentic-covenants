@@ -221,10 +221,10 @@ tags:
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/supply-chain/server-side/kyverno-log-image-pulls.yaml"><code>kyverno-log-image-pulls.yaml</code></a>, mutating ClusterPolicy that annotates every Pod with the image references and pull timestamp; the annotation is shipped to SIEM by the policy-report shipping CronJob in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/authorization/server-side/ship-policy-reports.yaml"><code>../../authorization/server-side/ship-policy-reports.yaml</code></a>.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/supply-chain/server-side/sbom-diff-cronjob.yaml"><code>sbom-diff-cronjob.yaml</code></a>, daily CronJob that runs syft against every image in agent namespaces, hashes the SBOM, compares to the previous day&#x27;s hash, ships sbom_diff events when changed.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/supply-chain/server-side/hubble-fqdn-deny-export.sh"><code>hubble-fqdn-deny-export.sh</code></a>, pipes Hubble L7 DNS denials to SIEM (the FQDN-egress denial signal).</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/supply-chain/server-side/sigma-cosign-failure.yaml"><code>sigma-cosign-failure.yaml</code></a>, SIEM rule firing on policy-report entries where <code>data.policy: verify-image-signatures</code> and <code>data.failed &gt; 0</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/kyverno-log-image-pulls.yaml"><code>kyverno-log-image-pulls.yaml</code></a>, mutating ClusterPolicy that annotates every Pod with the image references and pull timestamp; the annotation is shipped to SIEM by the policy-report shipping CronJob in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/authorization/server-side/ship-policy-reports.yaml"><code>../../authorization/server-side/ship-policy-reports.yaml</code></a>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sbom-diff-cronjob.yaml"><code>sbom-diff-cronjob.yaml</code></a>, daily CronJob that runs syft against every image in agent namespaces, hashes the SBOM, compares to the previous day&#x27;s hash, ships sbom_diff events when changed.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/hubble-fqdn-deny-export.sh"><code>hubble-fqdn-deny-export.sh</code></a>, pipes Hubble L7 DNS denials to SIEM (the FQDN-egress denial signal).</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sigma-cosign-failure.yaml"><code>sigma-cosign-failure.yaml</code></a>, SIEM rule firing on policy-report entries where <code>data.policy: verify-image-signatures</code> and <code>data.failed &gt; 0</code>.</li>
 </ul>
 <h3>Verification</h3>
 <pre><code>

@@ -306,9 +306,9 @@ spec:
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/server-side/kyverno-no-cluster-roles.yaml"><code>kyverno-no-cluster-roles.yaml</code></a>, ClusterPolicy with three rules: deny <code>ClusterRoleBinding</code> whose subjects include any agent ServiceAccount; deny wildcard verbs in any Role or ClusterRole; deny RoleBinding into prod namespaces with agent SA subjects. Apply with <code>kubectl apply -f</code>.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/server-side/git-pre-receive-hook.sh"><code>git-pre-receive-hook.sh</code></a>, server-side pre-receive hook. Rejects force-pushes to main, blocks edits to protected paths from non-CODEOWNERS, runs gitleaks against the diff. Install in <code>/var/lib/git/&lt;repo&gt;.git/hooks/pre-receive</code> on every Git server.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/server-side/aws-iam-scoped-policy.json"><code>aws-iam-scoped-policy.json</code></a>, example IAM policy with explicit <code>Resource</code> ARNs for the allow list and a tagged-deny clause for everything else. Substitute resource ARNs for your environment.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/kyverno-no-cluster-roles.yaml"><code>kyverno-no-cluster-roles.yaml</code></a>, ClusterPolicy with three rules: deny <code>ClusterRoleBinding</code> whose subjects include any agent ServiceAccount; deny wildcard verbs in any Role or ClusterRole; deny RoleBinding into prod namespaces with agent SA subjects. Apply with <code>kubectl apply -f</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/git-pre-receive-hook.sh"><code>git-pre-receive-hook.sh</code></a>, server-side pre-receive hook. Rejects force-pushes to main, blocks edits to protected paths from non-CODEOWNERS, runs gitleaks against the diff. Install in <code>/var/lib/git/&lt;repo&gt;.git/hooks/pre-receive</code> on every Git server.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/aws-iam-scoped-policy.json"><code>aws-iam-scoped-policy.json</code></a>, example IAM policy with explicit <code>Resource</code> ARNs for the allow list and a tagged-deny clause for everything else. Substitute resource ARNs for your environment.</li>
 </ul>
 <h3>Verification</h3>
 <pre><code>

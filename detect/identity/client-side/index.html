@@ -159,9 +159,9 @@ compression = &quot;gzip&quot;
 </ul>
 <h3>Files in this directory</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/identity/client-side/identity-log-hook.sh"><code>identity-log-hook.sh</code></a>, PreToolUse hook that emits a structured JSON event with session ID, tool name, credential fingerprint (hash, never the token), effective UID, hostname, timestamp.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/identity/client-side/auditd-agent.rules"><code>auditd-agent.rules</code></a>, auditd watch rules for agent process startup. Drop in <code>/etc/audit/rules.d/</code>.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/identity/client-side/vector.toml"><code>vector.toml</code></a>, Vector config that parses syslog, enriches, and ships to Elasticsearch (substitute your SIEM endpoint).</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/identity-log-hook.sh"><code>identity-log-hook.sh</code></a>, PreToolUse hook that emits a structured JSON event with session ID, tool name, credential fingerprint (hash, never the token), effective UID, hostname, timestamp.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/auditd-agent.rules"><code>auditd-agent.rules</code></a>, auditd watch rules for agent process startup. Drop in <code>/etc/audit/rules.d/</code>.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/vector.toml"><code>vector.toml</code></a>, Vector config that parses syslog, enriches, and ships to Elasticsearch (substitute your SIEM endpoint).</li>
 </ul>
 <h3>Verification</h3>
 <pre><code>
