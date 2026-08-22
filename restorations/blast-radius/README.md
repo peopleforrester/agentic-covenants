@@ -6,8 +6,8 @@
 
 | Layer | Cell | What you actually run |
 |---|---|---|
-| In-agent | [`in-agent/`](./in-agent/) | Empty. |
-| Client-side | [`client-side/`](./client-side/) | `agent-restore-host-local`: rebuild operator host from known-good system image (if untrusted), reinstall agent runtime with signature verification, re-derive sandbox profiles, reapply launchers. |
-| Server-side | [`server-side/`](./server-side/) | `agent-restore-blast-radius-server`: restore data from immutable backups verified pre-incident, redeploy IaC, reapply NetworkPolicy default-deny + allow, reapply ResourceQuota and LimitRange, re-create namespace if needed. |
+| In-agent | [`in-agent/`](./in-agent) | Empty. |
+| Client-side | [`client-side/`](./client-side) | `agent-restore-host-local`: rebuild operator host from known-good system image (if untrusted), reinstall agent runtime with signature verification, re-derive sandbox profiles, reapply launchers. |
+| Server-side | [`server-side/`](./server-side) | `agent-restore-blast-radius-server`: restore data from immutable backups verified pre-incident, redeploy IaC, reapply NetworkPolicy default-deny + allow, reapply ResourceQuota and LimitRange, re-create namespace if needed. |
 
-Rebuilds what [`../../interventions/blast-radius/`](../../interventions/blast-radius/) contained.
+Rebuilds what [`../../interventions/blast-radius/`](../../interventions/blast-radius) contained.

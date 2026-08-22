@@ -1,6 +1,6 @@
 # Charter
 
-Per-cell governance guidance and templates for the [Agentic Charter Matrix](../CHARTER_MATRIX.md). This is a **documentation discipline**, not a runbook. Each cell directory contains template fragments and the structural questions your governance documents must answer.
+Per-cell governance guidance and templates for the [Agentic Charter Matrix](../framework/CHARTER_MATRIX.md). This is a **documentation discipline**, not a runbook. Each cell directory contains template fragments and the structural questions your governance documents must answer.
 
 ## Layout
 
@@ -40,11 +40,11 @@ Each Charter cell has a downstream consumer:
 
 | Charter cell | Operational consumer |
 |---|---|
-| Identity / agent | [`controls/identity/server-side/`](../controls/identity/server-side/) (the named owner becomes the on-call paged by Sentinels) |
-| Authorization / agent | [`controls/authorization/server-side/`](../controls/authorization/server-side/) (RBAC role implements the charter scope) |
+| Identity / agent | [`controls/identity/server-side/`](../controls/identity/server-side) (the named owner becomes the on-call paged by Sentinels) |
+| Authorization / agent | [`controls/authorization/server-side/`](../controls/authorization/server-side) (RBAC role implements the charter scope) |
 | Blast radius / agent | Decides which Covenants cells must be populated. Tier 1 → minimal; Tier 4 → all 15. |
-| Approval gating / agent | [`controls/approval-gating/server-side/`](../controls/approval-gating/server-side/) (branch protection on the charter file itself) |
-| Supply chain / agent | [`controls/supply-chain/client-side/mcp-allowlist.json`](../controls/supply-chain/client-side/mcp-allowlist.json) and [`controls/supply-chain/server-side/`](../controls/supply-chain/server-side/) (declared dependencies become the runtime allowlist) |
+| Approval gating / agent | [`controls/approval-gating/server-side/`](../controls/approval-gating/server-side) (branch protection on the charter file itself) |
+| Supply chain / agent | [`controls/supply-chain/client-side/mcp-allowlist.json`](../controls/supply-chain/client-side/mcp-allowlist.json) and [`controls/supply-chain/server-side/`](../controls/supply-chain/server-side) (declared dependencies become the runtime allowlist) |
 
 If the Charter is missing for an agent, the operational matrices have no anchor.
 

@@ -35,7 +35,7 @@ This is first because everything after it depends on it. You cannot scope permis
 |---|---|
 | The agent uses a credential that is not the operator's | The cloud principal in the agent's environment differs from the operator's default profile |
 | The credential is short-lived or independently revocable | The credential can be revoked without locking the operator out |
-| The agent is registered somewhere a human can enumerate it | An entry exists in an inventory, per [`inventory/`](../../inventory/) |
+| The agent is registered somewhere a human can enumerate it | An entry exists in an inventory, per [`inventory/`](../../inventory) |
 | A named human is accountable for it | The inventory entry names a person, not a group mailbox |
 
 ### Level 2: Bounded
@@ -78,10 +78,10 @@ Levels 1 through 3 are all Protect. Level 4 is where the other four NIST CSF fun
 | Requirement | Verified by |
 |---|---|
 | Decisions are shipped off the machine as they happen | Deleting the local log does not destroy the record |
-| Denials and approvals are both recorded, with timing | Approval-fatigue rate is measurable, per [`sentinels/approval-gating/`](../../sentinels/approval-gating/) |
+| Denials and approvals are both recorded, with timing | Approval-fatigue rate is measurable, per [`sentinels/approval-gating/`](../../sentinels/approval-gating) |
 | High-consequence actions require out-of-band approval | The approval path does not run on the machine the agent controls |
 | A kill switch exists and has been executed in a drill | Time from decision to agent stopped is measured, not estimated |
-| Restoration from a known-good state has been rehearsed | The runbook has been run, per [`restorations/`](../../restorations/) |
+| Restoration from a known-good state has been rehearsed | The runbook has been run, per [`restorations/`](../../restorations) |
 
 The drill requirements are deliberate. An untested kill switch is a Level 3 control with a Level 4 label, and the difference is only discovered during the incident.
 
@@ -110,4 +110,4 @@ What makes this land is that the level is falsifiable. Every requirement above h
 - **It does not score in-agent controls.** Prompt-level constraints do not move a level, at any level. They are worth having and they are not evidence.
 - **It does not average.** See the rule at the top.
 - **It does not end at Level 4.** Level 4 is a defensible posture for a single workstation, not a finished state. A multi-agent production deployment has cells this model does not evaluate, which is what the full matrix is for.
-- **It is not a compliance mapping.** The crosswalks in [`CITATIONS.md`](../../CITATIONS.md) are the starting point for that conversation, and an authorizing official makes the determination.
+- **It is not a compliance mapping.** The crosswalks in [`CITATIONS.md`](../../framework/CITATIONS.md) are the starting point for that conversation, and an authorizing official makes the determination.

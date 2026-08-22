@@ -32,7 +32,7 @@ agent:
 
 - The owner's contact info goes into PagerDuty as the on-call recipient for that agent's Sentinels alerts.
 - The backup owner is the failover when the named owner is unavailable.
-- The `identifier` in the charter must match the `agentic-covenants.io/agent-name` label on the Kubernetes namespace and ServiceAccount in [`../../../controls/identity/server-side/`](../../../controls/identity/server-side/).
+- The `identifier` in the charter must match the `agentic-covenants.io/agent-name` label on the Kubernetes namespace and ServiceAccount in [`../../../controls/identity/server-side/`](../../../controls/identity/server-side).
 
 ## Common failure modes
 

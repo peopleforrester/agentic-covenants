@@ -58,7 +58,7 @@ class Matrix:
     """One of the six matrices, and how it presents."""
 
     slug: str          # url segment, the CSF function
-    yaml_name: str     # file at repo root
+    yaml_name: str     # basename under data/
     path_key: str      # per-schema key naming the artifact directory
     function: str      # NIST CSF 2.0 function
     abbrev: str
@@ -88,7 +88,7 @@ def esc(text: object) -> str:
 
 
 def load(m: Matrix) -> dict:
-    with (REPO / f"{m.yaml_name}.yaml").open(encoding="utf-8") as fh:
+    with (REPO / "data" / f"{m.yaml_name}.yaml").open(encoding="utf-8") as fh:
         return yaml.safe_load(fh)
 
 
@@ -557,10 +557,10 @@ def build(out: Path, check_only: bool = False) -> int:
         total_cells += len(cells)
         for cell in cells:
             if cell["concern"] not in concern_ids:
-                problems.append(f"{m.yaml_name}.yaml: cell references unknown concern {cell['concern']!r}")
+                problems.append(f"data/{m.yaml_name}.yaml: cell references unknown concern {cell['concern']!r}")
             rel = (cell.get(m.path_key) or "").rstrip("/")
             if rel and not (REPO / rel).is_dir():
-                problems.append(f"{m.yaml_name}.yaml: {m.path_key} does not exist: {rel}")
+                problems.append(f"data/{m.yaml_name}.yaml: {m.path_key} does not exist: {rel}")
             total_artifacts += len(artifacts_for(rel)) if rel else 0
 
     print(f"matrices: {len(MATRICES)}  cells: {total_cells}  artifacts: {total_artifacts}")

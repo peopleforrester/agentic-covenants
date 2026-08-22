@@ -20,7 +20,7 @@ FICAM requires an NPE to be "under the control of an authorized Person Entity (P
 | Assurance / risk categorization | `risk_tier` | Map your tier taxonomy to the system categorization (FIPS 199 Low/Moderate/High) used in the ATO package. |
 | Recertification date | `next_review_due` | Aligns the charter review cadence to the account recertification cycle so they cannot drift apart. |
 | De-provisioning trigger | `retirement_criteria` | The charter criterion "owner departs and no backup accepts handoff within 30 days" is an NPE de-provisioning event, not just a governance note. |
-| Emergency revocation authority | `incident_revocation.authority` | Who may invoke [`interventions/identity/server-side/`](../../interventions/identity/server-side/) without a second approval. |
+| Emergency revocation authority | `incident_revocation.authority` | Who may invoke [`interventions/identity/server-side/`](../../interventions/identity/server-side) without a second approval. |
 
 ## Where the charter says more than ICAM does
 

@@ -96,8 +96,8 @@ The pre-engagement order is Sentinels → Interventions → Restorations. The fe
 ## Reading order
 
 1. This document: the framework essay.
-2. [`docs/walkthrough-agentic-restorations-engineering-actions-v5.md`](./docs/walkthrough-agentic-restorations-engineering-actions-v5.md), engineering-actions companion (gitignored).
-3. [`restorations/`](./restorations/), pick a cell, run the rebuild script.
+2. `walkthrough-agentic-restorations-engineering-actions-v5.md`, engineering-actions companion (gitignored).
+3. [`restorations/`](../restorations), pick a cell, run the rebuild script.
 
 ## Citations
 

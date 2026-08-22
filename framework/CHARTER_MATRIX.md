@@ -58,19 +58,19 @@ Three test outcomes:
 
 The Charter constraints are what Covenants enforces, what Sentinels watches for, what Interventions stops on, and what Restorations rebuilds toward. Specifically:
 
-- The agent's authorized scope (Charter Authorization row) is the input to [Covenants L3-C2](./controls/authorization/server-side/) (server-side authorization). The agent's RBAC Role is the technical implementation of the charter scope.
+- The agent's authorized scope (Charter Authorization row) is the input to [Covenants L3-C2](../controls/authorization/server-side) (server-side authorization). The agent's RBAC Role is the technical implementation of the charter scope.
 - The agent's risk tier (Charter Blast Radius row) determines which Covenants cells must be populated for that agent. A Tier 1 read-only agent does not need every cell. A Tier 4 production agent needs all of them.
 - The agent's named owner (Charter Identity row) is the human paged when Sentinels alerts and the human authorized to sign Interventions runbooks.
-- The agent's dependency manifest (Charter Supply Chain row) is the input to [Covenants L2-C5](./controls/supply-chain/client-side/) and [L3-C5](./controls/supply-chain/server-side/) allowlists.
+- The agent's dependency manifest (Charter Supply Chain row) is the input to [Covenants L2-C5](../controls/supply-chain/client-side) and [L3-C5](../controls/supply-chain/server-side) allowlists.
 - The charter's review cadence (Charter Approval Gating row) drives the periodic re-attestation that Sentinels reports against (drift detection).
 
 **If the Charter is missing for an agent, the operational matrices have no anchor.** Covenants enforces a scope you have not defined. Sentinels alerts on a baseline you have not declared. Interventions pages a human you have not named. Restorations rebuilds toward a state you have not committed to.
 
 ## Templates
 
-- [`charter/templates/agent-charter.yaml`](./charter/templates/agent-charter.yaml), operational template for a single agent's charter. Version-controlled, under branch protection, PR-reviewed.
-- [`charter/templates/domain-charter.md`](./charter/templates/domain-charter.md), markdown template for a domain governance document.
-- [`charter/templates/organizational-policy.md`](./charter/templates/organizational-policy.md), markdown template for org-wide AI policy and risk appetite.
+- [`charter/templates/agent-charter.yaml`](../charter/templates/agent-charter.yaml), operational template for a single agent's charter. Version-controlled, under branch protection, PR-reviewed.
+- [`charter/templates/domain-charter.md`](../charter/templates/domain-charter.md), markdown template for a domain governance document.
+- [`charter/templates/organizational-policy.md`](../charter/templates/organizational-policy.md), markdown template for org-wide AI policy and risk appetite.
 
 ## Where this matrix sits
 
@@ -88,9 +88,9 @@ Charter feeds Inventory (every chartered agent should be in inventory). Inventor
 ## Reading order
 
 1. This document: the framework essay.
-2. [`docs/walkthrough-agentic-charter-matrix-v5.md`](./docs/walkthrough-agentic-charter-matrix-v5.md), companion walkthrough (gitignored).
-3. [`charter/templates/`](./charter/templates/), copy and fill in for your environment.
-4. [`charter/`](./charter/), per-cell governance guidance.
+2. `walkthrough-agentic-charter-matrix-v5.md`, the companion walkthrough. Local-only working material, not published with this repo.
+3. [`charter/templates/`](../charter/templates), copy and fill in for your environment.
+4. [`charter/`](../charter), per-cell governance guidance.
 
 ## Citations
 

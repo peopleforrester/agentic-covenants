@@ -6,8 +6,8 @@
 
 | Layer | Cell | What you actually run |
 |---|---|---|
-| In-agent | [`in-agent/`](./in-agent/) | Empty. |
-| Client-side | [`client-side/`](./client-side/) | `agent-restore-authorization-local`: restore hook config from VCS, verify ownership and ACLs, reinstall pre-commit, verify Claude Code is on the patched version. |
-| Server-side | [`server-side/`](./server-side/) | `agent-restore-authorization-server`: reapply RBAC + Kyverno + IAM from declarative source, audit for cluster drift vs source. |
+| In-agent | [`in-agent/`](./in-agent) | Empty. |
+| Client-side | [`client-side/`](./client-side) | `agent-restore-authorization-local`: restore hook config from VCS, verify ownership and ACLs, reinstall pre-commit, verify Claude Code is on the patched version. |
+| Server-side | [`server-side/`](./server-side) | `agent-restore-authorization-server`: reapply RBAC + Kyverno + IAM from declarative source, audit for cluster drift vs source. |
 
-Rebuilds what [`../../interventions/authorization/`](../../interventions/authorization/) locked down.
+Rebuilds what [`../../interventions/authorization/`](../../interventions/authorization) locked down.

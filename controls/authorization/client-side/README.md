@@ -9,7 +9,7 @@
 - Claude Code v2.1.40 or later (the May 2026 PreToolUse precedence patch, pre-patch versions allow `allow` to override `deny`).
 - `pre-commit` framework on the operator's machine.
 - `jq` for the hook script.
-- A server-side Git pre-receive hook to backstop `--no-verify`. Lives in [`../server-side/`](../server-side/).
+- A server-side Git pre-receive hook to backstop `--no-verify`. Lives in [`../server-side/`](../server-side).
 
 ## Files in this directory
 
@@ -54,7 +54,7 @@ git add . && git commit -m "test"
 - Pattern hooks that match `kubectl delete` but not `kubectl scale --replicas=0`. Pattern hooks catch casual misuse, not adversarial agents. Document the equivalent-command bypass and accept the matrix's framing.
 - Hook config owned by the agent's own user. The agent edits its own deny list at runtime.
 - Forgetting to enable the May 2026 Claude Code patch where `allow` no longer beats `deny`. Verify with `claude --version` and check the changelog.
-- Pre-commit only on the operator's machine. The agent runs `git commit --no-verify` and skips it. Mitigation is the server-side pre-receive hook in [`../server-side/`](../server-side/).
+- Pre-commit only on the operator's machine. The agent runs `git commit --no-verify` and skips it. Mitigation is the server-side pre-receive hook in [`../server-side/`](../server-side).
 
 ## Citation
 

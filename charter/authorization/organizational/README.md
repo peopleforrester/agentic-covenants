@@ -16,7 +16,7 @@
 
 ## Operational tie-in
 
-Hard prohibitions are codified in the Kyverno policies under [`../../../controls/authorization/server-side/`](../../../controls/authorization/server-side/). If your AUP says "no agent has direct prod-database write," the corresponding `agents-no-cluster-roles` policy must include a deny rule for that specific resource.
+Hard prohibitions are codified in the Kyverno policies under [`../../../controls/authorization/server-side/`](../../../controls/authorization/server-side). If your AUP says "no agent has direct prod-database write," the corresponding `agents-no-cluster-roles` policy must include a deny rule for that specific resource.
 
 ## Citation
 

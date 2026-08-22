@@ -8,7 +8,7 @@
 
 ## Tooling
 
-- The hook layout from [`../../authorization/client-side/`](../../authorization/client-side/) (this runbook re-uses the deny-all hook).
+- The hook layout from [`../../authorization/client-side/`](../../authorization/client-side) (this runbook re-uses the deny-all hook).
 - `jq` for editing `settings.json` in place.
 - API access to your judgment-query escalation service to disable it.
 

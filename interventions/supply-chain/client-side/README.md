@@ -8,7 +8,7 @@
 
 ## Tooling
 
-- The MCP allowlist layout from [`../../../controls/supply-chain/client-side/`](../../../controls/supply-chain/client-side/).
+- The MCP allowlist layout from [`../../../controls/supply-chain/client-side/`](../../../controls/supply-chain/client-side).
 - `chattr` for locking lockfiles.
 
 ## Files in this directory

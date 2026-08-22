@@ -1,6 +1,6 @@
 # Interventions
 
-Response runbooks for every cell of the [Agentic Interventions Matrix](../INTERVENTIONS_MATRIX.md). Companion to [`controls/`](../controls/) (Protect) and [`sentinels/`](../sentinels/) (Detect).
+Response runbooks for every cell of the [Agentic Interventions Matrix](../framework/INTERVENTIONS_MATRIX.md). Companion to [`controls/`](../controls) (Protect) and [`sentinels/`](../sentinels) (Detect).
 
 ## Layout
 
@@ -40,7 +40,7 @@ Every cell directory has the same six-section README:
 4. **Files in this directory.** The runbook script and pre-staged emergency artifacts.
 5. **Verification.** How you confirm the cutoff worked.
 6. **Common mistakes.** Failure modes that leave residual capability.
-7. **Citation.** From [`CITATIONS.md`](../CITATIONS.md).
+7. **Citation.** From [`CITATIONS.md`](../framework/CITATIONS.md).
 
 ## Speed targets
 

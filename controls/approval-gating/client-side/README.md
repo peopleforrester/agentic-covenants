@@ -6,7 +6,7 @@
 
 ## Tooling
 
-- The PreToolUse hook from [`../../authorization/client-side/`](../../authorization/client-side/) extended with tiering.
+- The PreToolUse hook from [`../../authorization/client-side/`](../../authorization/client-side) extended with tiering.
 - A counter or sqlite-backed counter for session limits.
 - An out-of-band channel: signed Slack approval, second-terminal confirmation, FIDO2 hardware key prompt, or a phone-side app.
 

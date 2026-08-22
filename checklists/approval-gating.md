@@ -78,7 +78,7 @@ gh api repos/<org>/<repo>/actions/workflows --jq '.workflows[] | {name, state}' 
 
 ☐ All three present ☐ In-agent only, **audit finding** ☐ Server-side only ☐ Gaps
 
-**Federal/DoD note.** 800-53 **AC-3(2)** (dual authorization), **CM-3**, **CM-5**, **PM-10**; DoD ZT **Automation & Orchestration**; RAI *Governable*. DoD RAI's Warfighter Trust tenet requires clear operator procedures to activate and deactivate system functions, this row plus [`interventions/`](../interventions/) is where that lives.
+**Federal/DoD note.** 800-53 **AC-3(2)** (dual authorization), **CM-3**, **CM-5**, **PM-10**; DoD ZT **Automation & Orchestration**; RAI *Governable*. DoD RAI's Warfighter Trust tenet requires clear operator procedures to activate and deactivate system functions, this row plus [`interventions/`](../interventions) is where that lives.
 
 **Open items:**
 

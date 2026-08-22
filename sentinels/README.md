@@ -1,6 +1,6 @@
 # Sentinels
 
-Detection artifacts for every cell of the [Agentic Sentinels Matrix](../SENTINELS_MATRIX.md). Companion to [`controls/`](../controls/).
+Detection artifacts for every cell of the [Agentic Sentinels Matrix](../framework/SENTINELS_MATRIX.md). Companion to [`controls/`](../controls).
 
 ## Layout
 
@@ -19,12 +19,12 @@ The structure mirrors `controls/` exactly. The layer named "client-side" detects
 
 Every cell directory has the same six-section README:
 
-1. **Control.** One-line summary from [`SENTINELS_MATRIX.md`](../SENTINELS_MATRIX.md).
+1. **Control.** One-line summary from [`SENTINELS_MATRIX.md`](../framework/SENTINELS_MATRIX.md).
 2. **Tooling.** What to install or enable (Vector, Fluent Bit, Falco, Cilium Hubble, auditd, bpftrace, GitHub webhooks, ...).
 3. **Files in this directory.** Hook scripts, audit policies, Falco rules, SIEM detection rules.
 4. **Verification.** How you confirm the detection fires on real events.
 5. **Common mistakes.** Failure modes that defeat detection.
-6. **Citation.** From [`CITATIONS.md`](../CITATIONS.md).
+6. **Citation.** From [`CITATIONS.md`](../framework/CITATIONS.md).
 
 ## Two principles
 

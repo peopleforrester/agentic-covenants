@@ -14,11 +14,15 @@ Markdown + YAML + shell + a little Python/Terraform/Rego, all as **illustrative 
 
 ## Layout
 
-- `MATRIX.md` / `SENTINELS_MATRIX.md` / `INTERVENTIONS_MATRIX.md` / `RESTORATIONS_MATRIX.md` / `CHARTER_MATRIX.md` / `INVENTORY_MATRIX.md`, the six framework essays.
-- `BYPASSES.md`, per-control bypass surface + the running 2026 incident/CVE corpus.
-- `CITATIONS.md`, per-cell crosswalk to NIST / OWASP / ISO / EU AI Act.
-- `controls/ sentinels/ interventions/ restorations/ charter/ inventory/`, one directory per matrix, mirroring the five-concern × three-layer grid.
-- `docs/`, gitignored working notes / source walkthroughs (never published).
+**Root holds meta only.** README, licences, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, AGENTS. Content lives in directories. Do not add a document to root; if a visitor would read it for its own sake, it is content.
+
+- `framework/`, the six matrix essays plus `BYPASSES.md` (per-control bypass surface and the running 2026 incident corpus), `CITATIONS.md` (per-cell crosswalk to NIST / OWASP / ISO / EU AI Act), and `ASSURANCE.md` (coverage map: what the framework catches and what it does not).
+- `briefing/`, `EXECUTIVE-BRIEF.md` and `ECONOMICS.md`, for a CISO or an authorizing official.
+- `data/`, the machine-readable matrix data (`matrix.yaml`, `sentinels.yaml`, and the rest). Source of truth for the site.
+- `controls/ sentinels/ interventions/ restorations/ charter/ inventory/`, one directory per matrix, mirroring the concern x layer grid.
+- `examples/`, end-to-end deployments. `checklists/`, per-concern audit sheets.
+- `site/`, the generator for agenticcovenants.com. `assets/`, generated diagrams. `scripts/`, the repo checks. `tests/`, the Kyverno suite.
+- `.notes/`, gitignored working material. **Never `docs/`**, which is a reserved public path.
 
 ## Commands
 

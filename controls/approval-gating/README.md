@@ -6,9 +6,9 @@
 
 | Layer | Cell | What you actually deploy |
 |---|---|---|
-| In-agent | [`in-agent/`](./in-agent/) | A confirmation-prompt template the model uses before destructive ops. Silently bypassable; the model can be talked out of asking. |
-| Client-side | [`client-side/`](./client-side/) | Tiered PreToolUse hook (extends the deny hook from Authorization with tier-3 typed confirmation, tier-4 out-of-band approval, session destructive-action counter), and a judgment-query escalation tool the agent calls explicitly when it hits a value-laden decision. |
-| Server-side | [`server-side/`](./server-side/) | Branch protection with `enforce_admins=true` (the load-bearing flag), CODEOWNERS on critical paths, GitHub environments with required reviewers on the IaC apply job, deployment-freeze automation triggered by active PagerDuty incidents, and an hourly drift-detection job comparing live branch protection to a checked-in expected JSON. |
+| In-agent | [`in-agent/`](./in-agent) | A confirmation-prompt template the model uses before destructive ops. Silently bypassable; the model can be talked out of asking. |
+| Client-side | [`client-side/`](./client-side) | Tiered PreToolUse hook (extends the deny hook from Authorization with tier-3 typed confirmation, tier-4 out-of-band approval, session destructive-action counter), and a judgment-query escalation tool the agent calls explicitly when it hits a value-laden decision. |
+| Server-side | [`server-side/`](./server-side) | Branch protection with `enforce_admins=true` (the load-bearing flag), CODEOWNERS on critical paths, GitHub environments with required reviewers on the IaC apply job, deployment-freeze automation triggered by active PagerDuty incidents, and an hourly drift-detection job comparing live branch protection to a checked-in expected JSON. |
 
 ## Why it matters
 
@@ -41,7 +41,7 @@ The agent platform's tooling support for the second pattern is limited as of May
 
 ## Citations (per layer)
 
-See [`../../CITATIONS.md`](../../CITATIONS.md). Quick reference:
+See [`../../CITATIONS.md`](../../framework/CITATIONS.md). Quick reference:
 
 - **In-agent**: advisory; thematically NIST AI RMF MANAGE 4.1 (override mechanisms); OWASP LLM06; OWASP ASI09 (Human-Agent Trust Exploitation).
 - **Client-side**: NIST CSF 2.0 PR.AA-05, PR.PS-01; NIST AI RMF MANAGE 4.1 (post-deployment monitoring, appeal and override); OWASP LLM06; OWASP ASI02, ASI09; OWASP Agentic Least Agency principle; assistance-games framing (Russell, 2019); EU AI Act Art. 14 (human oversight); Singapore IMDA "meaningful human accountability."

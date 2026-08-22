@@ -1,6 +1,6 @@
 # Restorations
 
-Recovery runbooks for every cell of the [Agentic Restorations Matrix](../RESTORATIONS_MATRIX.md). Companion to [`controls/`](../controls/) (Protect), [`sentinels/`](../sentinels/) (Detect), and [`interventions/`](../interventions/) (Respond).
+Recovery runbooks for every cell of the [Agentic Restorations Matrix](../framework/RESTORATIONS_MATRIX.md). Companion to [`controls/`](../controls) (Protect), [`sentinels/`](../sentinels) (Detect), and [`interventions/`](../interventions) (Respond).
 
 ## Layout
 
@@ -47,14 +47,14 @@ Every cell directory has the same six-section README:
 4. **Files in this directory.** The rebuild script and pre-staged restore artifacts.
 5. **Verification.** How you confirm the rebuild is healthy and not still tainted.
 6. **Common failure modes.** From the matrix Appendix A.
-7. **Citation.** From [`CITATIONS.md`](../CITATIONS.md).
+7. **Citation.** From [`CITATIONS.md`](../framework/CITATIONS.md).
 
 ## Recovery feeds prevention
 
 Every successful recovery produces a follow-up action list:
 
 - Which Covenants prevention control was bypassed?
-- Was the bypass already in [`BYPASSES.md`](../BYPASSES.md), or new?
+- Was the bypass already in [`BYPASSES.md`](../framework/BYPASSES.md), or new?
 - What change to Covenants prevents this class in the future?
 
 If recovery does not feed back into prevention, the org is treating each incident as a one-off and accepting that the same class of attack will work again.

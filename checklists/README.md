@@ -32,7 +32,7 @@ Note that some in-agent cells are **empty by design**: Blast radius and Supply c
 
 ## Scope
 
-These checklists cover the **Covenants (Protect)** matrix. Detection, response, and recovery have their own matrices with their own verification steps in [`sentinels/`](../sentinels/), [`interventions/`](../interventions/), and [`restorations/`](../restorations/). A Covenants row that scores clean tells you the control is in place; it tells you nothing about whether you would notice or could stop it when the control fails.
+These checklists cover the **Covenants (Protect)** matrix. Detection, response, and recovery have their own matrices with their own verification steps in [`sentinels/`](../sentinels), [`interventions/`](../interventions), and [`restorations/`](../restorations). A Covenants row that scores clean tells you the control is in place; it tells you nothing about whether you would notice or could stop it when the control fails.
 
 ## Before you start
 

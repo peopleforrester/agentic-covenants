@@ -7,7 +7,7 @@
 ## Tooling
 
 - IdP API access (Okta, Auth0, Keycloak, Dex) for credential reissue.
-- `setfacl` for the deny-on-self ACL pattern from [`../../../controls/identity/client-side/`](../../../controls/identity/client-side/).
+- `setfacl` for the deny-on-self ACL pattern from [`../../../controls/identity/client-side/`](../../../controls/identity/client-side).
 
 ## Files in this directory
 

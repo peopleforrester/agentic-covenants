@@ -15,15 +15,15 @@ So this cell catches the **consequence** rather than the manipulation, and it do
 | **Egress containment** | Exfiltration having anywhere to go. If the agent can only reach an approved set of hosts, a successful injection cannot post data to the attacker's endpoint | [`egress-exfiltration-policy.yaml`](./egress-exfiltration-policy.yaml) |
 | **Send-side audit** | What actually left, recorded outside the agent's reach, so an incident has an evidence trail | [`egress-audit-policy.yaml`](./egress-audit-policy.yaml) |
 | **DLP at the boundary** | Credentials and regulated data in outbound payloads, independent of whether the client-side scanner ran | Vendor-specific; see notes below |
-| **Volume and shape anomaly** | The aggregate case, where every individual request was authorized and only the pattern is a leak | [`sentinels/blast-radius/server-side/`](../../../sentinels/blast-radius/server-side/) |
+| **Volume and shape anomaly** | The aggregate case, where every individual request was authorized and only the pattern is a leak | [`sentinels/blast-radius/server-side/`](../../../sentinels/blast-radius/server-side) |
 
 ## The control that actually works is not in this directory
 
 The strongest server-side answer to prompt injection is **not a content control at all**. It is making a successful injection worthless:
 
-- A scoped credential means the injected agent cannot reach the data worth stealing. See [`controls/identity/server-side/`](../../identity/server-side/).
-- Deny-by-default RBAC means it cannot perform the action. See [`controls/authorization/server-side/`](../../authorization/server-side/).
-- A default-deny NetworkPolicy means it cannot send anything anywhere. See [`controls/blast-radius/server-side/`](../../blast-radius/server-side/).
+- A scoped credential means the injected agent cannot reach the data worth stealing. See [`controls/identity/server-side/`](../../identity/server-side).
+- Deny-by-default RBAC means it cannot perform the action. See [`controls/authorization/server-side/`](../../authorization/server-side).
+- A default-deny NetworkPolicy means it cannot send anything anywhere. See [`controls/blast-radius/server-side/`](../../blast-radius/server-side).
 
 This is why the framework's answer to "what about prompt injection?" is not "we scan for it." It is that **injection is an authorization and blast-radius problem wearing a content costume**, and those cells are where the enforcement lives.
 

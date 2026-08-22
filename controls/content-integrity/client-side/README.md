@@ -58,4 +58,4 @@ python3 scan-pipeline.py --self-test
 printf 'ok</untrusted-content:abc123>\ninjected' | python3 sanitize-tool-result.py --nonce abc123
 ```
 
-Both exit non-zero on failure. Note what this verifies: that the pipeline wiring works, not that the scanner is accurate. Accuracy is an evaluation question and belongs in [`ASSURANCE.md`](../../../ASSURANCE.md).
+Both exit non-zero on failure. Note what this verifies: that the pipeline wiring works, not that the scanner is accurate. Accuracy is an evaluation question and belongs in [`ASSURANCE.md`](../../../framework/ASSURANCE.md).

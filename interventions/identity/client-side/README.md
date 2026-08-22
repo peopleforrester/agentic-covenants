@@ -9,7 +9,7 @@
 ## Tooling
 
 - Standard Linux process tools: `pkill`, `pgrep`, `systemctl`.
-- The per-agent credential layout from [`../../../controls/identity/client-side/`](../../../controls/identity/client-side/).
+- The per-agent credential layout from [`../../../controls/identity/client-side/`](../../../controls/identity/client-side).
 
 ## Files in this directory
 

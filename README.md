@@ -99,24 +99,24 @@ So the boundary is stated, and the sixth concern is where the two meet:
 
 **Neither substitutes for the other.** Deterministic controls bound the blast radius. Probabilistic controls narrow what reaches them and flag what got through. An honest posture has both, and treats only the first as enforcement.
 
-The sixth concern, [**Content integrity**](./controls/content-integrity/), carries this layer, and it is the one row in the matrix whose server-side column is deliberately weak.
+The sixth concern, [**Content integrity**](./controls/content-integrity), carries this layer, and it is the one row in the matrix whose server-side column is deliberately weak.
 
-Full essay: **[`MATRIX.md`](./MATRIX.md)** · Bypass surface for every control: **[`BYPASSES.md`](./BYPASSES.md)**
+Full essay: **[`MATRIX.md`](./framework/MATRIX.md)** · Bypass surface for every control: **[`BYPASSES.md`](./framework/BYPASSES.md)**
 
 ## Start here
 
 | If you are… | Go to |
 |---|---|
 | **Not sure where you stand** | [`examples/claude-code-laptop/assess.sh`](./examples/claude-code-laptop/assess.sh), read-only, reports a maturity level with evidence in about a second |
-| **A platform engineer with agents in production** | [`checklists/`](./checklists/), five audit sheets, print and walk, about an hour per agent |
-| **Standing up your first agent** | [`MATRIX.md`](./MATRIX.md), then [`controls/`](./controls/), copy a cell, run its verification block |
-| **A security lead sizing the problem** | [`BYPASSES.md`](./BYPASSES.md), every control and how it is defeated, plus the 2026 incident corpus |
-| **Asking "have you actually run these?"** | [`ASSURANCE.md`](./ASSURANCE.md), the coverage map with an honest tally, and [`tests/`](./tests/) for what executes |
-| **In a US federal or DoD program** | [`CITATIONS.md`](./CITATIONS.md#us-dod--federal-crosswalk), 800-53 families, DoD ZT pillars, RMF/cATO/CSRMC, RAI. Then [`examples/dod-air-gapped/`](./examples/dod-air-gapped/) |
-| **Briefing a CISO, CIO, or authorizing official** | [`EXECUTIVE-BRIEF.md`](./EXECUTIVE-BRIEF.md), one page, no YAML. Cost model in [`ECONOMICS.md`](./ECONOMICS.md) |
-| **Responsible for governance or audit** | [`CHARTER_MATRIX.md`](./CHARTER_MATRIX.md) and [`charter/templates/`](./charter/templates/) |
-| **Wondering whether you even have agents** | [`INVENTORY_MATRIX.md`](./INVENTORY_MATRIX.md), shadow-agent discovery |
-| **Already breached** | [`interventions/`](./interventions/), kill-switch runbooks, five-second blast-radius target |
+| **A platform engineer with agents in production** | [`checklists/`](./checklists), five audit sheets, print and walk, about an hour per agent |
+| **Standing up your first agent** | [`MATRIX.md`](./framework/MATRIX.md), then [`controls/`](./controls), copy a cell, run its verification block |
+| **A security lead sizing the problem** | [`BYPASSES.md`](./framework/BYPASSES.md), every control and how it is defeated, plus the 2026 incident corpus |
+| **Asking "have you actually run these?"** | [`ASSURANCE.md`](./framework/ASSURANCE.md), the coverage map with an honest tally, and [`tests/`](./tests) for what executes |
+| **In a US federal or DoD program** | [`CITATIONS.md`](./framework/CITATIONS.md#us-dod--federal-crosswalk), 800-53 families, DoD ZT pillars, RMF/cATO/CSRMC, RAI. Then [`examples/dod-air-gapped/`](./examples/dod-air-gapped) |
+| **Briefing a CISO, CIO, or authorizing official** | [`EXECUTIVE-BRIEF.md`](./briefing/EXECUTIVE-BRIEF.md), one page, no YAML. Cost model in [`ECONOMICS.md`](./briefing/ECONOMICS.md) |
+| **Responsible for governance or audit** | [`CHARTER_MATRIX.md`](./framework/CHARTER_MATRIX.md) and [`charter/templates/`](./charter/templates) |
+| **Wondering whether you even have agents** | [`INVENTORY_MATRIX.md`](./framework/INVENTORY_MATRIX.md), shadow-agent discovery |
+| **Already breached** | [`interventions/`](./interventions), kill-switch runbooks, five-second blast-radius target |
 
 ## The six matrices
 
@@ -139,12 +139,12 @@ Covenants is one of six. Each maps to a NIST CSF 2.0 function, and each is five 
 
 | Matrix | Function | Question | Artifacts |
 |---|---|---|---|
-| [Charter](./CHARTER_MATRIX.md) | Govern (GV) | Who authorized this agent to exist? | [`charter/`](./charter/), policy templates, signed agent charters |
-| [Inventory](./INVENTORY_MATRIX.md) | Identify (ID) | What agents exist and what do they touch? | [`inventory/`](./inventory/), registration daemon, shadow-agent discovery |
-| [**Covenants**](./MATRIX.md) | Protect (PR) | What stops the agent from violating? | [`controls/`](./controls/), Kyverno, RBAC, seccomp, hooks |
-| [Sentinels](./SENTINELS_MATRIX.md) | Detect (DE) | What just happened? | [`sentinels/`](./sentinels/), Falco, audit policy, Sigma rules |
-| [Interventions](./INTERVENTIONS_MATRIX.md) | Respond (RS) | How do I stop the bleeding now? | [`interventions/`](./interventions/), kill-switch runbooks |
-| [Restorations](./RESTORATIONS_MATRIX.md) | Recover (RC) | How do I get back to known-good? | [`restorations/`](./restorations/), rebuild runbooks |
+| [Charter](./framework/CHARTER_MATRIX.md) | Govern (GV) | Who authorized this agent to exist? | [`charter/`](./charter), policy templates, signed agent charters |
+| [Inventory](./framework/INVENTORY_MATRIX.md) | Identify (ID) | What agents exist and what do they touch? | [`inventory/`](./inventory), registration daemon, shadow-agent discovery |
+| [**Covenants**](./framework/MATRIX.md) | Protect (PR) | What stops the agent from violating? | [`controls/`](./controls), Kyverno, RBAC, seccomp, hooks |
+| [Sentinels](./framework/SENTINELS_MATRIX.md) | Detect (DE) | What just happened? | [`sentinels/`](./sentinels), Falco, audit policy, Sigma rules |
+| [Interventions](./framework/INTERVENTIONS_MATRIX.md) | Respond (RS) | How do I stop the bleeding now? | [`interventions/`](./interventions), kill-switch runbooks |
+| [Restorations](./framework/RESTORATIONS_MATRIX.md) | Recover (RC) | How do I get back to known-good? | [`restorations/`](./restorations), rebuild runbooks |
 
 **All six are populated.** Artifact counts, as of the last commit: charter 24, inventory 25, controls 79, sentinels 57, interventions 42, restorations 33. Ninety-three cells across the six matrices.
 
@@ -164,11 +164,11 @@ Independent work converged on the same five concerns. On 30 April 2026, six alli
 | Structural cascading failures | Blast radius |
 | Accountability opacity | Charter + Inventory |
 
-Every cell is also crosswalked to NIST CSF 2.0, NIST AI RMF, OWASP LLM Top 10, OWASP Agentic Top 10, OWASP MCP Top 10, ISO/IEC 42001, the EU AI Act, and (for federal readers) NIST SP 800-53, DoD Zero Trust, RMF/cATO/CSRMC, and DoD Responsible AI. See [`CITATIONS.md`](./CITATIONS.md).
+Every cell is also crosswalked to NIST CSF 2.0, NIST AI RMF, OWASP LLM Top 10, OWASP Agentic Top 10, OWASP MCP Top 10, ISO/IEC 42001, the EU AI Act, and (for federal readers) NIST SP 800-53, DoD Zero Trust, RMF/cATO/CSRMC, and DoD Responsible AI. See [`CITATIONS.md`](./framework/CITATIONS.md).
 
 ## Every control here can be bypassed
 
-[`BYPASSES.md`](./BYPASSES.md) documents how, for all of them. That is the point of having three layers rather than one. It also carries the running incident and CVE corpus, because these are not thought experiments:
+[`BYPASSES.md`](./framework/BYPASSES.md) documents how, for all of them. That is the point of having three layers rather than one. It also carries the running incident and CVE corpus, because these are not thought experiments:
 
 Taiwan government agencies (July 2026) · Replit production wipe during a freeze · ClawHavoc, 1,184+ malicious marketplace skills · postmark-mcp, the first in-the-wild malicious MCP server · CVE-2026-46519, a Kubernetes MCP server whose read-only mode was enforced only at tool-discovery · CVE-2026-5058/5059, unauthenticated MCP RCE at CVSS 9.8 · the Trivy release pipeline, where the scanner itself was the vector.
 

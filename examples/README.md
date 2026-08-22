@@ -4,12 +4,12 @@ End-to-end deployments that wire the matrix cells together for a specific enviro
 
 | Example | Environment | Status |
 |---|---|---|
-| [`dod-air-gapped/`](./dod-air-gapped/) | DoD IL4–IL5 enclave, no internet egress. Self-hosted or offline Sigstore, enclave registry, ICAM NPE identity binding, in-tree admission policy. | Available |
-| [`claude-code-laptop/`](./claude-code-laptop/) | Single operator workstation. Sandbox at launch, PreToolUse hooks, per-agent credentials, MCP allowlist. Carries the [maturity model](./claude-code-laptop/MATURITY.md) and a read-only assessment script. | Available |
+| [`dod-air-gapped/`](./dod-air-gapped) | DoD IL4–IL5 enclave, no internet egress. Self-hosted or offline Sigstore, enclave registry, ICAM NPE identity binding, in-tree admission policy. | Available |
+| [`claude-code-laptop/`](./claude-code-laptop) | Single operator workstation. Sandbox at launch, PreToolUse hooks, per-agent credentials, MCP allowlist. Carries the [maturity model](./claude-code-laptop/MATURITY.md) and a read-only assessment script. | Available |
 | `github-actions-pipeline/` | CI/CD agent. Gated IaC apply, branch protection, lockfile integrity, cosign signing. | Planned |
 | `kubernetes-cluster/` | Multi-agent cluster. Per-agent ServiceAccount, Kyverno/VAP admission, NetworkPolicy, Falco, SBOM diff. | Planned |
 
-The connected examples are largely assembled from artifacts already in [`controls/`](../controls/) and [`sentinels/`](../sentinels/); the air-gapped one was published first because its substitutions are the ones you cannot derive by reading the connected cells.
+The connected examples are largely assembled from artifacts already in [`controls/`](../controls) and [`sentinels/`](../sentinels); the air-gapped one was published first because its substitutions are the ones you cannot derive by reading the connected cells.
 
 ## Do not know where to start
 

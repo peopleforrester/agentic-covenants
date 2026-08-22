@@ -1,0 +1,36 @@
+name: Stale version, date, or deprecation claim
+description: A version pin, EOL date, regulatory date, or "X is deprecated" claim that is no longer true
+title: "Stale: "
+labels: ["currency"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Currency is this framework's product. A version pin that has rotted is a
+        defect, not a nitpick, and this is one of the two most valuable things
+        you can report.
+  - type: input
+    id: where
+    attributes:
+      label: Where
+      description: File and line, or the URL on agenticcovenants.com
+      placeholder: framework/CITATIONS.md:54
+    validations:
+      required: true
+  - type: textarea
+    id: claim
+    attributes:
+      label: What it currently says
+    validations:
+      required: true
+  - type: textarea
+    id: correct
+    attributes:
+      label: What is actually true, with a dated primary source
+      description: >
+        A link to the vendor's own changelog, registry, or the regulation text.
+        Secondary coverage is acceptable if you say so. Training data is not.
+      placeholder: |
+        As of 2026-08-23, per https://... the current stable is X.
+    validations:
+      required: true

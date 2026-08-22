@@ -1,6 +1,6 @@
 # Inventory
 
-Per-cell discovery guidance and reference tooling for the [Agentic Inventory Matrix](../INVENTORY_MATRIX.md). Hybrid: documentation discipline (operator-declared) plus reference code (self-declared registration daemon, discovered tooling).
+Per-cell discovery guidance and reference tooling for the [Agentic Inventory Matrix](../framework/INVENTORY_MATRIX.md). Hybrid: documentation discipline (operator-declared) plus reference code (self-declared registration daemon, discovered tooling).
 
 ## Layout
 

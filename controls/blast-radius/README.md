@@ -6,9 +6,9 @@
 
 | Layer | Cell | What you actually deploy |
 |---|---|---|
-| In-agent | [`in-agent/`](./in-agent/) | Refusal-language template. Verified-bypassable in Kiro, Replit, and DataTalks.Club incidents. Listed for completeness; do not rely on it. |
-| Client-side | [`client-side/`](./client-side/) | Sandbox at process launch with inheritance enforcement: bubblewrap (Linux), Seatbelt (macOS), gVisor (containerized). Seccomp or AppArmor profile. `--network none` plus a unix-domain-socket egress proxy when network is needed. Read-only mounts on operator data. |
-| Server-side | [`server-side/`](./server-side/) | Gated IaC apply pipeline as the actual backstop. NetworkPolicy default-deny with explicit allowlist. ResourceQuota and LimitRange per namespace. Immutable backups with separate credentials. Cross-account separation. PodDisruptionBudget on critical workloads. |
+| In-agent | [`in-agent/`](./in-agent) | Refusal-language template. Verified-bypassable in Kiro, Replit, and DataTalks.Club incidents. Listed for completeness; do not rely on it. |
+| Client-side | [`client-side/`](./client-side) | Sandbox at process launch with inheritance enforcement: bubblewrap (Linux), Seatbelt (macOS), gVisor (containerized). Seccomp or AppArmor profile. `--network none` plus a unix-domain-socket egress proxy when network is needed. Read-only mounts on operator data. |
+| Server-side | [`server-side/`](./server-side) | Gated IaC apply pipeline as the actual backstop. NetworkPolicy default-deny with explicit allowlist. ResourceQuota and LimitRange per namespace. Immutable backups with separate credentials. Cross-account separation. PodDisruptionBudget on critical workloads. |
 
 ## Why it matters
 
@@ -30,7 +30,7 @@ For each layer ask: *if the agent does the wrong thing, how much can break befor
 
 ## Citations (per layer)
 
-See [`../../CITATIONS.md`](../../CITATIONS.md). Quick reference:
+See [`../../CITATIONS.md`](../../framework/CITATIONS.md). Quick reference:
 
 - **In-agent**: advisory; thematically MAP 5.1, MEASURE 2.6 (safety risks evaluated); OWASP LLM06; OWASP ASI02, ASI05.
 - **Client-side**: NIST CSF 2.0 PR.PS-01, PR.PS-05, PR.PS-06, PR.IR-01; OWASP LLM05, LLM10; OWASP ASI05; NIST SP 800-160 Vol. 1 (defense in depth).

@@ -40,7 +40,7 @@ The rest of this file speaks the language of NIST CSF 2.0, OWASP, and ISO. A US 
 - **Department of the Air Force Zero Trust Strategy v1.0** (DAF CIO, July 2024) and the **DAF Enterprise ICAM Roadmap**. DAF targets **Intermediate maturity by end of FY2028**, one year beyond the DoD Target mandate. The ICAM roadmap explicitly calls out an **ICAM solution for Non-Person Entities (NPEs)** as a deliverable.
 - **DoD ICAM** (DoD ICAM Strategy; DoD Enterprise ICAM Reference Design; DoDI 8520.03; NIST SP 800-63 for IAL/AAL). Four domains: Identity Management, Credential Management, Access Management, Governance. **Non-Person Entities (NPEs)**, devices, service accounts, applications, RPA workers, and now AI agents, must each be **under the control of an authorized Person Entity (PE)** who can create, modify, or destroy the NPE account. Live deadlines: automated access workflows available to system owners by **June 2026**; all access requests through automated workflows by **September 2026** (retiring the DD Form 2875 SAAR); financial systems on automated ICAM provisioning by **end of FY2026**.
 - **DoD Responsible AI (RAI)** (DoD AI Ethical Principles, February 2020; RAI Strategy and Implementation Pathway, June 2022, updated October 2024). Five principles: **Responsible, Equitable, Traceable, Reliable, Governable**. **"Governable"** is the principle this framework operationalizes: systems must have the ability to detect and avoid unintended consequences, and the ability to disengage or deactivate systems that demonstrate unintended behavior. The **Warfighter Trust** tenet requires traceable feedback on system status and clear operator procedures to activate and deactivate system functions, which is, in this matrix's terms, Sentinels plus Interventions.
-- **DoD Cloud Computing SRG Impact Levels** (DISA). **IL2** (non-CUI, FedRAMP Moderate), **IL4** (CUI, FedRAMP Moderate + DoD overlay), **IL5** (CUI + unclassified NSS, FedRAMP High + DoD overlay), **IL6** (SECRET, DISA-authorized separately). FedRAMP authorization is **not** automatic DoD authorization. The Impact Level determines which cells in this matrix can use public infrastructure at all, see [`examples/dod-air-gapped/`](./examples/dod-air-gapped/).
+- **DoD Cloud Computing SRG Impact Levels** (DISA). **IL2** (non-CUI, FedRAMP Moderate), **IL4** (CUI, FedRAMP Moderate + DoD overlay), **IL5** (CUI + unclassified NSS, FedRAMP High + DoD overlay), **IL6** (SECRET, DISA-authorized separately). FedRAMP authorization is **not** automatic DoD authorization. The Impact Level determines which cells in this matrix can use public infrastructure at all, see [`examples/dod-air-gapped/`](../examples/dod-air-gapped).
 - **DISA STIGs** (~500 Security Technical Implementation Guides). Prescriptive configuration standards; open STIG findings become POA&M items. Relevant to the Blast radius client-side and server-side cells, where a STIG for the container platform or OS is the DoD-specific expression of the same hardening.
 - **DoDI 5400.19** (Public Affairs Use of Artificial Intelligence). Narrow scope, but a live example of DoD issuing AI-use policy by function.
 
@@ -133,11 +133,11 @@ The joint guidance ("Careful Adoption of Agentic AI Services," April 30, 2026) n
 
 | Five Eyes risk category | This matrix's concern | Where it is enforced |
 |---|---|---|
-| Privilege escalation | Identity + Authorization | [`controls/identity/`](./controls/identity/), [`controls/authorization/`](./controls/authorization/) |
-| Design and configuration flaws | Authorization | [`controls/authorization/server-side/`](./controls/authorization/server-side/) |
-| Behavioral misalignment | Blast radius + Approval gating | [`controls/blast-radius/`](./controls/blast-radius/), [`controls/approval-gating/`](./controls/approval-gating/) |
-| Structural cascading failures | Blast radius | [`controls/blast-radius/server-side/`](./controls/blast-radius/server-side/) |
-| Accountability opacity | Charter + Inventory (+ Sentinels) | [`charter/`](./charter/), [`inventory/`](./inventory/), [`sentinels/`](./sentinels/) |
+| Privilege escalation | Identity + Authorization | [`controls/identity/`](../controls/identity), [`controls/authorization/`](../controls/authorization) |
+| Design and configuration flaws | Authorization | [`controls/authorization/server-side/`](../controls/authorization/server-side) |
+| Behavioral misalignment | Blast radius + Approval gating | [`controls/blast-radius/`](../controls/blast-radius), [`controls/approval-gating/`](../controls/approval-gating) |
+| Structural cascading failures | Blast radius | [`controls/blast-radius/server-side/`](../controls/blast-radius/server-side) |
+| Accountability opacity | Charter + Inventory (+ Sentinels) | [`charter/`](../charter), [`inventory/`](../inventory), [`sentinels/`](../sentinels) |
 
 The joint guidance's core posture, adopt incrementally starting with low-risk tasks; treat governance, human oversight, monitoring, and explicit accountability as requirements rather than options, is the same argument this framework makes with artifacts attached.
 

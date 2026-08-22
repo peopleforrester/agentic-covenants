@@ -8,7 +8,7 @@
 
 ## Tooling
 
-- The hook layout from [`../../../controls/authorization/client-side/`](../../../controls/authorization/client-side/) (the runbook overwrites it).
+- The hook layout from [`../../../controls/authorization/client-side/`](../../../controls/authorization/client-side) (the runbook overwrites it).
 - `chattr` (Linux ext4/xfs); not all filesystems support it. Verify your `/etc/agents/` mount.
 
 ## Files in this directory

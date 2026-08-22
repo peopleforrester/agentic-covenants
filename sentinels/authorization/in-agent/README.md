@@ -18,7 +18,7 @@ Find a known tool call in the shipped session log and confirm its description wa
 
 ## Common mistakes
 
-- Trusting tool descriptions in the session log to be authoritative for what the tool will actually do. Tool-description rug-pull (see [`../../supply-chain/`](../../supply-chain/)) means the description at call time may differ from the description at approval time.
+- Trusting tool descriptions in the session log to be authoritative for what the tool will actually do. Tool-description rug-pull (see [`../../supply-chain/`](../../supply-chain)) means the description at call time may differ from the description at approval time.
 
 ## Citation
 

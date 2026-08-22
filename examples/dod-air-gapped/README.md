@@ -6,7 +6,7 @@ It is written for a program office that has to defend this to an AO, so every su
 
 ## What changes and what does not
 
-**Does not change.** The framework's thesis is unaffected by air-gapping. In-agent controls are still advisory. Client-side hooks still catch casual misuse. Server-side enforcement is still the backstop. The five concerns are the same five concerns. **An air gap is a network control, not a behavioral control**, it constrains where the agent can reach, and does nothing about what the agent does with what it can already reach. Several of the incidents in [`BYPASSES.md`](../../BYPASSES.md) (Replit's freeze-violation wipe, the K8s MCP read-only bypass) would have happened identically inside an enclave.
+**Does not change.** The framework's thesis is unaffected by air-gapping. In-agent controls are still advisory. Client-side hooks still catch casual misuse. Server-side enforcement is still the backstop. The five concerns are the same five concerns. **An air gap is a network control, not a behavioral control**, it constrains where the agent can reach, and does nothing about what the agent does with what it can already reach. Several of the incidents in [`BYPASSES.md`](../../framework/BYPASSES.md) (Replit's freeze-violation wipe, the K8s MCP read-only bypass) would have happened identically inside an enclave.
 
 **Does change.** Every cell that depended on a public service needs an in-enclave substitute, and the identity cells need to bind to ICAM rather than to a commercial IdP.
 
@@ -59,4 +59,4 @@ See [`icam-npe-binding.md`](./icam-npe-binding.md) for the field-by-field mappin
 - **Model provenance.** SBOM and signature verification cover the container and the dependency tree. They do not attest what a model weights file was trained on. That is an open problem industry-wide, not something this framework closes.
 - **Cross-domain transfer.** Moving artifacts into the enclave is a cross-domain solution problem governed by its own accreditation. This example assumes artifacts are already inside.
 - **IL6 and above.** See the table.
-- **The behavioral gap remains the point.** Air-gapping constrains reach. Every control in [`controls/`](../../controls/) is still required, because an agent inside the enclave with valid credentials and legitimate access is exactly the threat the matrix exists to bound.
+- **The behavioral gap remains the point.** Air-gapping constrains reach. Every control in [`controls/`](../../controls) is still required, because an agent inside the enclave with valid credentials and legitimate access is exactly the threat the matrix exists to bound.

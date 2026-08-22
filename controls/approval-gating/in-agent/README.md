@@ -10,7 +10,7 @@ None.
 
 ## Files in this directory
 
-- [`confirmation-prompt-template.md`](./confirmation-prompt-template.md), language to drop in the system prompt that names the kinds of actions where the agent must confirm with the operator before proceeding. Pair with the refusal template in [`../../blast-radius/in-agent/`](../../blast-radius/in-agent/).
+- [`confirmation-prompt-template.md`](./confirmation-prompt-template.md), language to drop in the system prompt that names the kinds of actions where the agent must confirm with the operator before proceeding. Pair with the refusal template in [`../../blast-radius/in-agent/`](../../blast-radius/in-agent).
 
 ## Verification
 

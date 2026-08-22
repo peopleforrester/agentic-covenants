@@ -6,9 +6,9 @@
 
 | Layer | Cell | What you actually deploy |
 |---|---|---|
-| In-agent | [`in-agent/`](./in-agent/) | Tool descriptions that scope each tool to safe operations and explicitly say what the tool is not for. Advisory only. |
-| Client-side | [`client-side/`](./client-side/) | Claude Code `settings.json` with deny-by-default `permissions`, a PreToolUse hook with deny-then-ask-then-allow precedence, pre-commit hooks blocking edits to protected paths. Hooks owned by the operator account, not the agent. |
-| Server-side | [`server-side/`](./server-side/) | Kyverno ClusterPolicy denying wildcard verbs and ClusterRoleBindings on agent ServiceAccounts, server-side Git pre-receive hook (cannot be bypassed by `--no-verify`), IAM policies with explicit ARN scoping. |
+| In-agent | [`in-agent/`](./in-agent) | Tool descriptions that scope each tool to safe operations and explicitly say what the tool is not for. Advisory only. |
+| Client-side | [`client-side/`](./client-side) | Claude Code `settings.json` with deny-by-default `permissions`, a PreToolUse hook with deny-then-ask-then-allow precedence, pre-commit hooks blocking edits to protected paths. Hooks owned by the operator account, not the agent. |
+| Server-side | [`server-side/`](./server-side) | Kyverno ClusterPolicy denying wildcard verbs and ClusterRoleBindings on agent ServiceAccounts, server-side Git pre-receive hook (cannot be bypassed by `--no-verify`), IAM policies with explicit ARN scoping. |
 
 ## Why it matters
 
@@ -28,7 +28,7 @@ Pre-2.1.40 Claude Code allowed `allow` in `settings.json` `permissions` to overr
 
 ## Citations (per layer)
 
-See [`../../CITATIONS.md`](../../CITATIONS.md). Quick reference:
+See [`../../CITATIONS.md`](../../framework/CITATIONS.md). Quick reference:
 
 - **In-agent**: advisory; thematically MAP 5.1; OWASP LLM06 (Excessive Agency); OWASP ASI02 (Tool Misuse).
 - **Client-side**: NIST CSF 2.0 PR.AA-05 (least privilege, separation of duties), PR.PS-01; OWASP LLM05, LLM06; OWASP ASI02, ASI05; OWASP MCP02, MCP05; OWASP Agentic Least Agency principle.

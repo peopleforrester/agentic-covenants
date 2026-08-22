@@ -16,7 +16,7 @@ Please include the file path, what you expected, and what actually happened.
 
 ## 2. A bypass in a control the framework recommends
 
-A documented way to defeat something in [`controls/`](./controls/) that [`BYPASSES.md`](./BYPASSES.md) does not already list.
+A documented way to defeat something in [`controls/`](./controls) that [`BYPASSES.md`](./framework/BYPASSES.md) does not already list.
 
 - **If the bypass is already public** (a published CVE, a vendor advisory, a conference talk, a blog post), open a PR or issue adding it to `BYPASSES.md` with the source. This is one of the most valuable contributions to the project.
 - **If the bypass is novel and not yet public**, do not open an issue here. Report it to the affected vendor or project first, through their own disclosure process. This repo is not a disclosure venue and cannot coordinate a fix in someone else's software. Once it is public, please come back and add it.
@@ -39,4 +39,4 @@ There is no release train. `main` is the current state, and the framework is ver
 
 ## A note on the artifacts themselves
 
-Every template here is a starting point that you are expected to review before deploying. Treat a policy copied from this repo the way you would treat a policy copied from any other public source: read it, understand what it denies, and verify it in your own environment. The [`checklists/`](./checklists/) exist for exactly that step.
+Every template here is a starting point that you are expected to review before deploying. Treat a policy copied from this repo the way you would treat a policy copied from any other public source: read it, understand what it denies, and verify it in your own environment. The [`checklists/`](./checklists) exist for exactly that step.

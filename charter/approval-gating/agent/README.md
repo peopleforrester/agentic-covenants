@@ -38,12 +38,12 @@ incident_revocation:
 
 ## Operational tie-in
 
-- The charter file lives under branch protection from [`../../../controls/approval-gating/server-side/`](../../../controls/approval-gating/server-side/). Tampering with the charter is detected by [`../../../sentinels/approval-gating/server-side/audit-branch-protection.yml`](../../../sentinels/approval-gating/server-side/audit-branch-protection.yml).
+- The charter file lives under branch protection from [`../../../controls/approval-gating/server-side/`](../../../controls/approval-gating/server-side). Tampering with the charter is detected by [`../../../sentinels/approval-gating/server-side/audit-branch-protection.yml`](../../../sentinels/approval-gating/server-side/audit-branch-protection.yml).
 - `incident_revocation` conditions feed the on-call's authority to invoke [`../../../interventions/identity/server-side/agent-revoke-server`](../../../interventions/identity/server-side/agent-revoke-server) without a second approval.
 
 ## Common failure mode
 
-Approval signatures become reflexive, alert fatigue at the governance layer. Tiered approval (more rigorous review for Tier 3+) is the same cure used in [Covenants L2-C4](../../../controls/approval-gating/client-side/).
+Approval signatures become reflexive, alert fatigue at the governance layer. Tiered approval (more rigorous review for Tier 3+) is the same cure used in [Covenants L2-C4](../../../controls/approval-gating/client-side).
 
 ## Citation
 

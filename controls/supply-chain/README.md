@@ -6,9 +6,9 @@
 
 | Layer | Cell | What you actually deploy |
 |---|---|---|
-| In-agent | [`in-agent/`](./in-agent/) | A "warn before installing unvetted packages" prompt. Frequently wrong. Listed for completeness. |
-| Client-side | [`client-side/`](./client-side/) | MCP allowlist with manifest hash pinning, **tool-description hashing on first approval (rug-pull defense)**, Sigstore signature verification before install, lockfile pinning paired with server-side integrity validation, pre-commit dependency scan, reject unsigned MCP servers at handshake. |
-| Server-side | [`server-side/`](./server-side/) | Image registry restrictions in admission policy, OCI signature verification (cosign), SBOM admission requirements, egress NetworkPolicy to approved registries only, OPA policy denying images without provenance attestation, SLSA build-provenance attestation gates, MCP domain allowlist enforced at the network layer (Cilium FQDN policy). |
+| In-agent | [`in-agent/`](./in-agent) | A "warn before installing unvetted packages" prompt. Frequently wrong. Listed for completeness. |
+| Client-side | [`client-side/`](./client-side) | MCP allowlist with manifest hash pinning, **tool-description hashing on first approval (rug-pull defense)**, Sigstore signature verification before install, lockfile pinning paired with server-side integrity validation, pre-commit dependency scan, reject unsigned MCP servers at handshake. |
+| Server-side | [`server-side/`](./server-side) | Image registry restrictions in admission policy, OCI signature verification (cosign), SBOM admission requirements, egress NetworkPolicy to approved registries only, OPA policy denying images without provenance attestation, SLSA build-provenance attestation gates, MCP domain allowlist enforced at the network layer (Cilium FQDN policy). |
 
 ## Why it matters
 
@@ -34,7 +34,7 @@ Lockfile pinning is **only** meaningful when paired with server-side integrity v
 
 ## Citations (per layer)
 
-See [`../../CITATIONS.md`](../../CITATIONS.md). Quick reference:
+See [`../../CITATIONS.md`](../../framework/CITATIONS.md). Quick reference:
 
 - **In-agent**: advisory; thematically MAP 4.1 (third-party risks identified); OWASP LLM03; OWASP ASI04 (Agentic Supply Chain Vulnerabilities), mitigation principle.
 - **Client-side**: NIST CSF 2.0 PR.PS-02, PR.PS-01, GV.SC-07 (risks from suppliers identified, recorded, prioritized, assessed); NIST AI RMF MAP 4.1, MANAGE 3.1 (third-party risk treatment); OWASP LLM03 (Supply Chain), LLM04 (Data and Model Poisoning); OWASP ASI04, ASI06 (Memory & Context Poisoning); NIST SP 800-218 PS.2; NIST SP 800-218 Rev. 1 draft (Dec 17, 2025); NIST SP 800-218A (Generative AI Profile of SSDF); OWASP MCP01, MCP03, MCP04.

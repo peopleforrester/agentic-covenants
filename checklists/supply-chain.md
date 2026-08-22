@@ -77,7 +77,7 @@ kubectl exec -n <ns> <pod> -- curl -sS --max-time 3 https://example.com   # must
 
 **Charter drift check:** do the runtime MCP hashes and image digest match `dependencies` in the charter? ☐ yes ☐ **no, finding**
 
-**Federal/DoD note.** 800-53 **SR-3, SR-4, SR-5, SR-11, SA-11, CM-14, SI-7**; CSF 2.0 **GV.SC-07**, **ID.RA-09**; DoD ZT **Application & Workload**; RAI *Reliable*, *Traceable*. In an enclave, public Sigstore and public registries do not exist, see [`examples/dod-air-gapped/`](../examples/dod-air-gapped/) for the substitutions and what each one satisfies.
+**Federal/DoD note.** 800-53 **SR-3, SR-4, SR-5, SR-11, SA-11, CM-14, SI-7**; CSF 2.0 **GV.SC-07**, **ID.RA-09**; DoD ZT **Application & Workload**; RAI *Reliable*, *Traceable*. In an enclave, public Sigstore and public registries do not exist, see [`examples/dod-air-gapped/`](../examples/dod-air-gapped) for the substitutions and what each one satisfies.
 
 **Named incidents worth knowing before this audit:** postmark-mcp (first in-the-wild malicious MCP server, ~300 orgs), ClawHavoc (1,184+ malicious marketplace skills), Trivy (the scanner itself), CVE-2026-5058/5059 (unauthenticated MCP RCE, CVSS 9.8).
 

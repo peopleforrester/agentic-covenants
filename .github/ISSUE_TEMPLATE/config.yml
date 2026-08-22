@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security defect in an artifact here
+    url: https://github.com/peopleforrester/agentic-covenants/blob/main/SECURITY.md
+    about: A policy that does not deny what it claims. Read SECURITY.md first; most of these are public issues.
+  - name: The framework itself
+    url: https://agenticcovenants.com
+    about: Six matrices, 93 cells, every artifact browsable.

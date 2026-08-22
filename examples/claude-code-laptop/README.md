@@ -43,7 +43,7 @@ The last row is the one people give up on too early. An agent on a laptop with a
 | [`settings.json`](./settings.json) | A composed deny-by-default permission posture for the workstation |
 | [`launch-agent`](./launch-agent) | Sandbox-at-launch wrapper that applies the constraint before the process starts |
 
-The per-cell artifacts these compose from live in [`controls/`](../../controls/) and are not duplicated here. Where this example references one, it references the real path.
+The per-cell artifacts these compose from live in [`controls/`](../../controls) and are not duplicated here. Where this example references one, it references the real path.
 
 ## The order to install things in
 
@@ -60,4 +60,4 @@ Follow the levels. They are ordered by dependency, not by importance, so skippin
 - **A compromised operator account.** Every control here runs as the operator and is configurable by the operator. This bounds what a misbehaving agent does, not what a hostile human does.
 - **The agent reading things it should not.** Filesystem ACLs and the sandbox mount set bound this, but an agent with read access to the operator's home directory has read access to the operator's secrets. Moving secrets out of the agent's mount namespace is a real control and is not automatic.
 - **Prompt injection.** Nothing here prevents the agent from being convinced to do something. The point is that being convinced is not sufficient, because the hook and the sandbox do not read the conversation.
-- **Anything after the fact.** This directory is Protect. Detection is [`sentinels/`](../../sentinels/), stopping it is [`interventions/`](../../interventions/), and recovering is [`restorations/`](../../restorations/).
+- **Anything after the fact.** This directory is Protect. Detection is [`sentinels/`](../../sentinels), stopping it is [`interventions/`](../../interventions), and recovering is [`restorations/`](../../restorations).

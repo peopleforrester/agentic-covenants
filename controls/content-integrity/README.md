@@ -16,15 +16,15 @@ So the controls here are **probabilistic**. They score and threshold rather than
 
 | Layer | Control | Honest limitation |
 |---|---|---|
-| [**In-agent**](./in-agent/) | System-prompt hardening, instruction hierarchy, refusal training | Advisory, as everywhere in this framework. Worse here: the attack is aimed precisely at this layer, so it is the one surface the adversary is directly optimizing against |
-| [**Client-side**](./client-side/) | Input scanning before the model sees the text, output scanning before it leaves, tool-result sanitization, provenance tagging of untrusted content | Scoring, so false positives and false negatives are inherent. Evadable by encoding, indirection, multi-turn setup, and translation |
-| [**Server-side**](./server-side/) | Egress policy so exfiltration has nowhere to go, DLP at the boundary, audit of what was actually sent | Catches the consequence rather than the manipulation. The agent is already compromised by the time this fires |
+| [**In-agent**](./in-agent) | System-prompt hardening, instruction hierarchy, refusal training | Advisory, as everywhere in this framework. Worse here: the attack is aimed precisely at this layer, so it is the one surface the adversary is directly optimizing against |
+| [**Client-side**](./client-side) | Input scanning before the model sees the text, output scanning before it leaves, tool-result sanitization, provenance tagging of untrusted content | Scoring, so false positives and false negatives are inherent. Evadable by encoding, indirection, multi-turn setup, and translation |
+| [**Server-side**](./server-side) | Egress policy so exfiltration has nowhere to go, DLP at the boundary, audit of what was actually sent | Catches the consequence rather than the manipulation. The agent is already compromised by the time this fires |
 
 ## What actually works here
 
 The strongest available control for this concern is not a scanner. It is **making a successful injection worthless**, which is a blast-radius problem rather than a content problem.
 
-An agent that has been successfully injected can only do what its credentials, its RBAC, its sandbox, and its egress policy permit. If those are tight, the injection succeeds and accomplishes nothing. This is why [`controls/blast-radius/`](../blast-radius/) and [`controls/authorization/`](../authorization/) matter more to this concern than anything in this directory does.
+An agent that has been successfully injected can only do what its credentials, its RBAC, its sandbox, and its egress policy permit. If those are tight, the injection succeeds and accomplishes nothing. This is why [`controls/blast-radius/`](../blast-radius) and [`controls/authorization/`](../authorization) matter more to this concern than anything in this directory does.
 
 Scanners narrow the funnel. They do not close it.
 
@@ -53,10 +53,10 @@ Version and status claims above are as reported by secondary sources in August 2
 
 ## Cells
 
-- [`in-agent/`](./in-agent/): prompt hardening, and why it is the weakest cell in the matrix
-- [`client-side/`](./client-side/): scanning pipeline and provenance tagging
-- [`server-side/`](./server-side/): egress containment and send-side audit
+- [`in-agent/`](./in-agent): prompt hardening, and why it is the weakest cell in the matrix
+- [`client-side/`](./client-side): scanning pipeline and provenance tagging
+- [`server-side/`](./server-side): egress containment and send-side audit
 
 ## Crosswalk
 
-OWASP LLM Top 10 **LLM01** (prompt injection), **LLM02** (sensitive information disclosure), **LLM05** (improper output handling). OWASP Agentic **ASI02** (tool misuse). NIST AI RMF **MEASURE 2.7**. See [`CITATIONS.md`](../../CITATIONS.md).
+OWASP LLM Top 10 **LLM01** (prompt injection), **LLM02** (sensitive information disclosure), **LLM05** (improper output handling). OWASP Agentic **ASI02** (tool misuse). NIST AI RMF **MEASURE 2.7**. See [`CITATIONS.md`](../../framework/CITATIONS.md).

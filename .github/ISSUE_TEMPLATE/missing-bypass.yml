@@ -1,0 +1,45 @@
+name: Missing bypass
+description: A published way to defeat a control this framework recommends, not yet in BYPASSES.md
+title: "Bypass: "
+labels: ["bypass"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **If the bypass is not yet public, do not file it here.** Report it to
+        the affected vendor or project first. This repo is not a disclosure
+        venue and cannot coordinate a fix in someone else's software. Come back
+        once it is public. See SECURITY.md.
+
+        An undocumented control that fails to its bypass is worse than no
+        control, because somebody trusted it.
+  - type: input
+    id: control
+    attributes:
+      label: Which control
+      placeholder: controls/blast-radius/client-side/agent-bwrap
+    validations:
+      required: true
+  - type: textarea
+    id: how
+    attributes:
+      label: How it is defeated
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Public source
+      description: CVE, vendor advisory, talk, or writeup
+    validations:
+      required: true
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Which layer does this defeat
+      options:
+        - In-agent (L1)
+        - Client-side (L2)
+        - Server-side (L3)
+    validations:
+      required: true

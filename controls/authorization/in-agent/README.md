@@ -14,7 +14,7 @@ None. The artifact is text in the system prompt and in each tool's `description`
 
 ## Verification
 
-You cannot verify this layer the way you verify the others. The "verification" is a lint that confirms each tool description has scope and exclusion language. A linter like `mcp-scanner` (see [`../../supply-chain/client-side/`](../../supply-chain/client-side/)) can enforce a basic pattern.
+You cannot verify this layer the way you verify the others. The "verification" is a lint that confirms each tool description has scope and exclusion language. A linter like `mcp-scanner` (see [`../../supply-chain/client-side/`](../../supply-chain/client-side)) can enforce a basic pattern.
 
 ## Common mistakes
 

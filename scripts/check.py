@@ -42,7 +42,7 @@ PRUNE_DIRS = {
     "__pycache__",
     "dist",
     "build",
-    "docs",  # gitignored working notes, never published
+    ".notes",  # gitignored working notes; docs/ is a reserved public path
     "transcripts",
     "claude-ai-context",
 }
@@ -466,7 +466,53 @@ def check_diagrams(staged: bool) -> Findings:
     return findings
 
 
+# Root holds meta only. Measured against the top-starred repos and comparable
+# engineering repos: their root file counts are high (Rust 33, Kyverno 32) but
+# almost all of it is dotfiles and build config. Every root markdown file in all
+# eight comparators is ABOUT the project. None puts the product at root. The
+# median document count there is 7; this repo had 20 before the split.
+ROOT_ALLOWED = {
+    "README.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "SECURITY.md",
+    "CHANGELOG.md", "AGENTS.md", "CLAUDE.md",
+    "LICENSE", "LICENSE-CODE", "LICENSE-CONTENT",
+}
+
+
+def check_root(staged: bool) -> Findings:
+    """Root may hold meta files only, and docs/ stays a reserved public path."""
+    findings = Findings("root")
+
+    tracked = subprocess.run(
+        ["git", "ls-files", "--cached"], cwd=REPO_ROOT,
+        capture_output=True, text=True, check=False,
+    ).stdout.split()
+    root_files = [f for f in tracked if "/" not in f]
+
+    for name in sorted(root_files):
+        if name.startswith("."):
+            continue  # dotfiles are infrastructure; every comparator has them
+        if name not in ROOT_ALLOWED:
+            findings.add(
+                REPO_ROOT / name, None,
+                "content at repository root. If a visitor would read it for its "
+                "own sake it belongs in a directory (framework/, briefing/, data/)",
+            )
+
+    # docs/ is what readers and tooling expect to be public documentation.
+    # Using it for gitignored working notes puts unpublishable material on the
+    # one path everyone assumes is publishable.
+    if (REPO_ROOT / "docs").exists():
+        findings.add(REPO_ROOT / "docs", None,
+                     "docs/ is a reserved public path; private notes belong in .notes/")
+
+    if not (REPO_ROOT / ".github").is_dir():
+        findings.add(REPO_ROOT, None, ".github/ is absent; 8 of 8 comparable repos have one")
+
+    return findings
+
+
 CHECKS: dict[str, Callable[[bool], Findings]] = {
+    "root": check_root,
     "diagrams": check_diagrams,
     "site": check_site,
     "links": check_links,

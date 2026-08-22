@@ -14,7 +14,7 @@
 ## Files in this directory
 
 - [`apply-branch-protection.sh`](./apply-branch-protection.sh), wraps the `gh api` call that sets every branch-protection field correctly. Run once per repo. The script asserts `enforce_admins=true` and refuses to apply without it.
-- [`branch-protection-expected.json`](./branch-protection-expected.json), declarative target state for branch protection. The detection job in [`../../../sentinels/approval-gating/server-side/`](../../../sentinels/approval-gating/server-side/) compares this to the live state and alerts on drift.
+- [`branch-protection-expected.json`](./branch-protection-expected.json), declarative target state for branch protection. The detection job in [`../../../sentinels/approval-gating/server-side/`](../../../sentinels/approval-gating/server-side) compares this to the live state and alerts on drift.
 - [`CODEOWNERS`](./CODEOWNERS), template CODEOWNERS file. Drop at `.github/CODEOWNERS` and substitute team names.
 - [`freeze.yml`](./freeze.yml), workflow that polls PagerDuty every minute and sets the `DEPLOY_FREEZE` repo variable. The `apply` job in the IaC pipeline reads the variable and refuses to run when true.
 

@@ -76,7 +76,7 @@ aws --profile <agent> sts assume-role --role-arn arn:aws:iam::<PROD>:role/any --
 
 ☐ All three present ☐ Client-side only, insufficient with cluster reach ☐ Server-side only ☐ Gaps
 
-**Federal/DoD note.** 800-53 **SC-7, SC-39, SC-5, SI-4, CP-9, CP-10**; DoD ZT **Network/Environment**, **Application & Workload**, **Data**; RAI *Reliable*, *Governable*; DISA STIG for the container platform and OS. **An air gap is a network control, not a behavioral one**, every incident above would have happened identically inside an enclave. See [`examples/dod-air-gapped/`](../examples/dod-air-gapped/).
+**Federal/DoD note.** 800-53 **SC-7, SC-39, SC-5, SI-4, CP-9, CP-10**; DoD ZT **Network/Environment**, **Application & Workload**, **Data**; RAI *Reliable*, *Governable*; DISA STIG for the container platform and OS. **An air gap is a network control, not a behavioral one**, every incident above would have happened identically inside an enclave. See [`examples/dod-air-gapped/`](../examples/dod-air-gapped).
 
 **Open items:**
 

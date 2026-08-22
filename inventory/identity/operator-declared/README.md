@@ -4,7 +4,7 @@
 
 ## Where it lives
 
-A GitOps registry: `agents/<agent-identifier>.yaml` per agent, committed to a repo under branch protection (the same protection that [`controls/approval-gating/server-side/`](../../../controls/approval-gating/server-side/) applies). PR-reviewed changes only.
+A GitOps registry: `agents/<agent-identifier>.yaml` per agent, committed to a repo under branch protection (the same protection that [`controls/approval-gating/server-side/`](../../../controls/approval-gating/server-side) applies). PR-reviewed changes only.
 
 ## Reference tooling
 

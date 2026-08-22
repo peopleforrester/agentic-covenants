@@ -63,4 +63,4 @@ Not a product, not a compliance certification, and not a claim that any control 
 
 ---
 
-**Full framework:** [`README.md`](./README.md) · **Cost model:** [`ECONOMICS.md`](./ECONOMICS.md) · **Maturity model:** [`examples/claude-code-laptop/MATURITY.md`](./examples/claude-code-laptop/MATURITY.md) · **Assessment sheets:** [`checklists/`](./checklists/)
+**Full framework:** [`README.md`](../README.md) · **Cost model:** [`ECONOMICS.md`](./ECONOMICS.md) · **Maturity model:** [`examples/claude-code-laptop/MATURITY.md`](../examples/claude-code-laptop/MATURITY.md) · **Assessment sheets:** [`checklists/`](../checklists)

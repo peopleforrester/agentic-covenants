@@ -7,7 +7,7 @@ This repo is a governance framework, not a code project. There is no build, no t
 In rough order of how much they improve the framework:
 
 1. **A citation that is wrong.** A subcategory that does not say what it is cited for, an identifier that changed (`ID.SC-04` moved to `GV.SC-07`; `GV.RR-04` in CSF 2.0 final is HR-related, not authorization), a standard that was superseded. These are defects. File them even if you cannot propose the replacement.
-2. **A bypass that is missing.** If a control in `controls/` can be defeated in a way [`BYPASSES.md`](./BYPASSES.md) does not document, that is the highest-severity gap in the repo. An undocumented control that fails to its bypass is worse than no control, because someone trusted it.
+2. **A bypass that is missing.** If a control in `controls/` can be defeated in a way [`BYPASSES.md`](./framework/BYPASSES.md) does not document, that is the highest-severity gap in the repo. An undocumented control that fails to its bypass is worse than no control, because someone trusted it.
 3. **A version pin that has gone stale.** See [Currency](#currency-is-the-product) below.
 4. **A cell that does not work as written.** An artifact that fails against the tooling version it claims to target, a verification command that does not verify what it says.
 5. **An additional citation mapping.** A framework subcategory that legitimately applies and is not listed.
@@ -37,7 +37,7 @@ If a claim cannot be verified, mark it `UNVERIFIED` inline rather than deleting 
 - **Every cell README follows the same shape**: Control, Tooling, Files in this directory, Verification, Common mistakes, Citation. Match it.
 - **Every artifact carries two `ABOUTME:` comment lines** at the top saying what it is and where it goes.
 - **Prose style**: no em-dashes; no aphoristic closing lines; avoid the reflexive rule of three. Match the terse, evidence-first voice of the existing cell READMEs. Write the substance and stop.
-- **Crosswalks are not compliance claims.** The DoD/federal mappings in [`CITATIONS.md`](./CITATIONS.md) are defensible starting points for a conversation with an authorizing official. Do not phrase anything as "this satisfies control X."
+- **Crosswalks are not compliance claims.** The DoD/federal mappings in [`CITATIONS.md`](./framework/CITATIONS.md) are defensible starting points for a conversation with an authorizing official. Do not phrase anything as "this satisfies control X."
 
 ## Making a change
 
@@ -64,4 +64,4 @@ By submitting a contribution you agree it is licensed under the same terms as th
 
 ## Reporting a security-relevant finding
 
-If you find a bypass in a control that is deployed in the wild, treat it like any other vulnerability disclosure: contact the affected vendor or project first. This repo documents publicly disclosed bypasses. It is not a disclosure venue for a novel zero-day. Once a finding is public, a PR adding it to [`BYPASSES.md`](./BYPASSES.md) is very welcome.
+If you find a bypass in a control that is deployed in the wild, treat it like any other vulnerability disclosure: contact the affected vendor or project first. This repo documents publicly disclosed bypasses. It is not a disclosure venue for a novel zero-day. Once a finding is public, a PR adding it to [`BYPASSES.md`](./framework/BYPASSES.md) is very welcome.

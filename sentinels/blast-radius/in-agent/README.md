@@ -6,7 +6,7 @@
 
 ## Tooling
 
-- The transcript-shipping pipeline from [`../../identity/in-agent/`](../../identity/in-agent/).
+- The transcript-shipping pipeline from [`../../identity/in-agent/`](../../identity/in-agent).
 - A wrapper that intercepts tool calls and inspects the in-context state. The reference implementation is in [`lethal-trifecta-detector.py`](./lethal-trifecta-detector.py).
 
 ## Files in this directory

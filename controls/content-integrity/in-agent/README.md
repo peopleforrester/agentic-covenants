@@ -19,7 +19,7 @@ This cell is not empty, because unlike blast radius and supply chain there is so
 
 Treat everything in this cell as **reducing the volume of low-effort attacks so the probabilistic scanners downstream have less to score**. That is worth something. It is not a control, and it must never be cited as one in a risk register.
 
-If a threat model says "prompt injection is mitigated by system-prompt hardening," the threat model is wrong. The correct statement is that injection is *bounded* by what the agent's credentials, sandbox, and egress policy permit after the injection succeeds. Those live in [`controls/authorization/`](../../authorization/), [`controls/blast-radius/`](../../blast-radius/), and [`server-side/`](../server-side/).
+If a threat model says "prompt injection is mitigated by system-prompt hardening," the threat model is wrong. The correct statement is that injection is *bounded* by what the agent's credentials, sandbox, and egress policy permit after the injection succeeds. Those live in [`controls/authorization/`](../../authorization), [`controls/blast-radius/`](../../blast-radius), and [`server-side/`](../server-side).
 
 ## Artifact
 
@@ -27,6 +27,6 @@ If a threat model says "prompt injection is mitigated by system-prompt hardening
 
 ## Verification
 
-There is no verification block for this cell, and that absence is deliberate. You cannot verify a prompt-level mitigation the way you verify an admission policy: there is no manifest that either loads or does not. The closest available thing is adversarial evaluation, which measures a rate rather than proving a property, and which belongs in assurance. See [`ASSURANCE.md`](../../../ASSURANCE.md).
+There is no verification block for this cell, and that absence is deliberate. You cannot verify a prompt-level mitigation the way you verify an admission policy: there is no manifest that either loads or does not. The closest available thing is adversarial evaluation, which measures a rate rather than proving a property, and which belongs in assurance. See [`ASSURANCE.md`](../../../framework/ASSURANCE.md).
 
 A cell that cannot be verified should say so rather than offering a check that proves nothing.

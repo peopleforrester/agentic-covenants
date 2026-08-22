@@ -6,9 +6,9 @@
 
 | Layer | Cell | What you actually deploy |
 |---|---|---|
-| In-agent | [`in-agent/`](./in-agent/) | A non-trivial system prompt that names the agent. Advisory only. |
-| Client-side | [`client-side/`](./client-side/) | Per-agent credentials in operator-owned config, filesystem ACLs, systemd unit binding the credential to the agent's process, never a shared shell rc. |
-| Server-side | [`server-side/`](./server-side/) | Dedicated ServiceAccount per agent, OIDC federation, projected ServiceAccount token with 15-minute TTL, IAM trust policy with strict subject condition, optional SPIFFE/SPIRE for cross-cluster identity. |
+| In-agent | [`in-agent/`](./in-agent) | A non-trivial system prompt that names the agent. Advisory only. |
+| Client-side | [`client-side/`](./client-side) | Per-agent credentials in operator-owned config, filesystem ACLs, systemd unit binding the credential to the agent's process, never a shared shell rc. |
+| Server-side | [`server-side/`](./server-side) | Dedicated ServiceAccount per agent, OIDC federation, projected ServiceAccount token with 15-minute TTL, IAM trust policy with strict subject condition, optional SPIFFE/SPIRE for cross-cluster identity. |
 
 ## Why it matters
 
@@ -31,7 +31,7 @@ For each layer ask: *if the agent's identity is forged, stale, or shared, what s
 
 ## Citations (per layer)
 
-See [`../../CITATIONS.md`](../../CITATIONS.md). Quick reference:
+See [`../../CITATIONS.md`](../../framework/CITATIONS.md). Quick reference:
 
 - **In-agent**: advisory, no direct mapping.
 - **Client-side**: NIST CSF 2.0 PR.AA-01, PR.AA-03; NIST SP 800-207; NIST SP 800-63 Rev. 4.

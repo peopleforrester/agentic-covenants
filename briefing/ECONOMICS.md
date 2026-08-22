@@ -62,7 +62,7 @@ Effort is expressed per agent estate rather than per agent, because most of the 
 
 ### Why the estimates are shaped this way
 
-Level 2 is cheap because the artifacts already exist. The permission config and the hooks in [`controls/authorization/client-side/`](./controls/authorization/client-side/) are copy-and-substitute work, and the expensive part is not writing them but deciding what belongs on the deny list, which is a half-day conversation rather than an engineering project.
+Level 2 is cheap because the artifacts already exist. The permission config and the hooks in [`controls/authorization/client-side/`](../controls/authorization/client-side) are copy-and-substitute work, and the expensive part is not writing them but deciding what belongs on the deny list, which is a half-day conversation rather than an engineering project.
 
 Level 3 is the step change, and the cost is concentrated in one requirement: **sandbox inheritance**. Applying a sandbox is easy. Guaranteeing that a process the agent spawns is subject to the same constraint requires getting the launch path right and then testing it, and it is the requirement most commonly claimed and least commonly verified.
 
@@ -94,7 +94,7 @@ That is the whole case for Level 2, and it does not require anyone to believe a 
 
 ### The cost of the assessment itself
 
-Roughly **one hour per agent** using [`checklists/`](./checklists/), or seconds per workstation using [`examples/claude-code-laptop/assess.sh`](./examples/claude-code-laptop/assess.sh).
+Roughly **one hour per agent** using [`checklists/`](../checklists), or seconds per workstation using [`examples/claude-code-laptop/assess.sh`](../examples/claude-code-laptop/assess.sh).
 
 This is the highest-return spend in the document and the one most often skipped. Organizations routinely fund controls they already had while leaving the binding constraint untouched, because scoring by average hides the gap that scoring by minimum reveals.
 
@@ -114,7 +114,7 @@ State the conditions under which this document becomes wrong, so a later reader 
 ## Sources
 
 - IBM, *Cost of a Data Breach Report 2026*, announced 29 July 2026. [IBM newsroom release](https://newsroom.ibm.com/2026-07-29-ibm-study-one-in-four-malicious-breaches-are-ai-enabled,-costing-companies-6-million-on-average). Figures not carried in the release (the 92% access-control finding, the 43% unapproved-tool share, and the outcome breakdown) are as reported in [Help Net Security's coverage, 30 July 2026](https://www.helpnetsecurity.com/2026/07/30/ibm-cost-of-a-data-breach-2026/), which quotes the report directly. IBM's own report landing page returned HTTP 403 to automated retrieval, so the primary PDF was not read directly and these figures are attributed to the release and that coverage rather than to a page that was opened.
-- EU AI Act Articles 72 and 73, serious-incident reporting. See [`CITATIONS.md`](./CITATIONS.md) for the full entry and the Digital Omnibus caveat.
-- Incident corpus behind the qualitative claims: [`BYPASSES.md`](./BYPASSES.md).
+- EU AI Act Articles 72 and 73, serious-incident reporting. See [`CITATIONS.md`](../framework/CITATIONS.md) for the full entry and the Digital Omnibus caveat.
+- Incident corpus behind the qualitative claims: [`BYPASSES.md`](../framework/BYPASSES.md).
 
 All engineer-day and dollar-cost estimates in Part 2 and Part 3 are this document's own, not IBM's, and carry no external authority.
