@@ -28,6 +28,17 @@ Three failure modes when Inventory is absent or incomplete:
 
 The three layers are complementary and partially overlapping. A complete Inventory cross-references all three: an agent that self-declares should also appear in operator-declared (intent) and discovered (liveness). **Mismatches across layers are themselves Sentinels-level alerts.**
 
+Those three names are how this matrix reads. The directories, the data, and the
+URLs use the canonical layer ids that all six matrices share, so the mapping is
+worth stating once:
+
+| This matrix calls it | Canonical id | Why it lands there |
+|---|---|---|
+| Self-declared | `in-agent` | The agent reports itself, so it can be wrong, stale, or absent. Advisory. |
+| Operator-declared | `client-side` | A human registered it. Deterministic, and only as good as what the operator knows. |
+| Discovered | `server-side` | Found by scanning the target. External, and trusts neither of the above. |
+
+
 ### Horizontal: what is being inventoried
 
 1. **Identity.** Which agents exist, with what credentials, mapped to which charter, owned by which named human.

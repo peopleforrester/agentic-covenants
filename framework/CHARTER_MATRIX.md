@@ -44,6 +44,16 @@ Governance is also the function that absorbs regulatory load. EU AI Act Articles
 | **Approval gating** | Org-wide AI Governance Council is the authority that approves new agent classes, ratifies risk-tier policy changes, and reviews annual agent-program report. Member roles named (CISO, Chief AI Officer, GC, Privacy, Domain Leads). Quorum and voting rules defined per ISO/IEC 42001 §A.4. | Domain authority approves agent charters within its domain. Multi-party signature required for Tier 3+ agents (typically domain lead plus security review plus risk review). Approval process documented and auditable. Charter amendments require the same process as original approval. | Agent charter signed by named owner, domain authority, and (for Tier 3+) security review. Charter identifies the approver of every subsequent scope change. Annual review cadence specified. Conditions for emergency revocation specified. **The charter is the artifact that Covenants L3-C4 protects** (branch protection prevents tampering with the charter file itself). |
 | **Supply chain** | Org-wide allowlist of approved foundation models. Org-wide policy on MCP server approval, third-party dependency approval, vendor risk assessment. Procurement process integrates AI vendor risk per NIST SP 800-161 Rev. 1 and NIST SP 800-218A. | Domain charter inherits org-wide approved-model list and adds domain-specific restrictions (e.g., "this domain may not use models that train on user data" or "this domain may only use SOC 2 Type II vendors"). Domain charter approves or denies MCP servers for the domain. | Agent charter declares specific dependencies: named foundation model and version, named MCP servers (with allowlist hashes referenced from L2-C5 of Covenants), named base container images, named tool versions. Dependency changes require charter amendment. Per OWASP MCP Top 10 (MCP04, MCP09), supply chain inventory is a charter property, not a runtime property. |
 
+
+Those three names are how this matrix reads. The directories, the data, and the
+URLs use the canonical layer ids that all six matrices share:
+
+| This matrix calls it | Canonical id | Why it lands there |
+|---|---|---|
+| Agent charter | `in-agent` | The scope the agent declares for itself. Advisory. |
+| Domain charter | `client-side` | The team that operates the agent, and the policy they set. |
+| Organizational charter | `server-side` | Authority above the operator, which the operator cannot waive. |
+
 ## How to use this as governance
 
 The Charter Matrix is not a runbook; it is a **documentation discipline**. Each cell answers a structural question that the org's governance documents must answer. Walk the cells and ask: *does our org actually have this written down somewhere, with named owners, signed and dated?* If the answer is "we know this but it is not written," the cell is empty.
