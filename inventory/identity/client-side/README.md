@@ -12,8 +12,8 @@ This cell is paperwork, not code. The structure is the [`inventory/templates/inv
 
 ## Cross-layer cross-references
 
-- Every entry here should match a self-declared registration (`../self-declared/`). Operator-declared but not self-declared = ghost agent.
-- Every entry here should match a discovered identity (`../discovered/`). Operator-declared but not discovered = same ghost-agent state.
+- Every entry here should match a self-declared registration (`../in-agent/`). Operator-declared but not self-declared = ghost agent.
+- Every entry here should match a discovered identity (`../server-side/`). Operator-declared but not discovered = same ghost-agent state.
 - A self-declared agent without an operator-declared entry = unauthorized agent. Investigate.
 
 ## Common failure modes

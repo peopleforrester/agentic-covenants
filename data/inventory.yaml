@@ -6,15 +6,18 @@ question: "What agents exist, what they touch, what threats they face?"
 companions: [matrix.yaml, sentinels.yaml, interventions.yaml, restorations.yaml, charter.yaml]
 
 layers:
-  - id: self-declared
+  - id: in-agent
     label: Self-declared
-    summary: Agent registers itself on startup. Strong signal when present; missing for agents that do not implement the protocol.
-  - id: operator-declared
+    strength: advisory
+    summary: The agent reports itself. It can be wrong, stale, or absent entirely.
+  - id: client-side
     label: Operator-declared
-    summary: Human-maintained registry. Strong source of intent; weak source of liveness. Drifts.
-  - id: discovered
+    strength: deterministic-when-invoked
+    summary: The operator registered it. Accurate only as far as the operator knows.
+  - id: server-side
     label: Discovered
-    summary: Passive discovery from audit logs and runtime introspection. Truth source for "what is actually running."
+    strength: deterministic-and-external
+    summary: Found independently by scanning the target. Trusts neither of the above.
 
 concerns:
   - id: identity
@@ -45,9 +48,9 @@ cells:
 
   # ---- IDENTITY ----
   - concern: identity
-    layer: self-declared
+    layer: in-agent
     summary: Agent registers on startup with name, charter ref, owner email, instance ID. Heartbeats. Deregister on shutdown. Dead-mans-switch alerts on heartbeat lapse.
-    inventory_path: inventory/identity/self-declared/
+    inventory_path: inventory/identity/in-agent/
     citations:
       nist_csf_2_0: ["ID.AM-01", "ID.AM-02"]
       nist_ai_rmf: ["MAP 1.1", "MAP 4.1"]
@@ -59,9 +62,9 @@ cells:
       - registration silently drops on network failure
 
   - concern: identity
-    layer: operator-declared
+    layer: client-side
     summary: Operator-maintained registry; agents.yaml in GitOps; ServiceNow CMDB; internal AI inventory tool. Owner-confirmed. Updated on charter signature.
-    inventory_path: inventory/identity/operator-declared/
+    inventory_path: inventory/identity/client-side/
     citations:
       nist_csf_2_0: ["ID.AM-01", "ID.AM-02", "ID.AM-08"]
       nist_ai_rmf: ["MAP 1.1", "MAP 1.5"]
@@ -72,9 +75,9 @@ cells:
       - registry not GitOps; changes not PR-reviewed
 
   - concern: identity
-    layer: discovered
+    layer: server-side
     summary: CloudTrail / GCP Audit Logs of SA and IAM principal usage. K8s controller watching SA+RoleBinding by naming pattern. Reverse-lookup from credential fingerprints in Sentinels.
-    inventory_path: inventory/identity/discovered/
+    inventory_path: inventory/identity/server-side/
     citations:
       nist_csf_2_0: ["ID.AM-01", "ID.AM-02"]
       nist_ai_rmf: ["MAP 1.1", "MAP 1.5"]
@@ -86,27 +89,27 @@ cells:
 
   # ---- AUTHORIZATION ----
   - concern: authorization
-    layer: self-declared
+    layer: in-agent
     summary: Agent reports allowed-tools list, MCP allowlist hashes, effective scope on registration. Updates on scope change.
-    inventory_path: inventory/authorization/self-declared/
+    inventory_path: inventory/authorization/in-agent/
     citations:
       nist_csf_2_0: ["ID.AM-02"]
       nist_ai_rmf: ["MAP 4.1"]
       csa_maestro: ["Layer 7"]
 
   - concern: authorization
-    layer: operator-declared
+    layer: client-side
     summary: Operator records authorized scope in registry, linked to RBAC manifest paths and IAM policy ARNs.
-    inventory_path: inventory/authorization/operator-declared/
+    inventory_path: inventory/authorization/client-side/
     citations:
       nist_csf_2_0: ["ID.AM-02", "ID.AM-08"]
       nist_ai_rmf: ["MAP 1.5", "MAP 4.1"]
       csa_maestro: ["Layer 7"]
 
   - concern: authorization
-    layer: discovered
+    layer: server-side
     summary: K8s RBAC API list, AWS IAM Access Analyzer effective permissions, Kyverno PolicyReports of policies actually applied.
-    inventory_path: inventory/authorization/discovered/
+    inventory_path: inventory/authorization/server-side/
     citations:
       nist_csf_2_0: ["ID.RA-09", "ID.RA-01"]
       nist_ai_rmf: ["MAP 5.1"]
@@ -115,17 +118,17 @@ cells:
 
   # ---- BLAST RADIUS ----
   - concern: blast-radius
-    layer: self-declared
+    layer: in-agent
     summary: Agent reports declared risk tier, damage cap, forbidden operations from its charter. Reports current environment and data class access.
-    inventory_path: inventory/blast-radius/self-declared/
+    inventory_path: inventory/blast-radius/in-agent/
     citations:
       nist_csf_2_0: ["ID.RA-01"]
       nist_ai_rmf: ["MAP 5.1", "MAP 5.2"]
 
   - concern: blast-radius
-    layer: operator-declared
+    layer: client-side
     summary: Operator records blast-radius profile per agent. Worst-case impact statement (revenue, customer, compliance).
-    inventory_path: inventory/blast-radius/operator-declared/
+    inventory_path: inventory/blast-radius/client-side/
     citations:
       nist_csf_2_0: ["ID.RA-01", "ID.RA-04"]
       nist_ai_rmf: ["MAP 5.1", "MAP 5.2"]
@@ -133,9 +136,9 @@ cells:
       other: ["NIST AI 600-1 (GAI risks taxonomy)", "EU AI Act Art. 9(2)"]
 
   - concern: blast-radius
-    layer: discovered
+    layer: server-side
     summary: Threat-modeling output (MAESTRO Layer 7, MITRE ATLAS, lateral-movement path analysis). Behavioral observation of what the agent has touched.
-    inventory_path: inventory/blast-radius/discovered/
+    inventory_path: inventory/blast-radius/server-side/
     citations:
       nist_csf_2_0: ["ID.RA-01", "ID.RA-04", "ID.AM-05"]
       nist_ai_rmf: ["MAP 5.1", "MAP 5.2", "MAP 3.1"]
@@ -144,35 +147,35 @@ cells:
 
   # ---- APPROVAL GATING ----
   - concern: approval-gating
-    layer: self-declared
+    layer: in-agent
     summary: Agent reports last charter signature date, next review due, current charter version on registration. Refuses to start if charter is expired.
-    inventory_path: inventory/approval-gating/self-declared/
+    inventory_path: inventory/approval-gating/in-agent/
     citations:
       nist_csf_2_0: ["ID.IM-01"]
       nist_ai_rmf: ["GOVERN 1.5", "MAP 4.1"]
 
   - concern: approval-gating
-    layer: operator-declared
+    layer: client-side
     summary: Operator-maintained review calendar. Quarterly attestation. Tracks pending and overdue reviews.
-    inventory_path: inventory/approval-gating/operator-declared/
+    inventory_path: inventory/approval-gating/client-side/
     citations:
       nist_csf_2_0: ["ID.IM-01", "ID.IM-02"]
       nist_ai_rmf: ["GOVERN 1.5"]
       other: ["ISO/IEC 42001 §A.9 (performance evaluation)"]
 
   - concern: approval-gating
-    layer: discovered
+    layer: server-side
     summary: Registry of charter files in source control. Last-modified, last-PR-merged. Cross-reference with self-declared and operator-declared.
-    inventory_path: inventory/approval-gating/discovered/
+    inventory_path: inventory/approval-gating/server-side/
     citations:
       nist_csf_2_0: ["ID.IM-01", "ID.IM-03"]
       nist_ai_rmf: ["GOVERN 1.5", "MANAGE 4.1"]
 
   # ---- SUPPLY CHAIN ----
   - concern: supply-chain
-    layer: self-declared
+    layer: in-agent
     summary: "Agent reports current dependency manifest on registration: foundation model + version, MCP server names + hashes, base image SHA, lockfile fingerprint. Updates on change."
-    inventory_path: inventory/supply-chain/self-declared/
+    inventory_path: inventory/supply-chain/in-agent/
     citations:
       nist_csf_2_0: ["ID.AM-04", "ID.RA-09"]
       nist_ai_rmf: ["MAP 4.1"]
@@ -180,9 +183,9 @@ cells:
       owasp_mcp: ["MCP04", "MCP09"]
 
   - concern: supply-chain
-    layer: operator-declared
+    layer: client-side
     summary: Operator records authorized-dependency manifest from agent charter. Linked to Covenants L2-C5 and L3-C5 allowlists. Version-controlled audit trail.
-    inventory_path: inventory/supply-chain/operator-declared/
+    inventory_path: inventory/supply-chain/client-side/
     citations:
       nist_csf_2_0: ["ID.AM-04", "ID.RA-09"]
       nist_ai_rmf: ["MAP 4.1"]
@@ -190,9 +193,9 @@ cells:
       other: ["NIST SP 800-218A"]
 
   - concern: supply-chain
-    layer: discovered
+    layer: server-side
     summary: Image-registry pull events, package-manager logs, runtime introspection of loaded models and connected MCP servers, SBOM scanning. Drift between actual and authorized = alert.
-    inventory_path: inventory/supply-chain/discovered/
+    inventory_path: inventory/supply-chain/server-side/
     citations:
       nist_csf_2_0: ["ID.RA-09", "ID.AM-04"]
       nist_ai_rmf: ["MAP 4.1"]

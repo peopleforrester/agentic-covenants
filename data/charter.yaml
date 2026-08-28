@@ -6,18 +6,18 @@ question: "Who is allowed to put this agent into the world, under what authority
 companions: [matrix.yaml, sentinels.yaml, interventions.yaml, restorations.yaml]
 
 layers:
-  - id: organizational
-    label: Organizational charter
-    summary: Top-of-house policy. AI Acceptable Use Policy, AI Risk Appetite Statement, regulatory commitments. Applies to every agent the org operates.
-    owner: AI Governance Council / Board
-  - id: domain
-    label: Domain charter
-    summary: Per-domain governance. DevOps agents, customer-facing agents, internal automation, research agents.
-    owner: Domain leadership (Platform Engineering Director, Security Director, etc.)
-  - id: agent
+  - id: in-agent
     label: Agent charter
-    summary: The specific authorization document for a single agent. Names owner, risk tier, scope, dependencies, approval signatures, retirement criteria.
-    owner: Named operator, signed by domain authority
+    strength: advisory
+    summary: What the agent's own charter declares. Scope it claims for itself.
+  - id: client-side
+    label: Domain charter
+    strength: deterministic-when-invoked
+    summary: The domain or team that operates the agent, and the policy they set.
+  - id: server-side
+    label: Organizational charter
+    strength: deterministic-and-external
+    summary: Authority above the operator. Organizational policy the operator cannot waive.
 
 concerns:
   - id: identity
@@ -50,9 +50,9 @@ cells:
 
   # ---- IDENTITY ----
   - concern: identity
-    layer: organizational
+    layer: server-side
     summary: AI Acceptable Use Policy names categories of agents allowed to exist. AI Governance Council holds authority to create new agent classes. Director of AI Workforce Transformation is the named org-wide owner.
-    charter_path: charter/identity/organizational/
+    charter_path: charter/identity/server-side/
     citations:
       nist_csf_2_0: ["GV.OC-01", "GV.OC-02", "GV.PO-01", "GV.PO-02"]
       nist_ai_rmf: ["GOVERN 1.1", "GOVERN 1.4"]
@@ -60,9 +60,9 @@ cells:
       eu_ai_act: ["Art. 9", "Art. 17"]
 
   - concern: identity
-    layer: domain
+    layer: client-side
     summary: Domain leadership signs charter authorizing a class of agents. Names roles permitted to create agents and the escalation path.
-    charter_path: charter/identity/domain/
+    charter_path: charter/identity/client-side/
     citations:
       nist_csf_2_0: ["GV.RR-02", "GV.OV-01"]
       nist_ai_rmf: ["GOVERN 2.1", "GOVERN 5.1"]
@@ -70,9 +70,9 @@ cells:
       eu_ai_act: ["Art. 26"]
 
   - concern: identity
-    layer: agent
+    layer: in-agent
     summary: Named human owner accountable for the agent's actions. Backup owner identified. Identity claims tied to charter via registered agent identifier.
-    charter_path: charter/identity/agent/
+    charter_path: charter/identity/in-agent/
     citations:
       nist_csf_2_0: ["GV.RR-02", "PR.AA-01"]
       nist_ai_rmf: ["GOVERN 2.1", "GOVERN 2.2"]
@@ -82,9 +82,9 @@ cells:
 
   # ---- AUTHORIZATION ----
   - concern: authorization
-    layer: organizational
+    layer: server-side
     summary: AI Risk Appetite Statement defines hard prohibitions and change-control process for evolving scope policy.
-    charter_path: charter/authorization/organizational/
+    charter_path: charter/authorization/server-side/
     citations:
       nist_csf_2_0: ["GV.RM-01", "GV.RM-02", "GV.PO-01"]
       nist_ai_rmf: ["GOVERN 1.2", "GOVERN 1.5"]
@@ -92,9 +92,9 @@ cells:
       eu_ai_act: ["Art. 9(2)"]
 
   - concern: authorization
-    layer: domain
+    layer: client-side
     summary: Per-class scope, inherits org hard prohibitions, adds domain-specific restrictions.
-    charter_path: charter/authorization/domain/
+    charter_path: charter/authorization/client-side/
     citations:
       nist_csf_2_0: ["GV.PO-01", "PR.AA-05"]
       nist_ai_rmf: ["GOVERN 1.4", "MANAGE 2.4"]
@@ -102,9 +102,9 @@ cells:
       eu_ai_act: ["Art. 14", "Art. 15"]
 
   - concern: authorization
-    layer: agent
+    layer: in-agent
     summary: Specific authorized scope. Named tools, MCP servers, environments, max-blast-radius. Scope expansion requires re-signature.
-    charter_path: charter/authorization/agent/
+    charter_path: charter/authorization/in-agent/
     citations:
       nist_csf_2_0: ["GV.PO-01", "PR.AA-05"]
       nist_ai_rmf: ["GOVERN 1.4", "MANAGE 2.4"]
@@ -113,9 +113,9 @@ cells:
 
   # ---- BLAST RADIUS ----
   - concern: blast-radius
-    layer: organizational
+    layer: server-side
     summary: Org-wide risk tier taxonomy (1 read-only, 2 scoped writes, 3 destructive, 4 production-critical) with damage caps and matching control requirements.
-    charter_path: charter/blast-radius/organizational/
+    charter_path: charter/blast-radius/server-side/
     citations:
       nist_csf_2_0: ["GV.RM-01", "GV.RM-02"]
       nist_ai_rmf: ["GOVERN 1.3", "MAP 5.1"]
@@ -123,18 +123,18 @@ cells:
       eu_ai_act: ["Art. 9(3)", "Art. 9(4)"]
 
   - concern: blast-radius
-    layer: domain
+    layer: client-side
     summary: Inherits tier taxonomy, defines which tiers the domain is authorized to operate, defines failure-mode reviews per tier.
-    charter_path: charter/blast-radius/domain/
+    charter_path: charter/blast-radius/client-side/
     citations:
       nist_csf_2_0: ["GV.RM-03", "GV.RM-04"]
       nist_ai_rmf: ["GOVERN 1.3"]
       iso_iec_42001: ["§A.6"]
 
   - concern: blast-radius
-    layer: agent
+    layer: in-agent
     summary: Specific risk tier, specific damage cap (records-per-session, USD-per-day, forbidden ops), conditions for tier downgrade or retirement.
-    charter_path: charter/blast-radius/agent/
+    charter_path: charter/blast-radius/in-agent/
     citations:
       nist_csf_2_0: ["GV.RM-01", "GV.RM-02"]
       nist_ai_rmf: ["GOVERN 1.3", "MAP 5.1", "MAP 5.2"]
@@ -143,9 +143,9 @@ cells:
 
   # ---- APPROVAL GATING ----
   - concern: approval-gating
-    layer: organizational
+    layer: server-side
     summary: AI Governance Council approves new agent classes, ratifies risk-tier policy. Member roles named (CISO, Chief AI Officer, GC, Privacy, Domain Leads). Quorum and voting rules defined.
-    charter_path: charter/approval-gating/organizational/
+    charter_path: charter/approval-gating/server-side/
     citations:
       nist_csf_2_0: ["GV.RR-01", "GV.RR-02", "GV.RR-03"]
       nist_ai_rmf: ["GOVERN 2.1", "GOVERN 2.2"]
@@ -153,9 +153,9 @@ cells:
       eu_ai_act: ["Art. 17(1)(b)", "Art. 26"]
 
   - concern: approval-gating
-    layer: domain
+    layer: client-side
     summary: Domain authority approves charters within its domain. Multi-party signature for Tier 3+. Charter amendments require the same process as originals.
-    charter_path: charter/approval-gating/domain/
+    charter_path: charter/approval-gating/client-side/
     citations:
       nist_csf_2_0: ["GV.RR-02", "GV.OV-02"]
       nist_ai_rmf: ["GOVERN 4.1"]
@@ -163,9 +163,9 @@ cells:
       eu_ai_act: ["Art. 17(1)(c)"]
 
   - concern: approval-gating
-    layer: agent
+    layer: in-agent
     summary: Charter signed by owner, domain authority, and (Tier 3+) security review. Charter identifies approver of every subsequent scope change. Annual review cadence. Emergency revocation conditions specified.
-    charter_path: charter/approval-gating/agent/
+    charter_path: charter/approval-gating/in-agent/
     citations:
       nist_csf_2_0: ["GV.RR-02", "GV.OV-02", "GV.OV-03"]
       nist_ai_rmf: ["GOVERN 4.1", "MANAGE 4.1"]
@@ -174,9 +174,9 @@ cells:
 
   # ---- SUPPLY CHAIN ----
   - concern: supply-chain
-    layer: organizational
+    layer: server-side
     summary: Org-wide allowlist of approved foundation models. Org-wide policy on MCP server approval, third-party dependency approval, vendor risk assessment integrated with procurement.
-    charter_path: charter/supply-chain/organizational/
+    charter_path: charter/supply-chain/server-side/
     citations:
       nist_csf_2_0: ["GV.SC-01", "GV.SC-02", "GV.SC-03", "GV.SC-04", "GV.SC-05", "GV.SC-06", "GV.SC-07", "GV.SC-08", "GV.SC-09", "GV.SC-10", "ID.RA-09"]
       nist_ai_rmf: ["GOVERN 6.1", "GOVERN 6.2", "MAP 4.1"]
@@ -185,9 +185,9 @@ cells:
       other: ["NIST SP 800-161 Rev. 1", "NIST SP 800-218A"]
 
   - concern: supply-chain
-    layer: domain
+    layer: client-side
     summary: Inherits org-wide approved-model list, adds domain-specific restrictions (e.g., "no models that train on user data", "SOC 2 Type II vendors only"). Approves or denies MCP servers for the domain.
-    charter_path: charter/supply-chain/domain/
+    charter_path: charter/supply-chain/client-side/
     citations:
       nist_csf_2_0: ["GV.SC-04", "GV.SC-07"]
       nist_ai_rmf: ["GOVERN 6.1", "MAP 4.1"]
@@ -195,9 +195,9 @@ cells:
       eu_ai_act: ["Art. 25"]
 
   - concern: supply-chain
-    layer: agent
+    layer: in-agent
     summary: Specific dependencies declared. Named foundation model and version, named MCP servers (with hashes from Covenants L2-C5), named base images, named tool versions. Dependency changes require charter amendment.
-    charter_path: charter/supply-chain/agent/
+    charter_path: charter/supply-chain/in-agent/
     citations:
       nist_csf_2_0: ["GV.SC-07", "ID.RA-09"]
       nist_ai_rmf: ["GOVERN 6.2", "MAP 4.1"]

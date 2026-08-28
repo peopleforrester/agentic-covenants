@@ -18,8 +18,8 @@
 
 ## Cross-layer cross-references
 
-- Should appear in operator-declared (`inventory/identity/operator-declared/`). Mismatch = charter-integrity failure.
-- Should match a discovered identity (`inventory/identity/discovered/`). Heartbeat lapse without deregister = dead-mans-switch alert.
+- Should appear in operator-declared (`inventory/identity/client-side/`). Mismatch = charter-integrity failure.
+- Should match a discovered identity (`inventory/identity/server-side/`). Heartbeat lapse without deregister = dead-mans-switch alert.
 
 ## Common failure modes
 

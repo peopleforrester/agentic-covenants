@@ -93,25 +93,25 @@ def load(m: Matrix) -> dict:
 
 
 def layer_of(cell: dict) -> str:
-    """Return the cell's layer, normalizing the per-matrix layer vocabulary.
+    """Return the cell's layer.
 
-    Charter and Inventory name their layers differently (`self-declared`,
-    `agent`, and so on). Mapping them onto the canonical three keeps the
-    navigation identical across all six matrices, which is the whole point of
-    the framework having one shape.
+    All six matrices use the same three layer ids. Charter and Inventory once
+    carried their own vocabulary (agent/domain/organizational and
+    self-declared/operator-declared/discovered), which was normalized into the
+    canonical ids so URLs, directories, and data agree. The descriptive names
+    survive as the `label` on each matrix's layers block, which is where they
+    belong: they are how a layer reads, not what it is.
+
+    An unknown id is a data error rather than something to paper over, so it
+    raises instead of silently becoming a URL segment.
     """
     raw = cell.get("layer", "")
-    if raw in LAYER_ORDER:
-        return raw
-    return {
-        "self-declared": "in-agent",
-        "agent": "in-agent",
-        "declared": "in-agent",
-        "operator": "client-side",
-        "platform": "server-side",
-        "organizational": "server-side",
-        "org": "server-side",
-    }.get(raw, raw)
+    if raw not in LAYER_ORDER:
+        raise ValueError(
+            f"unknown layer {raw!r} in cell {cell.get('concern')!r}; "
+            f"expected one of {LAYER_ORDER}"
+        )
+    return raw
 
 
 # --------------------------------------------------------------------------
@@ -319,6 +319,12 @@ def md_to_html(text: str, base: str = "") -> str:
 def cell_page(m: Matrix, data: dict, cell: dict, concern: dict) -> tuple[str, str]:
     layer = layer_of(cell)
     strength, strength_note = LAYER_STRENGTH.get(layer, ("", ""))
+    # The id is canonical across all six matrices so URLs and directories
+    # agree. The label is how that layer reads in THIS matrix: a Charter
+    # server-side cell is an "Organizational charter", not a server. Show the
+    # label and keep the id in the path.
+    layer_label = next((l.get("label") for l in data.get("layers", [])
+                        if l.get("id") == layer), layer.replace("-", " "))
     rel_dir = (cell.get(m.path_key) or "").rstrip("/")
     summary = str(cell.get("summary", "")).strip()
 
@@ -355,12 +361,16 @@ def cell_page(m: Matrix, data: dict, cell: dict, concern: dict) -> tuple[str, st
     readme = read_cell_readme(rel_dir) if rel_dir else ""
     readme_html = f'<section class="readme"><h2>Cell notes</h2>{readme}</section>' if readme else ""
 
+    def _label(lid: str) -> str:
+        return next((l.get("label") for l in data.get("layers", [])
+                     if l.get("id") == lid), lid.replace("-", " "))
+
     others = "".join(
-        f'<a class="{"here" if l == layer else ""}" href="../{l}/index.html">{l.replace("-", " ")}</a>'
+        f'<a class="{"here" if l == layer else ""}" href="../{l}/index.html">{esc(_label(l))}</a>'
         for l in LAYER_ORDER
     )
 
-    title = f"{concern['label']} at the {layer.replace('-', ' ')} layer | {m.function} | Agentic Covenants"
+    title = f"{concern['label']} at the {layer_label} layer | {m.function} | Agentic Covenants"
     body = f"""
 <nav class="crumbs" aria-label="Breadcrumb">
   <a href="../../../index.html">Home</a> ›
@@ -369,7 +379,7 @@ def cell_page(m: Matrix, data: dict, cell: dict, concern: dict) -> tuple[str, st
 </nav>
 <article class="cell">
   <p class="eyebrow">{esc(m.function)} ({esc(m.abbrev)}) · {esc(concern['label'])}</p>
-  <h1>{esc(concern['label'])} <span class="at">at the</span> {esc(layer.replace('-', ' '))} <span class="at">layer</span></h1>
+  <h1>{esc(concern['label'])} <span class="at">at the</span> {esc(layer_label)} <span class="at">layer</span></h1>
   <p class="strength strength-{esc(layer)}"><strong>{esc(strength)}</strong> · {esc(strength_note)}</p>
   <blockquote class="q">{esc(data.get('question', ''))}</blockquote>
   <nav class="layerswitch" aria-label="Layers">{others}</nav>
@@ -414,6 +424,13 @@ def matrix_page(m: Matrix, data: dict) -> str:
             + "".join(tds) + "</tr>"
         )
 
+    by_layer = {l.get("id"): l for l in data.get("layers", [])}
+    heads = "".join(
+        f'<th>{esc(by_layer.get(l, {}).get("label", l.replace("-", " ")))}'
+        f'<em>{esc(LAYER_STRENGTH.get(l, ("", ""))[0])}</em></th>'
+        for l in LAYER_ORDER
+    )
+
     title = f"{m.function} · {data.get('title', '')} | Agentic Covenants"
     body = f"""
 <nav class="crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a> › <span>{esc(m.function)}</span></nav>
@@ -422,10 +439,7 @@ def matrix_page(m: Matrix, data: dict) -> str:
 <blockquote class="q big">{esc(data.get('question', ''))}</blockquote>
 <div class="tw">
 <table class="matrix">
-  <thead><tr><th>Concern</th>
-    <th>In-agent <em>advisory</em></th>
-    <th>Client-side <em>deterministic</em></th>
-    <th>Server-side <em>external</em></th></tr></thead>
+  <thead><tr><th>Concern</th>{heads}</tr></thead>
   <tbody>{"".join(rows)}</tbody>
 </table>
 </div>
