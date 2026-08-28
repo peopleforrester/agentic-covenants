@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Authorization at the client side layer | Detect | Agentic Covenants</title>
+<title>Authorization at the Client-side hooks layer | Detect | Agentic Covenants</title>
 <meta name="description" content="Hook decision events (allow/ask/deny/error); auditd watches hook config edits and --no-verify; SIEM rule for multi-deny patterns.">
 <link rel="canonical" href="https://agenticcovenants.com/detect/authorization/client-side/">
-<meta property="og:title" content="Authorization at the client side layer | Detect | Agentic Covenants">
+<meta property="og:title" content="Authorization at the Client-side hooks layer | Detect | Agentic Covenants">
 <meta property="og:description" content="Hook decision events (allow/ask/deny/error); auditd watches hook config edits and --no-verify; SIEM rule for multi-deny patterns.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://agenticcovenants.com/detect/authorization/client-side/">
@@ -31,10 +31,10 @@
 </nav>
 <article class="cell">
   <p class="eyebrow">Detect (DE) · Authorization</p>
-  <h1>Authorization <span class="at">at the</span> client side <span class="at">layer</span></h1>
+  <h1>Authorization <span class="at">at the</span> Client-side hooks <span class="at">layer</span></h1>
   <p class="strength strength-client-side"><strong>deterministic</strong> · Outside the model&#x27;s reasoning</p>
   <blockquote class="q">If this concern is breached, how do we know?</blockquote>
-  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="here" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">In-agent (forensic only)</a><a class="here" href="../client-side/index.html">Client-side hooks</a><a class="" href="../server-side/index.html">Server-side enforcement</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Hook decision events (allow/ask/deny/error); auditd watches hook config edits and --no-verify; SIEM rule for multi-deny patterns.</p></section>
   <section class="artifacts"><h2>Artifacts (3)</h2><figure class="artifact"><figcaption><code>auditd-auth.rules</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/authorization/client-side/auditd-auth.rules">view on GitHub</a></figcaption><pre><code># ABOUTME: auditd rules for authorization-layer events: hook config edits, allowlist edits, Claude settings edits, --no-verify execve.
 # ABOUTME: Drop in /etc/audit/rules.d/ and reload with `augenrules --load`. Confirm with `auditctl -l`.

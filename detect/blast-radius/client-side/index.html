@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Blast radius at the client side layer | Detect | Agentic Covenants</title>
+<title>Blast radius at the Client-side hooks layer | Detect | Agentic Covenants</title>
 <meta name="description" content="bpftrace or Falco userspace catches unsandboxed children, sandbox EPERM events, unexpected network attempts; correlates by session ID.">
 <link rel="canonical" href="https://agenticcovenants.com/detect/blast-radius/client-side/">
-<meta property="og:title" content="Blast radius at the client side layer | Detect | Agentic Covenants">
+<meta property="og:title" content="Blast radius at the Client-side hooks layer | Detect | Agentic Covenants">
 <meta property="og:description" content="bpftrace or Falco userspace catches unsandboxed children, sandbox EPERM events, unexpected network attempts; correlates by session ID.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://agenticcovenants.com/detect/blast-radius/client-side/">
@@ -31,10 +31,10 @@
 </nav>
 <article class="cell">
   <p class="eyebrow">Detect (DE) · Blast radius</p>
-  <h1>Blast radius <span class="at">at the</span> client side <span class="at">layer</span></h1>
+  <h1>Blast radius <span class="at">at the</span> Client-side hooks <span class="at">layer</span></h1>
   <p class="strength strength-client-side"><strong>deterministic</strong> · Outside the model&#x27;s reasoning</p>
   <blockquote class="q">If this concern is breached, how do we know?</blockquote>
-  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="here" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">In-agent (forensic only)</a><a class="here" href="../client-side/index.html">Client-side hooks</a><a class="" href="../server-side/index.html">Server-side enforcement</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>bpftrace or Falco userspace catches unsandboxed children, sandbox EPERM events, unexpected network attempts; correlates by session ID.</p></section>
   <section class="artifacts"><h2>Artifacts (3)</h2><figure class="artifact"><figcaption><code>bubblewrap-with-logging.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/blast-radius/client-side/bubblewrap-with-logging.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
 # ABOUTME: Wraps bubblewrap so its stderr (where EPERM events surface) is teed to syslog tagged agent-sandbox.

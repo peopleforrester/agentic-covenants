@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Identity at the in agent layer | Identify | Agentic Covenants</title>
+<title>Identity at the Self-declared layer | Identify | Agentic Covenants</title>
 <meta name="description" content="Agent registers on startup with name, charter ref, owner email, instance ID. Heartbeats. Deregister on shutdown. Dead-mans-switch alerts on heartbeat lapse.">
 <link rel="canonical" href="https://agenticcovenants.com/identify/identity/in-agent/">
-<meta property="og:title" content="Identity at the in agent layer | Identify | Agentic Covenants">
+<meta property="og:title" content="Identity at the Self-declared layer | Identify | Agentic Covenants">
 <meta property="og:description" content="Agent registers on startup with name, charter ref, owner email, instance ID. Heartbeats. Deregister on shutdown. Dead-mans-switch alerts on heartbeat lapse.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://agenticcovenants.com/identify/identity/in-agent/">
@@ -31,12 +31,12 @@
 </nav>
 <article class="cell">
   <p class="eyebrow">Identify (ID) · Identity</p>
-  <h1>Identity <span class="at">at the</span> in agent <span class="at">layer</span></h1>
+  <h1>Identity <span class="at">at the</span> Self-declared <span class="at">layer</span></h1>
   <p class="strength strength-in-agent"><strong>advisory</strong> · Bypassable by language alone</p>
   <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
-  <nav class="layerswitch" aria-label="Layers"><a class="here" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <nav class="layerswitch" aria-label="Layers"><a class="here" href="../in-agent/index.html">Self-declared</a><a class="" href="../client-side/index.html">Operator-declared</a><a class="" href="../server-side/index.html">Discovered</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Agent registers on startup with name, charter ref, owner email, instance ID. Heartbeats. Deregister on shutdown. Dead-mans-switch alerts on heartbeat lapse.</p></section>
-  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>agent-register.py</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/self-declared/agent-register.py">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env python3
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>agent-register.py</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/in-agent/agent-register.py">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env python3
 # ABOUTME: Minimal agent self-registration daemon. POSTs registration on start, heartbeats every N sec, deregisters on shutdown.
 # ABOUTME: Refuses to start if the agent&#x27;s charter is missing or expired. Wrap your agent process so this runs alongside.
 
@@ -193,12 +193,12 @@ if __name__ == &quot;__main__&quot;:
 </ul>
 <h3>Reference tooling</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/self-declared/agent-register.py"><code>agent-register.py</code></a>, minimal registration daemon. Sends a <code>POST /api/v1/agents/register</code> on startup, then heartbeats every N seconds, then <code>POST /api/v1/agents/deregister</code> on shutdown. Refuses to start if <code>charter_ref</code> is missing or charter is expired.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/in-agent/agent-register.py"><code>agent-register.py</code></a>, minimal registration daemon. Sends a <code>POST /api/v1/agents/register</code> on startup, then heartbeats every N seconds, then <code>POST /api/v1/agents/deregister</code> on shutdown. Refuses to start if <code>charter_ref</code> is missing or charter is expired.</li>
 </ul>
 <h3>Cross-layer cross-references</h3>
 <ul>
-<li>- Should appear in operator-declared (<code>inventory/identity/operator-declared/</code>). Mismatch = charter-integrity failure.</li>
-<li>- Should match a discovered identity (<code>inventory/identity/discovered/</code>). Heartbeat lapse without deregister = dead-mans-switch alert.</li>
+<li>- Should appear in operator-declared (<code>inventory/identity/client-side/</code>). Mismatch = charter-integrity failure.</li>
+<li>- Should match a discovered identity (<code>inventory/identity/server-side/</code>). Heartbeat lapse without deregister = dead-mans-switch alert.</li>
 </ul>
 <h3>Common failure modes</h3>
 <ul>

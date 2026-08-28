@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Blast radius at the server side layer | Protect | Agentic Covenants</title>
+<title>Blast radius at the Server-side enforcement layer | Protect | Agentic Covenants</title>
 <meta name="description" content="Gated IaC apply pipeline, ResourceQuota, NetworkPolicy default-deny, prod/non-prod separation, immutable backups, PDB.">
 <link rel="canonical" href="https://agenticcovenants.com/protect/blast-radius/server-side/">
-<meta property="og:title" content="Blast radius at the server side layer | Protect | Agentic Covenants">
+<meta property="og:title" content="Blast radius at the Server-side enforcement layer | Protect | Agentic Covenants">
 <meta property="og:description" content="Gated IaC apply pipeline, ResourceQuota, NetworkPolicy default-deny, prod/non-prod separation, immutable backups, PDB.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://agenticcovenants.com/protect/blast-radius/server-side/">
@@ -31,10 +31,10 @@
 </nav>
 <article class="cell">
   <p class="eyebrow">Protect (PR) · Blast radius</p>
-  <h1>Blast radius <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <h1>Blast radius <span class="at">at the</span> Server-side enforcement <span class="at">layer</span></h1>
   <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
   <blockquote class="q">If the agent decides to violate this concern, what stops it at this layer?</blockquote>
-  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">In-agent</a><a class="" href="../client-side/index.html">Client-side hooks</a><a class="here" href="../server-side/index.html">Server-side enforcement</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Gated IaC apply pipeline, ResourceQuota, NetworkPolicy default-deny, prod/non-prod separation, immutable backups, PDB.</p></section>
   <section class="artifacts"><h2>Artifacts (7)</h2><figure class="artifact"><figcaption><code>cross-account-providers.tf</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/blast-radius/server-side/cross-account-providers.tf">view on GitHub</a></figcaption><pre><code># ABOUTME: Terraform provider blocks demonstrating cross-account separation: agent in non-prod, prod in a separate account.
 # ABOUTME: The agent role explicitly cannot AssumeRole into prod; production work happens through human-operated pipelines only.

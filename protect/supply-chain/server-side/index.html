@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Supply chain at the server side layer | Protect | Agentic Covenants</title>
+<title>Supply chain at the Server-side enforcement layer | Protect | Agentic Covenants</title>
 <meta name="description" content="OCI signature verification (cosign), SBOM admission, egress NetworkPolicy, OPA attestation policy, MCP domain allowlist at network layer.">
 <link rel="canonical" href="https://agenticcovenants.com/protect/supply-chain/server-side/">
-<meta property="og:title" content="Supply chain at the server side layer | Protect | Agentic Covenants">
+<meta property="og:title" content="Supply chain at the Server-side enforcement layer | Protect | Agentic Covenants">
 <meta property="og:description" content="OCI signature verification (cosign), SBOM admission, egress NetworkPolicy, OPA attestation policy, MCP domain allowlist at network layer.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://agenticcovenants.com/protect/supply-chain/server-side/">
@@ -31,10 +31,10 @@
 </nav>
 <article class="cell">
   <p class="eyebrow">Protect (PR) · Supply chain</p>
-  <h1>Supply chain <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <h1>Supply chain <span class="at">at the</span> Server-side enforcement <span class="at">layer</span></h1>
   <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
   <blockquote class="q">If the agent decides to violate this concern, what stops it at this layer?</blockquote>
-  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">In-agent</a><a class="" href="../client-side/index.html">Client-side hooks</a><a class="here" href="../server-side/index.html">Server-side enforcement</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>OCI signature verification (cosign), SBOM admission, egress NetworkPolicy, OPA attestation policy, MCP domain allowlist at network layer.</p></section>
   <section class="artifacts"><h2>Artifacts (5)</h2><figure class="artifact"><figcaption><code>build-and-sign.yml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/server-side/build-and-sign.yml">view on GitHub</a></figcaption><pre><code># ABOUTME: Builds the agent image, signs with cosign (keyless via GitHub OIDC), generates SPDX SBOM, attaches as attestation.
 # ABOUTME: id-token: write is required for keyless signing. Drop in .github/workflows/. Match the OIDC subject in the Kyverno verifyImages policy.

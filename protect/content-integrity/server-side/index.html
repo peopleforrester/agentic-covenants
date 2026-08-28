@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Content integrity at the server side layer | Protect | Agentic Covenants</title>
+<title>Content integrity at the Server-side enforcement layer | Protect | Agentic Covenants</title>
 <meta name="description" content="Egress NetworkPolicy so exfiltration has nowhere to post, DLP at the boundary, and send-side audit written outside the agent&#x27;s reach. Deliberately the weakest server-side cell in t">
 <link rel="canonical" href="https://agenticcovenants.com/protect/content-integrity/server-side/">
-<meta property="og:title" content="Content integrity at the server side layer | Protect | Agentic Covenants">
+<meta property="og:title" content="Content integrity at the Server-side enforcement layer | Protect | Agentic Covenants">
 <meta property="og:description" content="Egress NetworkPolicy so exfiltration has nowhere to post, DLP at the boundary, and send-side audit written outside the agent&#x27;s reach. Deliberately the weakest server-side cell in t">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://agenticcovenants.com/protect/content-integrity/server-side/">
@@ -31,10 +31,10 @@
 </nav>
 <article class="cell">
   <p class="eyebrow">Protect (PR) · Content integrity</p>
-  <h1>Content integrity <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <h1>Content integrity <span class="at">at the</span> Server-side enforcement <span class="at">layer</span></h1>
   <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
   <blockquote class="q">If the agent decides to violate this concern, what stops it at this layer?</blockquote>
-  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">In-agent</a><a class="" href="../client-side/index.html">Client-side hooks</a><a class="here" href="../server-side/index.html">Server-side enforcement</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Egress NetworkPolicy so exfiltration has nowhere to post, DLP at the boundary, and send-side audit written outside the agent&#x27;s reach. Deliberately the weakest server-side cell in the framework: it catches the consequence, not the manipulation. The control that actually works is not a content control at all. A scoped credential, deny-by-default RBAC, and default-deny egress make a successful injection worthless, so injection is an authorization and blast-radius problem wearing a content costume.</p></section>
   <section class="artifacts"><h2>Artifacts (2)</h2><figure class="artifact"><figcaption><code>egress-audit-policy.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/content-integrity/server-side/egress-audit-policy.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Kyverno policy requiring agent workloads to carry egress audit annotations.
 # ABOUTME: Ensures what left the boundary is recorded outside the agent&#x27;s reach.

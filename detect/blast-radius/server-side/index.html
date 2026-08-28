@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Blast radius at the server side layer | Detect | Agentic Covenants</title>
+<title>Blast radius at the Server-side enforcement layer | Detect | Agentic Covenants</title>
 <meta name="description" content="Falco runtime rules for shells in agent containers and writes to sensitive paths; Cilium Hubble drops; ResourceQuota near-limit Prometheus alert; VPC Flow Log REJECTs.">
 <link rel="canonical" href="https://agenticcovenants.com/detect/blast-radius/server-side/">
-<meta property="og:title" content="Blast radius at the server side layer | Detect | Agentic Covenants">
+<meta property="og:title" content="Blast radius at the Server-side enforcement layer | Detect | Agentic Covenants">
 <meta property="og:description" content="Falco runtime rules for shells in agent containers and writes to sensitive paths; Cilium Hubble drops; ResourceQuota near-limit Prometheus alert; VPC Flow Log REJECTs.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://agenticcovenants.com/detect/blast-radius/server-side/">
@@ -31,10 +31,10 @@
 </nav>
 <article class="cell">
   <p class="eyebrow">Detect (DE) · Blast radius</p>
-  <h1>Blast radius <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <h1>Blast radius <span class="at">at the</span> Server-side enforcement <span class="at">layer</span></h1>
   <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
   <blockquote class="q">If this concern is breached, how do we know?</blockquote>
-  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">In-agent (forensic only)</a><a class="" href="../client-side/index.html">Client-side hooks</a><a class="here" href="../server-side/index.html">Server-side enforcement</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Falco runtime rules for shells in agent containers and writes to sensitive paths; Cilium Hubble drops; ResourceQuota near-limit Prometheus alert; VPC Flow Log REJECTs.</p></section>
   <section class="artifacts"><h2>Artifacts (4)</h2><figure class="artifact"><figcaption><code>falco-agent-container.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/blast-radius/server-side/falco-agent-container.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Falco runtime rules for agent Pods. Shell spawn, sensitive-path writes, non-allowlisted egress.
 # ABOUTME: agent_pod macro matches namespaces matching agent-*; align with the namespace label from controls/identity/server-side/namespace.yaml.

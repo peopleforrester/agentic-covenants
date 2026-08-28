@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Authorization at the server side layer | Recover | Agentic Covenants</title>
+<title>Authorization at the Server-side restore layer | Recover | Agentic Covenants</title>
 <meta name="description" content="Reapply RBAC, Kyverno, IAM from declarative source; audit for drift between cluster state and source.">
 <link rel="canonical" href="https://agenticcovenants.com/recover/authorization/server-side/">
-<meta property="og:title" content="Authorization at the server side layer | Recover | Agentic Covenants">
+<meta property="og:title" content="Authorization at the Server-side restore layer | Recover | Agentic Covenants">
 <meta property="og:description" content="Reapply RBAC, Kyverno, IAM from declarative source; audit for drift between cluster state and source.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://agenticcovenants.com/recover/authorization/server-side/">
@@ -31,10 +31,10 @@
 </nav>
 <article class="cell">
   <p class="eyebrow">Recover (RC) · Authorization</p>
-  <h1>Authorization <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <h1>Authorization <span class="at">at the</span> Server-side restore <span class="at">layer</span></h1>
   <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
   <blockquote class="q">How do I get back to a known-good state and not repeat this?</blockquote>
-  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">In-agent (empty)</a><a class="" href="../client-side/index.html">Client-side rebuild</a><a class="here" href="../server-side/index.html">Server-side restore</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Reapply RBAC, Kyverno, IAM from declarative source; audit for drift between cluster state and source.</p></section>
   <section class="artifacts"><h2>Artifacts (2)</h2><figure class="artifact"><figcaption><code>agent-restore-authorization-server</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/restorations/authorization/server-side/agent-restore-authorization-server">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
 # ABOUTME: Server-side authorization-rebuild runbook. Removes emergency-deny, reapplies RBAC + Kyverno + IAM from declarative source.

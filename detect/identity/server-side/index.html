@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Identity at the server side layer | Detect | Agentic Covenants</title>
+<title>Identity at the Server-side enforcement layer | Detect | Agentic Covenants</title>
 <meta name="description" content="K8s audit log captures every agent SA action; CloudTrail with Object Lock; SIEM rules on out-of-hours, unexpected source IP, identity reuse.">
 <link rel="canonical" href="https://agenticcovenants.com/detect/identity/server-side/">
-<meta property="og:title" content="Identity at the server side layer | Detect | Agentic Covenants">
+<meta property="og:title" content="Identity at the Server-side enforcement layer | Detect | Agentic Covenants">
 <meta property="og:description" content="K8s audit log captures every agent SA action; CloudTrail with Object Lock; SIEM rules on out-of-hours, unexpected source IP, identity reuse.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://agenticcovenants.com/detect/identity/server-side/">
@@ -31,10 +31,10 @@
 </nav>
 <article class="cell">
   <p class="eyebrow">Detect (DE) · Identity</p>
-  <h1>Identity <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <h1>Identity <span class="at">at the</span> Server-side enforcement <span class="at">layer</span></h1>
   <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
   <blockquote class="q">If this concern is breached, how do we know?</blockquote>
-  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">In-agent (forensic only)</a><a class="" href="../client-side/index.html">Client-side hooks</a><a class="here" href="../server-side/index.html">Server-side enforcement</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>K8s audit log captures every agent SA action; CloudTrail with Object Lock; SIEM rules on out-of-hours, unexpected source IP, identity reuse.</p></section>
   <section class="artifacts"><h2>Artifacts (4)</h2><figure class="artifact"><figcaption><code>audit-policy.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/identity/server-side/audit-policy.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Kubernetes API server audit policy. Captures every agent SA action; identity-binding events at full request body.
 # ABOUTME: Apply with --audit-policy-file= on kube-apiserver. Combined with --audit-log-path= or an audit webhook to a SIEM.

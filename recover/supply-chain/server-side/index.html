@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Supply chain at the server side layer | Recover | Agentic Covenants</title>
+<title>Supply chain at the Server-side restore layer | Recover | Agentic Covenants</title>
 <meta name="description" content="Rebuild and re-sign images, regenerate SBOMs, rotate signing key if exposed, force redeploy with new SHA pins.">
 <link rel="canonical" href="https://agenticcovenants.com/recover/supply-chain/server-side/">
-<meta property="og:title" content="Supply chain at the server side layer | Recover | Agentic Covenants">
+<meta property="og:title" content="Supply chain at the Server-side restore layer | Recover | Agentic Covenants">
 <meta property="og:description" content="Rebuild and re-sign images, regenerate SBOMs, rotate signing key if exposed, force redeploy with new SHA pins.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://agenticcovenants.com/recover/supply-chain/server-side/">
@@ -31,10 +31,10 @@
 </nav>
 <article class="cell">
   <p class="eyebrow">Recover (RC) · Supply chain</p>
-  <h1>Supply chain <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <h1>Supply chain <span class="at">at the</span> Server-side restore <span class="at">layer</span></h1>
   <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
   <blockquote class="q">How do I get back to a known-good state and not repeat this?</blockquote>
-  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">In-agent (empty)</a><a class="" href="../client-side/index.html">Client-side rebuild</a><a class="here" href="../server-side/index.html">Server-side restore</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Rebuild and re-sign images, regenerate SBOMs, rotate signing key if exposed, force redeploy with new SHA pins.</p></section>
   <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>agent-restore-supply-chain-server</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/restorations/supply-chain/server-side/agent-restore-supply-chain-server">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
 # ABOUTME: Server-side supply-chain rebuild. Removes emergency denies, optionally rotates signing key, rebuilds + re-signs images, regen SBOMs, force-roll.

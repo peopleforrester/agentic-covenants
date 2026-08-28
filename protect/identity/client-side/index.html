@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Identity at the client side layer | Protect | Agentic Covenants</title>
+<title>Identity at the Client-side hooks layer | Protect | Agentic Covenants</title>
 <meta name="description" content="Per-agent credentials, no shared keys, filesystem ACLs.">
 <link rel="canonical" href="https://agenticcovenants.com/protect/identity/client-side/">
-<meta property="og:title" content="Identity at the client side layer | Protect | Agentic Covenants">
+<meta property="og:title" content="Identity at the Client-side hooks layer | Protect | Agentic Covenants">
 <meta property="og:description" content="Per-agent credentials, no shared keys, filesystem ACLs.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://agenticcovenants.com/protect/identity/client-side/">
@@ -31,10 +31,10 @@
 </nav>
 <article class="cell">
   <p class="eyebrow">Protect (PR) · Identity</p>
-  <h1>Identity <span class="at">at the</span> client side <span class="at">layer</span></h1>
+  <h1>Identity <span class="at">at the</span> Client-side hooks <span class="at">layer</span></h1>
   <p class="strength strength-client-side"><strong>deterministic</strong> · Outside the model&#x27;s reasoning</p>
   <blockquote class="q">If the agent decides to violate this concern, what stops it at this layer?</blockquote>
-  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="here" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">In-agent</a><a class="here" href="../client-side/index.html">Client-side hooks</a><a class="" href="../server-side/index.html">Server-side enforcement</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Per-agent credentials, no shared keys, filesystem ACLs.</p></section>
   <section class="artifacts"><h2>Artifacts (3)</h2><figure class="artifact"><figcaption><code>claude-code-prod.service</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/identity/client-side/claude-code-prod.service">view on GitHub</a></figcaption><pre><code># ABOUTME: systemd unit binding the Claude Code agent to a dedicated user with a per-agent credential.
 # ABOUTME: The credential file in EnvironmentFile is read by systemd as root; the agent process never reads it at rest.

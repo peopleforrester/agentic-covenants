@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Approval gating at the server side layer | Detect | Agentic Covenants</title>
+<title>Approval gating at the Server-side enforcement layer | Detect | Agentic Covenants</title>
 <meta name="description" content="GitHub webhook for branch-protection bypass; hourly drift-detection job; deployment-freeze breach alerts; audit on changes to branch protection itself.">
 <link rel="canonical" href="https://agenticcovenants.com/detect/approval-gating/server-side/">
-<meta property="og:title" content="Approval gating at the server side layer | Detect | Agentic Covenants">
+<meta property="og:title" content="Approval gating at the Server-side enforcement layer | Detect | Agentic Covenants">
 <meta property="og:description" content="GitHub webhook for branch-protection bypass; hourly drift-detection job; deployment-freeze breach alerts; audit on changes to branch protection itself.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://agenticcovenants.com/detect/approval-gating/server-side/">
@@ -31,10 +31,10 @@
 </nav>
 <article class="cell">
   <p class="eyebrow">Detect (DE) · Approval gating</p>
-  <h1>Approval gating <span class="at">at the</span> server side <span class="at">layer</span></h1>
+  <h1>Approval gating <span class="at">at the</span> Server-side enforcement <span class="at">layer</span></h1>
   <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
   <blockquote class="q">If this concern is breached, how do we know?</blockquote>
-  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="here" href="../server-side/index.html">server side</a></nav>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">In-agent (forensic only)</a><a class="" href="../client-side/index.html">Client-side hooks</a><a class="here" href="../server-side/index.html">Server-side enforcement</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>GitHub webhook for branch-protection bypass; hourly drift-detection job; deployment-freeze breach alerts; audit on changes to branch protection itself.</p></section>
   <section class="artifacts"><h2>Artifacts (3)</h2><figure class="artifact"><figcaption><code>audit-branch-protection.yml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/sentinels/approval-gating/server-side/audit-branch-protection.yml">view on GitHub</a></figcaption><pre><code># ABOUTME: Hourly workflow that diffs live branch protection against a checked-in expected JSON. Drift fires a SIEM event.
 # ABOUTME: The expected JSON lives at controls/approval-gating/server-side/branch-protection-expected.json and is CODEOWNERS-protected.

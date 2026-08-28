@@ -3,36 +3,36 @@
   <url><loc>https://agenticcovenants.com/</loc></url>
   <url><loc>https://agenticcovenants.com/govern/</loc></url>
   <url><loc>https://agenticcovenants.com/govern/identity/server-side/</loc></url>
-  <url><loc>https://agenticcovenants.com/govern/identity/domain/</loc></url>
+  <url><loc>https://agenticcovenants.com/govern/identity/client-side/</loc></url>
   <url><loc>https://agenticcovenants.com/govern/identity/in-agent/</loc></url>
   <url><loc>https://agenticcovenants.com/govern/authorization/server-side/</loc></url>
-  <url><loc>https://agenticcovenants.com/govern/authorization/domain/</loc></url>
+  <url><loc>https://agenticcovenants.com/govern/authorization/client-side/</loc></url>
   <url><loc>https://agenticcovenants.com/govern/authorization/in-agent/</loc></url>
   <url><loc>https://agenticcovenants.com/govern/blast-radius/server-side/</loc></url>
-  <url><loc>https://agenticcovenants.com/govern/blast-radius/domain/</loc></url>
+  <url><loc>https://agenticcovenants.com/govern/blast-radius/client-side/</loc></url>
   <url><loc>https://agenticcovenants.com/govern/blast-radius/in-agent/</loc></url>
   <url><loc>https://agenticcovenants.com/govern/approval-gating/server-side/</loc></url>
-  <url><loc>https://agenticcovenants.com/govern/approval-gating/domain/</loc></url>
+  <url><loc>https://agenticcovenants.com/govern/approval-gating/client-side/</loc></url>
   <url><loc>https://agenticcovenants.com/govern/approval-gating/in-agent/</loc></url>
   <url><loc>https://agenticcovenants.com/govern/supply-chain/server-side/</loc></url>
-  <url><loc>https://agenticcovenants.com/govern/supply-chain/domain/</loc></url>
+  <url><loc>https://agenticcovenants.com/govern/supply-chain/client-side/</loc></url>
   <url><loc>https://agenticcovenants.com/govern/supply-chain/in-agent/</loc></url>
   <url><loc>https://agenticcovenants.com/identify/</loc></url>
   <url><loc>https://agenticcovenants.com/identify/identity/in-agent/</loc></url>
-  <url><loc>https://agenticcovenants.com/identify/identity/operator-declared/</loc></url>
-  <url><loc>https://agenticcovenants.com/identify/identity/discovered/</loc></url>
+  <url><loc>https://agenticcovenants.com/identify/identity/client-side/</loc></url>
+  <url><loc>https://agenticcovenants.com/identify/identity/server-side/</loc></url>
   <url><loc>https://agenticcovenants.com/identify/authorization/in-agent/</loc></url>
-  <url><loc>https://agenticcovenants.com/identify/authorization/operator-declared/</loc></url>
-  <url><loc>https://agenticcovenants.com/identify/authorization/discovered/</loc></url>
+  <url><loc>https://agenticcovenants.com/identify/authorization/client-side/</loc></url>
+  <url><loc>https://agenticcovenants.com/identify/authorization/server-side/</loc></url>
   <url><loc>https://agenticcovenants.com/identify/blast-radius/in-agent/</loc></url>
-  <url><loc>https://agenticcovenants.com/identify/blast-radius/operator-declared/</loc></url>
-  <url><loc>https://agenticcovenants.com/identify/blast-radius/discovered/</loc></url>
+  <url><loc>https://agenticcovenants.com/identify/blast-radius/client-side/</loc></url>
+  <url><loc>https://agenticcovenants.com/identify/blast-radius/server-side/</loc></url>
   <url><loc>https://agenticcovenants.com/identify/approval-gating/in-agent/</loc></url>
-  <url><loc>https://agenticcovenants.com/identify/approval-gating/operator-declared/</loc></url>
-  <url><loc>https://agenticcovenants.com/identify/approval-gating/discovered/</loc></url>
+  <url><loc>https://agenticcovenants.com/identify/approval-gating/client-side/</loc></url>
+  <url><loc>https://agenticcovenants.com/identify/approval-gating/server-side/</loc></url>
   <url><loc>https://agenticcovenants.com/identify/supply-chain/in-agent/</loc></url>
-  <url><loc>https://agenticcovenants.com/identify/supply-chain/operator-declared/</loc></url>
-  <url><loc>https://agenticcovenants.com/identify/supply-chain/discovered/</loc></url>
+  <url><loc>https://agenticcovenants.com/identify/supply-chain/client-side/</loc></url>
+  <url><loc>https://agenticcovenants.com/identify/supply-chain/server-side/</loc></url>
   <url><loc>https://agenticcovenants.com/protect/</loc></url>
   <url><loc>https://agenticcovenants.com/protect/identity/in-agent/</loc></url>
   <url><loc>https://agenticcovenants.com/protect/identity/client-side/</loc></url>

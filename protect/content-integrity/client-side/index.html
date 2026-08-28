@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Content integrity at the client side layer | Protect | Agentic Covenants</title>
+<title>Content integrity at the Client-side hooks layer | Protect | Agentic Covenants</title>
 <meta name="description" content="Input scanning before the model sees fetched content, output scanning before a response or tool argument leaves, tool-result sanitization stripping zero-width, bidi, tag-block and ">
 <link rel="canonical" href="https://agenticcovenants.com/protect/content-integrity/client-side/">
-<meta property="og:title" content="Content integrity at the client side layer | Protect | Agentic Covenants">
+<meta property="og:title" content="Content integrity at the Client-side hooks layer | Protect | Agentic Covenants">
 <meta property="og:description" content="Input scanning before the model sees fetched content, output scanning before a response or tool argument leaves, tool-result sanitization stripping zero-width, bidi, tag-block and ">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://agenticcovenants.com/protect/content-integrity/client-side/">
@@ -31,10 +31,10 @@
 </nav>
 <article class="cell">
   <p class="eyebrow">Protect (PR) · Content integrity</p>
-  <h1>Content integrity <span class="at">at the</span> client side <span class="at">layer</span></h1>
+  <h1>Content integrity <span class="at">at the</span> Client-side hooks <span class="at">layer</span></h1>
   <p class="strength strength-client-side"><strong>deterministic</strong> · Outside the model&#x27;s reasoning</p>
   <blockquote class="q">If the agent decides to violate this concern, what stops it at this layer?</blockquote>
-  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="here" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">In-agent</a><a class="here" href="../client-side/index.html">Client-side hooks</a><a class="" href="../server-side/index.html">Server-side enforcement</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Input scanning before the model sees fetched content, output scanning before a response or tool argument leaves, tool-result sanitization stripping zero-width, bidi, tag-block and ANSI sequences plus the wrapping nonce. Probabilistic: these score and threshold, so false positives and false negatives are inherent. Never block on input scores, which is how a control gets switched off next quarter; block on output, where a false positive costs a retry and a false negative costs a secret.</p></section>
   <section class="artifacts"><h2>Artifacts (2)</h2><figure class="artifact"><figcaption><code>sanitize-tool-result.py</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/content-integrity/client-side/sanitize-tool-result.py">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env python3
 # ABOUTME: Strips control characters, zero-width codepoints, and delimiter spoofing

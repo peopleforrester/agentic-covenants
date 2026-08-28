@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Identity at the discovered layer | Identify | Agentic Covenants</title>
+<title>Identity at the Discovered layer | Identify | Agentic Covenants</title>
 <meta name="description" content="CloudTrail / GCP Audit Logs of SA and IAM principal usage. K8s controller watching SA+RoleBinding by naming pattern. Reverse-lookup from credential fingerprints in Sentinels.">
-<link rel="canonical" href="https://agenticcovenants.com/identify/identity/discovered/">
-<meta property="og:title" content="Identity at the discovered layer | Identify | Agentic Covenants">
+<link rel="canonical" href="https://agenticcovenants.com/identify/identity/server-side/">
+<meta property="og:title" content="Identity at the Discovered layer | Identify | Agentic Covenants">
 <meta property="og:description" content="CloudTrail / GCP Audit Logs of SA and IAM principal usage. K8s controller watching SA+RoleBinding by naming pattern. Reverse-lookup from credential fingerprints in Sentinels.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://agenticcovenants.com/identify/identity/discovered/">
+<meta property="og:url" content="https://agenticcovenants.com/identify/identity/server-side/">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="../../../style.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%9B%A1%3C/text%3E%3C/svg%3E">
@@ -31,12 +31,12 @@
 </nav>
 <article class="cell">
   <p class="eyebrow">Identify (ID) · Identity</p>
-  <h1>Identity <span class="at">at the</span> discovered <span class="at">layer</span></h1>
-  <p class="strength strength-discovered"><strong></strong> · </p>
+  <h1>Identity <span class="at">at the</span> Discovered <span class="at">layer</span></h1>
+  <p class="strength strength-server-side"><strong>external</strong> · Outside the agent entirely</p>
   <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
-  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">Self-declared</a><a class="" href="../client-side/index.html">Operator-declared</a><a class="here" href="../server-side/index.html">Discovered</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>CloudTrail / GCP Audit Logs of SA and IAM principal usage. K8s controller watching SA+RoleBinding by naming pattern. Reverse-lookup from credential fingerprints in Sentinels.</p></section>
-  <section class="artifacts"><h2>Artifacts (2)</h2><figure class="artifact"><figcaption><code>discover-cloudtrail-agents.sql</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/discovered/discover-cloudtrail-agents.sql">view on GitHub</a></figcaption><p class="note">1,056 bytes. Too large to inline; open it on GitHub.</p></figure><figure class="artifact"><figcaption><code>discover-k8s-agents.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/discovered/discover-k8s-agents.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+  <section class="artifacts"><h2>Artifacts (2)</h2><figure class="artifact"><figcaption><code>discover-cloudtrail-agents.sql</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/server-side/discover-cloudtrail-agents.sql">view on GitHub</a></figcaption><p class="note">1,056 bytes. Too large to inline; open it on GitHub.</p></figure><figure class="artifact"><figcaption><code>discover-k8s-agents.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/server-side/discover-k8s-agents.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
 # ABOUTME: Lists every K8s ServiceAccount that looks like an agent (by namespace prefix or SA name pattern).
 # ABOUTME: Output goes to stdout as JSON lines. Feed into the operator-declared cross-reference job to surface shadow agents.
 
@@ -95,8 +95,8 @@ done
 </ul>
 <h3>Reference tooling</h3>
 <ul>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/discovered/discover-k8s-agents.sh"><code>discover-k8s-agents.sh</code></a>, lists every namespace-scoped ServiceAccount whose namespace matches <code>agent-<em></code> or whose name matches <code></em>-agent</code>/<code><em>-bot</code>/<code>claude-</em></code>. Feeds the operator-declared cross-reference.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/discovered/discover-cloudtrail-agents.sql"><code>discover-cloudtrail-agents.sql</code></a>, CloudWatch Logs Insights query listing every distinct AWS principal whose role name starts with the agent prefixes.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/server-side/discover-k8s-agents.sh"><code>discover-k8s-agents.sh</code></a>, lists every namespace-scoped ServiceAccount whose namespace matches <code>agent-<em></code> or whose name matches <code></em>-agent</code>/<code><em>-bot</code>/<code>claude-</em></code>. Feeds the operator-declared cross-reference.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/server-side/discover-cloudtrail-agents.sql"><code>discover-cloudtrail-agents.sql</code></a>, CloudWatch Logs Insights query listing every distinct AWS principal whose role name starts with the agent prefixes.</li>
 </ul>
 <h3>Cross-layer cross-references</h3>
 <ul>
@@ -114,7 +114,7 @@ done
   <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>audit logs have gaps (retention expired, delivery failed, audit policy missing the resource)</li><li>shadow agents in accounts/clusters where discovery has no credentials</li></ul></section>
   <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>ID.AM-01, ID.AM-02</td></tr><tr><th>NIST AI RMF</th><td>MAP 1.1, MAP 1.5</td></tr><tr><th>CSA MAESTRO</th><td>Layer 4, Layer 7</td></tr><tr><th>OTHER</th><td>NIST SP 800-92 (log management), NIST AI Agent Standards Initiative under CAISI (Feb 17, 2026)</td></tr></tbody></table></div></section>
   <p class="permalink">Cite this cell:
-     <code>https://agenticcovenants.com/identify/identity/discovered/</code></p>
+     <code>https://agenticcovenants.com/identify/identity/server-side/</code></p>
 </article>
 
 </main>

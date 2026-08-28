@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Approval gating at the in agent layer | Identify | Agentic Covenants</title>
+<title>Approval gating at the Self-declared layer | Identify | Agentic Covenants</title>
 <meta name="description" content="Agent reports last charter signature date, next review due, current charter version on registration. Refuses to start if charter is expired.">
 <link rel="canonical" href="https://agenticcovenants.com/identify/approval-gating/in-agent/">
-<meta property="og:title" content="Approval gating at the in agent layer | Identify | Agentic Covenants">
+<meta property="og:title" content="Approval gating at the Self-declared layer | Identify | Agentic Covenants">
 <meta property="og:description" content="Agent reports last charter signature date, next review due, current charter version on registration. Refuses to start if charter is expired.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://agenticcovenants.com/identify/approval-gating/in-agent/">
@@ -31,10 +31,10 @@
 </nav>
 <article class="cell">
   <p class="eyebrow">Identify (ID) · Approval gating</p>
-  <h1>Approval gating <span class="at">at the</span> in agent <span class="at">layer</span></h1>
+  <h1>Approval gating <span class="at">at the</span> Self-declared <span class="at">layer</span></h1>
   <p class="strength strength-in-agent"><strong>advisory</strong> · Bypassable by language alone</p>
   <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
-  <nav class="layerswitch" aria-label="Layers"><a class="here" href="../in-agent/index.html">in agent</a><a class="" href="../client-side/index.html">client side</a><a class="" href="../server-side/index.html">server side</a></nav>
+  <nav class="layerswitch" aria-label="Layers"><a class="here" href="../in-agent/index.html">Self-declared</a><a class="" href="../client-side/index.html">Operator-declared</a><a class="" href="../server-side/index.html">Discovered</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Agent reports last charter signature date, next review due, current charter version on registration. Refuses to start if charter is expired.</p></section>
   
   <section class="readme"><h2>Cell notes</h2><h2>Inventory, Approval gating / Self-declared</h2>
@@ -46,7 +46,7 @@
 <li>- <code>current_charter_version</code></li>
 <li>- <code>refuses_to_start_when_expired: true</code></li>
 </ul>
-<p>The agent runtime checks <code>next_review_due</code> at startup. If the date is in the past, registration aborts. The reference daemon at <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/self-declared/agent-register.py"><code>../../identity/self-declared/agent-register.py</code></a> implements this check.</p>
+<p>The agent runtime checks <code>next_review_due</code> at startup. If the date is in the past, registration aborts. The reference daemon at <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/in-agent/agent-register.py"><code>../../identity/in-agent/agent-register.py</code></a> implements this check.</p>
 <h3>Citation</h3>
 <p>NIST CSF 2.0 ID.IM-01. NIST AI RMF GOVERN 1.5, MAP 4.1.</p></section>
   
