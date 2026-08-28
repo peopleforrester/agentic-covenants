@@ -474,7 +474,7 @@ def check_diagrams(staged: bool) -> Findings:
 ROOT_ALLOWED = {
     "README.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "SECURITY.md",
     "CHANGELOG.md", "AGENTS.md", "CLAUDE.md",
-    "LICENSE", "LICENSE-CODE", "LICENSE-CONTENT",
+    "LICENSE", "LICENSE-CONTENT",
 }
 
 

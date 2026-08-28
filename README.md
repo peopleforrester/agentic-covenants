@@ -188,6 +188,6 @@ The most valuable contributions are a citation that is wrong, a bypass that is m
 
 ## License
 
-Dual-licensed. **Code** (hooks, policies, runbooks, Terraform, Rego) under [Apache 2.0](./LICENSE-CODE). **Content** (prose, matrices, crosswalks) under [CC BY-SA 4.0](./LICENSE-CONTENT). See [`LICENSE`](./LICENSE) for the split rule.
+Dual-licensed. **Code** (hooks, policies, runbooks, Terraform, Rego) under [Apache 2.0](./LICENSE). **Content** (prose, matrices, crosswalks) under [CC BY-SA 4.0](./LICENSE-CONTENT). See [`LICENSE-CONTENT`](./LICENSE-CONTENT) for the split rule.
 
 Cite as: Forrester, M. R. and contributors. *The Agentic Covenants Matrix*. https://github.com/peopleforrester/agentic-covenants

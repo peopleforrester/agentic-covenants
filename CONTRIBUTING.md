@@ -58,7 +58,7 @@ If a claim cannot be verified, mark it `UNVERIFIED` inline rather than deleting 
 
 ## Licensing of contributions
 
-This repo is dual-licensed: code under [Apache 2.0](./LICENSE-CODE), content under [CC BY-SA 4.0](./LICENSE-CONTENT). See [`LICENSE`](./LICENSE) for the split rule.
+This repo is dual-licensed: code under [Apache 2.0](./LICENSE), content under [CC BY-SA 4.0](./LICENSE-CONTENT). See [`LICENSE-CONTENT`](./LICENSE-CONTENT) for the split rule.
 
 By submitting a contribution you agree it is licensed under the same terms as the file it touches, and that you have the right to contribute it. Do not paste text from a source whose license does not permit redistribution under CC BY-SA 4.0. Quoting and citing a framework is fine; wholesale copying of its text is not.
 
