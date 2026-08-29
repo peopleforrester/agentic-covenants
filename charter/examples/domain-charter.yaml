@@ -1,0 +1,39 @@
+# ABOUTME: Worked example of a domain charter that satisfies every domain-layer Charter cell.
+# ABOUTME: Synthetic organisation. Copy the shape, not the values.
+
+charter_version: 1.0
+
+domain:
+  name: Platform Engineering
+  authority_role: Director of Platform Engineering
+  authority_name: Ravi Anand
+
+agent_creation_authorized:
+  - Director of Platform Engineering
+  - Platform Engineering Manager
+
+escalation_path: "Platform on-call rota (PagerDuty service PLAT-1), then Director of Platform Engineering, then AI Governance Council chair."
+
+audit_trail_location: "git@github.com:northgate-synthetic/ai-governance.git, path charters/, branch-protected with required review."
+
+scope:
+  data_classes: [public, internal]
+  inherits_prohibitions_from: organizational-policy.yaml
+  domain_prohibitions:
+    - "No agent may hold a credential that can write to the customer-data account"
+
+authorized_risk_tiers: [1, 2]
+
+tier_review_requirements:
+  1: "Manager approval"
+  2: "Manager approval plus security review"
+
+approvals_required_by_tier:
+  1: [Platform Engineering Manager]
+  2: [Platform Engineering Manager, Security Review]
+
+amendment_process: "Pull request against the ai-governance repo, two approvals, one of which must be the domain authority. Merges to main are the signature of record."
+
+supply_chain:
+  inherits_models_from: organizational-policy.yaml
+  approved_mcp_servers: [filesystem, github]

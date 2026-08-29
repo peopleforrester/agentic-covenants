@@ -1,0 +1,40 @@
+# ABOUTME: Machine-checkable definition of the Charter blast-radius / organizational cell.
+# ABOUTME: The audit prompts in this cell's README, expressed so a validator can score them.
+
+cell:
+  id: blast-radius.server-side
+  concern: blast-radius
+  layer: server-side
+  authority: organizational
+  document: organizational-policy
+  owner: "AI Governance Council."
+  question: "Does the org have a written risk tier taxonomy with explicit damage caps and the matching control requirements per tier?"
+
+mappings:
+  csf: "GV.RM-01, GV.RM-02"
+  ai_rmf: "GOVERN 1.3, MAP 5.1"
+  iso42001: "A.5"
+  eu_ai_act: "Art. 9"
+
+checks:
+  - id: GV-BR-O-01
+    description: "A tier taxonomy exists and defines all four tiers."
+    type: min_items
+    target: "risk_tiers:4"
+    document: organizational-policy
+    severity: blocking
+    evidence: "Four tier definitions."
+  - id: GV-BR-O-02
+    description: "Every tier carries an explicit damage cap."
+    type: every_has_key
+    target: "risk_tiers|damage_cap"
+    document: organizational-policy
+    severity: blocking
+    evidence: "No tier defined without a cap."
+  - id: GV-BR-O-03
+    description: "Every tier names the controls required at that tier."
+    type: every_has_key
+    target: "risk_tiers|required_controls"
+    document: organizational-policy
+    severity: blocking
+    evidence: "The link from Charter to the operational matrices."

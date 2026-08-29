@@ -1,0 +1,40 @@
+# ABOUTME: Machine-checkable definition of the Charter supply-chain / agent cell.
+# ABOUTME: The audit prompts in this cell's README, expressed so a validator can score them.
+
+cell:
+  id: supply-chain.in-agent
+  concern: supply-chain
+  layer: in-agent
+  authority: agent
+  document: agent-charter
+  owner: "Named human owner. Counter-signed by domain authority."
+  question: "Does the agent charter declare specific dependencies (named foundation model, MCP servers with hashes, base image digest, runtime version), and require charter amendment for changes?"
+
+mappings:
+  csf: "GV.SC-04, GV.SC-07, ID.AM-08"
+  ai_rmf: "GOVERN 6.1, MAP 4.1"
+  iso42001: "A.10"
+  eu_ai_act: "Art. 25"
+
+checks:
+  - id: GV-SC-A-01
+    description: "The foundation model is named and pinned to a date."
+    type: required_field
+    target: "dependencies.foundation_model_pinned_at"
+    document: agent-charter
+    severity: blocking
+    evidence: "A pinned model, not a floating alias."
+  - id: GV-SC-A-02
+    description: "The base image is pinned by digest rather than tag."
+    type: matches
+    target: "dependencies.base_image_digest:^sha256:[0-9a-f]{64}$"
+    document: agent-charter
+    severity: blocking
+    evidence: "A real digest. A tag floats and a digest does not."
+  - id: GV-SC-A-03
+    description: "Every declared MCP server carries a hash."
+    type: every_value_matches
+    target: "dependencies.mcp_server_hashes:^sha256:[0-9a-f]{64}$"
+    document: agent-charter
+    severity: blocking
+    evidence: "This is the list the runtime allowlist is generated from."

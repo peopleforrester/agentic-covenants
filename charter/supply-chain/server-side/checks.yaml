@@ -1,0 +1,40 @@
+# ABOUTME: Machine-checkable definition of the Charter supply-chain / organizational cell.
+# ABOUTME: The audit prompts in this cell's README, expressed so a validator can score them.
+
+cell:
+  id: supply-chain.server-side
+  concern: supply-chain
+  layer: server-side
+  authority: organizational
+  document: organizational-policy
+  owner: "AI Governance Council with Procurement and Security."
+  question: "Does the org maintain an allowlist of approved foundation models, an MCP server approval policy, a third-party dependency approval policy, and integrate AI vendor risk into procurement?"
+
+mappings:
+  csf: "GV.SC-01, GV.SC-03, GV.SC-04, GV.SC-07"
+  ai_rmf: "GOVERN 6.1, GOVERN 6.2"
+  iso42001: "A.10"
+  eu_ai_act: "Art. 25"
+
+checks:
+  - id: GV-SC-O-01
+    description: "An approved foundation-model allowlist exists and is non-empty."
+    type: min_items
+    target: "supply_chain.approved_models:1"
+    document: organizational-policy
+    severity: blocking
+    evidence: "Named models with versions."
+  - id: GV-SC-O-02
+    description: "An MCP server approval policy is recorded."
+    type: required_field
+    target: "supply_chain.mcp_approval_policy"
+    document: organizational-policy
+    severity: blocking
+    evidence: "How a server gets onto the list, and who decides."
+  - id: GV-SC-O-03
+    description: "AI vendor risk is integrated into procurement, with the owning function named."
+    type: required_field
+    target: "supply_chain.procurement_integration"
+    document: organizational-policy
+    severity: blocking
+    evidence: "Names the function, not the intention."

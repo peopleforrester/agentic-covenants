@@ -1,0 +1,47 @@
+# ABOUTME: Machine-checkable definition of the Charter identity / organizational cell.
+# ABOUTME: The audit prompts in this cell's README, expressed so a validator can score them.
+
+cell:
+  id: identity.server-side
+  concern: identity
+  layer: server-side
+  authority: organizational
+  document: organizational-policy
+  owner: "AI Governance Council, signed by board representative or CEO."
+  question: "Does the org have a written, signed AI Acceptable Use Policy that names the categories of agents permitted to exist, the body that authorizes new categories, and the named org-wide owner of the agent program?"
+
+mappings:
+  csf: "GV.OC-01, GV.OC-02, GV.PO-01, GV.PO-02"
+  ai_rmf: "GOVERN 1.1, GOVERN 1.4"
+  iso42001: "A.2, A.3"
+  eu_ai_act: "Art. 9, Art. 17"
+
+checks:
+  - id: GV-ID-O-01
+    description: "The AUP names the categories of agent permitted to exist."
+    type: min_items
+    target: "acceptable_use.permitted_categories:1"
+    document: organizational-policy
+    severity: blocking
+    evidence: "An enumerated list, not 'agents that support the business'."
+  - id: GV-ID-O-02
+    description: "The body authorised to create new categories is named."
+    type: required_field
+    target: "acceptable_use.authorizing_body"
+    document: organizational-policy
+    severity: blocking
+    evidence: "A named council or officer."
+  - id: GV-ID-O-03
+    description: "A single org-wide owner of the agent programme is named, with an acceptance date."
+    type: required_field
+    target: "acceptable_use.program_owner.accepted_on"
+    document: organizational-policy
+    severity: blocking
+    evidence: "A date on which a named person accepted the role."
+  - id: GV-ID-O-04
+    description: "The policy has been signed, and the signature is dated."
+    type: required_field
+    target: "signed.date"
+    document: organizational-policy
+    severity: blocking
+    evidence: "Signature block with signer, role, and date."

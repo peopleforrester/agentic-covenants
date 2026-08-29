@@ -1,0 +1,87 @@
+# ABOUTME: Worked example of a filled agent charter that satisfies every agent-layer Charter cell.
+# ABOUTME: Synthetic organisation. Copy the shape, not the values.
+
+charter_version: 1.0
+
+agent:
+  name: release-bot
+  identifier: agent-release-bot-001
+  description: "Cuts release branches and opens PRs. No deploys, no secrets."
+
+ownership:
+  owner_name: Dana Whitfield
+  owner_role: Staff Platform Engineer
+  owner_email: dana.whitfield@northgate-synthetic.test
+  backup_owner_name: Ravi Anand
+  backup_owner_role: Platform Engineering Manager
+  backup_owner_email: ravi.anand@northgate-synthetic.test
+
+risk_tier: 2
+
+damage_cap:
+  max_pull_requests_per_day: 20
+  max_cloud_spend_per_day_usd: 25
+  forbidden_operations:
+    - prod_database_writes
+    - secret_modifications
+    - branch_protection_changes
+    - charter_self_modification
+
+authorized_scope:
+  environments: [dev, staging]
+  tools_allowlist:
+    - Read
+    - Glob
+    - Grep
+    - "Bash(git:status)"
+    - "Bash(git:diff)"
+    - "Bash(gh:pr:create)"
+  mcp_servers_allowlist: [filesystem, github]
+  rbac_role_ref: agent-release-bot-role
+  iam_role_arn: arn:aws:iam::123456789012:role/release-bot
+
+dependencies:
+  foundation_model: claude-sonnet-5
+  foundation_model_pinned_at: 2026-08-01
+  mcp_server_hashes:
+    filesystem: sha256:a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4
+    github: sha256:a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4
+  base_image: ghcr.io/northgate-synthetic/agent-runtime
+  base_image_digest: sha256:a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4
+  agent_runtime_version: 2.4.1
+  pinned_at: 2026-08-01
+
+approvals:
+  - approver_name: Ravi Anand
+    approver_role: Platform Engineering Manager
+    approval_date: 2026-08-01
+    approval_signature: 8f2c91e4d7a3b60518cc2f9e77ab34d1c05e6b92
+  - approver_name: Priya Raghunathan
+    approver_role: Security Review
+    approval_date: 2026-08-01
+    approval_signature: 3d71ba05c9e28f4460a7d13fbb92c5e08a4f7712
+
+review_cadence: quarterly
+next_review_due: 2026-11-27
+
+retirement_criteria:
+  - "Owner departs and no backup owner accepts handoff within 30 days"
+  - "False-positive rate above 30% sustained for 14 days"
+  - "Sentinels-detected scope drift sustained for 7 days"
+  - "Foundation model deprecated by the vendor"
+
+incident_revocation:
+  conditions:
+    - "Two or more Sentinels alerts at severity ERROR within 24 hours"
+    - "Any attempt against a forbidden operation"
+  authority: owner_or_domain_lead
+  procedure: "Run interventions/identity/server-side/agent-revoke-server, then notify ai-governance@northgate-synthetic.test"
+
+parent_charters:
+  domain: domain-charter.yaml
+  organizational: organizational-policy.yaml
+
+audit_trail:
+  created_at: 2026-08-01T00:00:00Z
+  last_amended_at: 2026-08-01T00:00:00Z
+  amendment_history_ref: "git log charter/examples/agent-charter.yaml"

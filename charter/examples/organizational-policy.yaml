@@ -1,0 +1,66 @@
+# ABOUTME: Worked example of an organisational AI policy that satisfies every org-layer Charter cell.
+# ABOUTME: Synthetic organisation. Copy the shape, not the values.
+
+policy_version: 1.0
+
+acceptable_use:
+  permitted_categories:
+    - "Developer productivity agents, non-production scope"
+    - "Release automation agents, scoped write to source control"
+    - "Read-only analysis agents against internal data"
+  authorizing_body: AI Governance Council
+  program_owner:
+    name: Ines Okonkwo
+    role: Chief Information Security Officer
+    accepted_on: 2026-02-17
+
+signed:
+  signer: Ines Okonkwo
+  role: Chief Information Security Officer
+  date: 2026-02-17
+
+risk_appetite:
+  hard_prohibitions:
+    - "No agent holds a standing credential to a production datastore"
+    - "No agent may alter branch protection, audit configuration, or its own charter"
+    - "No agent may transmit customer data outside the approved egress allowlist"
+  quantitative_caps:
+    max_cloud_spend_per_agent_per_day_usd: 100
+    max_records_touched_per_session: 500
+  change_control: "Scope policy changes require an AI Governance Council vote at quorum and are recorded in the minutes."
+
+risk_tiers:
+  1:
+    description: "Read-only, non-production"
+    damage_cap: "No writes. No spend above 10 USD per day."
+    required_controls: ["controls/identity/server-side", "controls/authorization/server-side"]
+  2:
+    description: "Scoped writes, non-production"
+    damage_cap: "Writes limited to source control. No spend above 25 USD per day."
+    required_controls: ["controls/identity/server-side", "controls/authorization/server-side", "controls/blast-radius/client-side"]
+  3:
+    description: "Destructive operations in non-production, or scoped writes in production"
+    damage_cap: "No deletion without a tested restore path. No spend above 100 USD per day."
+    required_controls: ["controls/blast-radius/server-side", "controls/approval-gating/server-side", "sentinels/blast-radius/server-side"]
+  4:
+    description: "Production-critical"
+    damage_cap: "Every destructive verb gated out of band. Spend capped at 100 USD per day and alarmed at 50."
+    required_controls: ["all Covenants cells", "all Sentinels cells", "interventions/identity/server-side"]
+
+governance_council:
+  members:
+    - {name: Ines Okonkwo, role: Chief Information Security Officer, seat: chair}
+    - {name: Ravi Anand, role: Director of Platform Engineering, seat: member}
+    - {name: Priya Raghunathan, role: Head of Security Engineering, seat: member}
+    - {name: Tomas Lindqvist, role: General Counsel, seat: member}
+  quorum: "Three of four members, chair or deputy chair among them."
+  voting: "Simple majority. The chair breaks a tie."
+  minutes_location: "git@github.com:northgate-synthetic/ai-governance.git, path council/minutes/"
+  last_met: 2026-08-08
+
+supply_chain:
+  approved_models:
+    - "claude-sonnet-5"
+    - "claude-opus-5"
+  mcp_approval_policy: "A server reaches the allowlist after a security review of its tool descriptions and a pinned hash recorded in this policy. Head of Security Engineering approves."
+  procurement_integration: "Procurement runs the AI vendor risk questionnaire on every purchase touching model inference or agent tooling. Owned by Procurement with Security Engineering as reviewer."

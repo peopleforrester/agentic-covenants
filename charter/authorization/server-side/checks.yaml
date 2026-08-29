@@ -1,0 +1,40 @@
+# ABOUTME: Machine-checkable definition of the Charter authorization / organizational cell.
+# ABOUTME: The audit prompts in this cell's README, expressed so a validator can score them.
+
+cell:
+  id: authorization.server-side
+  concern: authorization
+  layer: server-side
+  authority: organizational
+  document: organizational-policy
+  owner: "AI Governance Council."
+  question: "Does the org have an AI Risk Appetite Statement that names hard prohibitions every agent must obey, and a change-control process for evolving scope policy?"
+
+mappings:
+  csf: "GV.RM-01, GV.RM-02, GV.PO-02"
+  ai_rmf: "GOVERN 1.3, MANAGE 1.1"
+  iso42001: "A.5"
+  eu_ai_act: "Art. 9"
+
+checks:
+  - id: GV-AZ-O-01
+    description: "Hard prohibitions binding on every agent are enumerated."
+    type: min_items
+    target: "risk_appetite.hard_prohibitions:1"
+    document: organizational-policy
+    severity: blocking
+    evidence: "Absolute prohibitions, not guidance."
+  - id: GV-AZ-O-02
+    description: "Risk appetite carries at least one quantitative cap."
+    type: min_items
+    target: "risk_appetite.quantitative_caps:1"
+    document: organizational-policy
+    severity: blocking
+    evidence: "A number with a unit. 'Low risk' fails."
+  - id: GV-AZ-O-03
+    description: "A change-control process for scope policy is named."
+    type: required_field
+    target: "risk_appetite.change_control"
+    document: organizational-policy
+    severity: blocking
+    evidence: "Who may amend, and through what process."

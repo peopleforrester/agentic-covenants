@@ -1,0 +1,33 @@
+# ABOUTME: Machine-checkable definition of the Charter approval-gating / domain cell.
+# ABOUTME: The audit prompts in this cell's README, expressed so a validator can score them.
+
+cell:
+  id: approval-gating.client-side
+  concern: approval-gating
+  layer: client-side
+  authority: domain
+  document: domain-charter
+  owner: "Domain authority."
+  question: "Does the domain charter define which approvers are required for new agent charters at each tier, and the process for charter amendments?"
+
+mappings:
+  csf: "GV.PO-02, GV.RR-02"
+  ai_rmf: "GOVERN 2.2"
+  iso42001: "A.9"
+  eu_ai_act: "Art. 14"
+
+checks:
+  - id: GV-AG-D-01
+    description: "Required approvers are defined per tier."
+    type: required_field
+    target: "approvals_required_by_tier"
+    document: domain-charter
+    severity: blocking
+    evidence: "A mapping from tier to approver roles."
+  - id: GV-AG-D-02
+    description: "An amendment process is recorded."
+    type: required_field
+    target: "amendment_process"
+    document: domain-charter
+    severity: blocking
+    evidence: "How a charter changes, and who signs the change."

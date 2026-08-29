@@ -1,0 +1,47 @@
+# ABOUTME: Machine-checkable definition of the Charter authorization / agent cell.
+# ABOUTME: The audit prompts in this cell's README, expressed so a validator can score them.
+
+cell:
+  id: authorization.in-agent
+  concern: authorization
+  layer: in-agent
+  authority: agent
+  document: agent-charter
+  owner: "Named human owner. Counter-signed by domain authority."
+  question: "Does the agent charter declare a specific authorized scope (named tools, MCP servers, environments, RBAC role reference) that requires re-signature to expand?"
+
+mappings:
+  csf: "GV.PO-01, PR.AA-05"
+  ai_rmf: "GOVERN 1.2, MANAGE 2.2"
+  iso42001: "A.6"
+  eu_ai_act: "Art. 26"
+
+checks:
+  - id: GV-AZ-A-01
+    description: "Tools are enumerated rather than wildcarded at the top level."
+    type: min_items
+    target: "authorized_scope.tools_allowlist:1"
+    document: agent-charter
+    severity: blocking
+    evidence: "Named tools; a bare '*' fails."
+  - id: GV-AZ-A-02
+    description: "Environments the agent may touch are enumerated."
+    type: min_items
+    target: "authorized_scope.environments:1"
+    document: agent-charter
+    severity: blocking
+    evidence: "Named environments."
+  - id: GV-AZ-A-03
+    description: "The charter references the RBAC role that implements this scope at runtime."
+    type: required_field
+    target: "authorized_scope.rbac_role_ref"
+    document: agent-charter
+    severity: blocking
+    evidence: "A role name resolvable in the cluster."
+  - id: GV-AZ-A-04
+    description: "No tool entry grants a wildcard verb."
+    type: no_wildcard
+    target: "authorized_scope.tools_allowlist"
+    document: agent-charter
+    severity: blocking
+    evidence: "No entry equal to '*' or ending ':*:*'."

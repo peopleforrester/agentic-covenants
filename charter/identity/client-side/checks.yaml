@@ -1,0 +1,40 @@
+# ABOUTME: Machine-checkable definition of the Charter identity / domain cell.
+# ABOUTME: The audit prompts in this cell's README, expressed so a validator can score them.
+
+cell:
+  id: identity.client-side
+  concern: identity
+  layer: client-side
+  authority: domain
+  document: domain-charter
+  owner: "Domain authority, counter-signed by the AI Governance Council."
+  question: "Does each domain that operates agents have a signed domain charter naming who in the domain is permitted to create agents, what the escalation path is, and what audit trail location records charter signatures?"
+
+mappings:
+  csf: "GV.RR-01, GV.RR-02"
+  ai_rmf: "GOVERN 2.1, GOVERN 3.2"
+  iso42001: "A.3"
+  eu_ai_act: "Art. 26"
+
+checks:
+  - id: GV-ID-D-01
+    description: "The domain names who may create agents within it."
+    type: min_items
+    target: "agent_creation_authorized:1"
+    document: domain-charter
+    severity: blocking
+    evidence: "Named roles, not 'engineering'."
+  - id: GV-ID-D-02
+    description: "An escalation path is recorded with a destination that is a person or a rota."
+    type: required_field
+    target: "escalation_path"
+    document: domain-charter
+    severity: blocking
+    evidence: "Where a page goes at 03:00."
+  - id: GV-ID-D-03
+    description: "The audit-trail location for charter signatures is recorded."
+    type: required_field
+    target: "audit_trail_location"
+    document: domain-charter
+    severity: blocking
+    evidence: "A repo path or record system, resolvable by a reviewer."

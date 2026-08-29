@@ -1,0 +1,47 @@
+# ABOUTME: Machine-checkable definition of the Charter approval-gating / organizational cell.
+# ABOUTME: The audit prompts in this cell's README, expressed so a validator can score them.
+
+cell:
+  id: approval-gating.server-side
+  concern: approval-gating
+  layer: server-side
+  authority: organizational
+  document: organizational-policy
+  owner: "AI Governance Council itself; minutes ratified by the chair."
+  question: "Does the org have a named AI Governance Council with member roles, quorum, voting rules, and recorded minutes?"
+
+mappings:
+  csf: "GV.RR-01, GV.OV-01, GV.OV-03"
+  ai_rmf: "GOVERN 2.1, GOVERN 4.1"
+  iso42001: "A.3, A.9"
+  eu_ai_act: "Art. 17"
+
+checks:
+  - id: GV-AG-O-01
+    description: "Council members are named with their roles."
+    type: min_items
+    target: "governance_council.members:3"
+    document: organizational-policy
+    severity: blocking
+    evidence: "Named roles. A council of one is an officer."
+  - id: GV-AG-O-02
+    description: "Quorum is defined as a number or a fraction."
+    type: required_field
+    target: "governance_council.quorum"
+    document: organizational-policy
+    severity: blocking
+    evidence: "A rule that can settle a disputed vote."
+  - id: GV-AG-O-03
+    description: "Minutes are recorded at a resolvable location."
+    type: required_field
+    target: "governance_council.minutes_location"
+    document: organizational-policy
+    severity: blocking
+    evidence: "The most common emptiness pattern is a council that never meets."
+  - id: GV-AG-O-04
+    description: "The council has met within the last two quarters."
+    type: date_within_days
+    target: "governance_council.last_met:183"
+    document: organizational-policy
+    severity: blocking
+    evidence: "A named council that has not met is not a control."

@@ -1,0 +1,33 @@
+# ABOUTME: Machine-checkable definition of the Charter supply-chain / domain cell.
+# ABOUTME: The audit prompts in this cell's README, expressed so a validator can score them.
+
+cell:
+  id: supply-chain.client-side
+  concern: supply-chain
+  layer: client-side
+  authority: domain
+  document: domain-charter
+  owner: "Domain authority."
+  question: "Does the domain charter inherit the org's approved-models list, add domain-specific restrictions, and maintain its own MCP server approval list?"
+
+mappings:
+  csf: "GV.SC-04, GV.SC-07"
+  ai_rmf: "GOVERN 6.1"
+  iso42001: "A.10"
+  eu_ai_act: "Art. 25"
+
+checks:
+  - id: GV-SC-D-01
+    description: "The domain references the organisational approved-models list."
+    type: required_field
+    target: "supply_chain.inherits_models_from"
+    document: domain-charter
+    severity: blocking
+    evidence: "A reference, so drift is visible."
+  - id: GV-SC-D-02
+    description: "The domain maintains its own MCP server approval list."
+    type: field_present
+    target: "supply_chain.approved_mcp_servers"
+    document: domain-charter
+    severity: blocking
+    evidence: "An explicit list, empty by decision if that is the decision."

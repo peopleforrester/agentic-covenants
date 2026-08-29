@@ -1,0 +1,40 @@
+# ABOUTME: Machine-checkable definition of the Charter authorization / domain cell.
+# ABOUTME: The audit prompts in this cell's README, expressed so a validator can score them.
+
+cell:
+  id: authorization.client-side
+  concern: authorization
+  layer: client-side
+  authority: domain
+  document: domain-charter
+  owner: "Domain authority."
+  question: "Does the domain charter define the per-class scope (which APIs, data classes, environments, destructive verbs are allowed), inherit org-wide hard prohibitions, and add domain-specific ones?"
+
+mappings:
+  csf: "GV.PO-01, GV.RR-03"
+  ai_rmf: "GOVERN 1.2"
+  iso42001: "A.6"
+  eu_ai_act: "Art. 26"
+
+checks:
+  - id: GV-AZ-D-01
+    description: "Permitted data classes are enumerated for the domain."
+    type: min_items
+    target: "scope.data_classes:1"
+    document: domain-charter
+    severity: blocking
+    evidence: "Named classifications."
+  - id: GV-AZ-D-02
+    description: "The domain inherits the organisational hard prohibitions explicitly."
+    type: required_field
+    target: "scope.inherits_prohibitions_from"
+    document: domain-charter
+    severity: blocking
+    evidence: "A reference to the org policy document."
+  - id: GV-AZ-D-03
+    description: "Domain-specific prohibitions are recorded, even when the list is empty by decision."
+    type: field_present
+    target: "scope.domain_prohibitions"
+    document: domain-charter
+    severity: advisory
+    evidence: "An explicit empty list beats a missing key."

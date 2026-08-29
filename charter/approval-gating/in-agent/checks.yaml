@@ -1,0 +1,47 @@
+# ABOUTME: Machine-checkable definition of the Charter approval-gating / agent cell.
+# ABOUTME: The audit prompts in this cell's README, expressed so a validator can score them.
+
+cell:
+  id: approval-gating.in-agent
+  concern: approval-gating
+  layer: in-agent
+  authority: agent
+  document: agent-charter
+  owner: "Named human owner. Counter-signed by domain authority and, at Tier 3 and above, security review."
+  question: "Does the agent charter carry the required approval signatures, an annual review cadence, conditions for emergency revocation, and a clear identifier of the approver of every subsequent change?"
+
+mappings:
+  csf: "GV.PO-02, GV.OV-01"
+  ai_rmf: "GOVERN 2.2, MANAGE 2.3"
+  iso42001: "A.9"
+  eu_ai_act: "Art. 14, Art. 26"
+
+checks:
+  - id: GV-AG-A-01
+    description: "At least two approval signatures are recorded."
+    type: min_items
+    target: "approvals:2"
+    document: agent-charter
+    severity: blocking
+    evidence: "Separation of duties at the governance layer."
+  - id: GV-AG-A-02
+    description: "Every approval carries a signature reference, not just a name."
+    type: every_has_key
+    target: "approvals|approval_signature"
+    document: agent-charter
+    severity: blocking
+    evidence: "A commit SHA or a detached signature."
+  - id: GV-AG-A-03
+    description: "The next review date is in the future."
+    type: date_future
+    target: "next_review_due"
+    document: agent-charter
+    severity: blocking
+    evidence: "An overdue charter is an expired one."
+  - id: GV-AG-A-04
+    description: "Emergency revocation names an authority and a procedure."
+    type: required_field
+    target: "incident_revocation.procedure"
+    document: agent-charter
+    severity: blocking
+    evidence: "A runnable procedure, referenced by path."

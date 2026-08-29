@@ -1,0 +1,33 @@
+# ABOUTME: Machine-checkable definition of the Charter blast-radius / domain cell.
+# ABOUTME: The audit prompts in this cell's README, expressed so a validator can score them.
+
+cell:
+  id: blast-radius.client-side
+  concern: blast-radius
+  layer: client-side
+  authority: domain
+  document: domain-charter
+  owner: "Domain authority."
+  question: "Does the domain charter declare which risk tiers the domain is authorized to operate, and which failure-mode reviews are required per tier?"
+
+mappings:
+  csf: "GV.RM-02, GV.RR-03"
+  ai_rmf: "GOVERN 1.3"
+  iso42001: "A.5"
+  eu_ai_act: "Art. 9"
+
+checks:
+  - id: GV-BR-D-01
+    description: "The tiers this domain may operate are enumerated."
+    type: min_items
+    target: "authorized_risk_tiers:1"
+    document: domain-charter
+    severity: blocking
+    evidence: "A list of integers."
+  - id: GV-BR-D-02
+    description: "A review requirement is recorded for each tier the domain may operate."
+    type: required_field
+    target: "tier_review_requirements"
+    document: domain-charter
+    severity: blocking
+    evidence: "A mapping from tier to required review."

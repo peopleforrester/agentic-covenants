@@ -1,0 +1,47 @@
+# ABOUTME: Machine-checkable definition of the Charter identity / agent cell.
+# ABOUTME: The audit prompts in this cell's README, expressed so a validator can score them.
+
+cell:
+  id: identity.in-agent
+  concern: identity
+  layer: in-agent
+  authority: agent
+  document: agent-charter
+  owner: "The named human owner. Counter-signed by domain authority."
+  question: "Does each agent have a charter file naming a specific accountable human owner, a backup owner, and a registered agent identifier that ties runtime identity claims back to the charter?"
+
+mappings:
+  csf: "GV.RR-02, ID.AM-01"
+  ai_rmf: "GOVERN 2.1, MAP 1.1"
+  iso42001: "A.3, A.4"
+  eu_ai_act: "Art. 26"
+
+checks:
+  - id: GV-ID-A-01
+    description: "A specific human is named as owner, not a team or a distribution list."
+    type: required_field
+    target: "ownership.owner_name"
+    document: agent-charter
+    severity: blocking
+    evidence: "A personal name, plus the role and a reachable address."
+  - id: GV-ID-A-02
+    description: "A backup owner is named and is a different person from the owner."
+    type: distinct_from
+    target: "ownership.backup_owner_name|ownership.owner_name"
+    document: agent-charter
+    severity: blocking
+    evidence: "Two different named humans."
+  - id: GV-ID-A-03
+    description: "The agent carries a registered identifier that runtime identity can be traced to."
+    type: required_field
+    target: "agent.identifier"
+    document: agent-charter
+    severity: blocking
+    evidence: "An identifier that also appears on the workload's ServiceAccount or IAM principal."
+  - id: GV-ID-A-04
+    description: "No placeholder survives in the ownership block."
+    type: no_placeholder
+    target: "ownership"
+    document: agent-charter
+    severity: blocking
+    evidence: "No REPLACE_WITH, no example.com, no angle brackets."
