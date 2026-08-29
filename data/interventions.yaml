@@ -56,6 +56,7 @@ cells:
   # ---- IDENTITY ----
   - concern: identity
     layer: in-agent
+    empty_by_design: true
     summary: "(no enforcement; the agent that misuses identity will not voluntarily revoke it)"
     interventions_path: interventions/identity/in-agent/
     citations:
@@ -90,6 +91,7 @@ cells:
   # ---- AUTHORIZATION ----
   - concern: authorization
     layer: in-agent
+    empty_by_design: true
     summary: "(no enforcement)"
     interventions_path: interventions/authorization/in-agent/
     citations:
@@ -123,6 +125,7 @@ cells:
   # ---- BLAST RADIUS ----
   - concern: blast-radius
     layer: in-agent
+    empty_by_design: true
     summary: "(no enforcement)"
     interventions_path: interventions/blast-radius/in-agent/
     citations:
@@ -159,6 +162,7 @@ cells:
   # ---- APPROVAL GATING ----
   - concern: approval-gating
     layer: in-agent
+    empty_by_design: true
     summary: "(no enforcement)"
     interventions_path: interventions/approval-gating/in-agent/
     citations:
@@ -194,6 +198,7 @@ cells:
   # ---- SUPPLY CHAIN ----
   - concern: supply-chain
     layer: in-agent
+    empty_by_design: true
     summary: "(no enforcement)"
     interventions_path: interventions/supply-chain/in-agent/
     citations:

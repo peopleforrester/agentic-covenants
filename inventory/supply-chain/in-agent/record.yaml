@@ -1,0 +1,17 @@
+# ABOUTME: What the self-declared layer records for the supply-chain concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: supply-chain.in-agent
+  concern: supply-chain
+  layer: in-agent
+  authority: self-declared
+  records: "The agent reports the model, MCP servers and image digest it actually loaded."
+
+fields:
+  - dependencies_runtime.foundation_model
+  - dependencies_runtime.mcp_servers
+  - dependencies_runtime.base_image
+
+feeds_rules:
+  - dependency_drift

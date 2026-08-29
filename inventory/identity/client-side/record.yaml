@@ -1,0 +1,20 @@
+# ABOUTME: What the operator-declared layer records for the identity concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: identity.client-side
+  concern: identity
+  layer: client-side
+  authority: operator-declared
+  records: "The human registry of record: who owns this agent, in which domain, under which charter."
+
+fields:
+  - agent_identifier
+  - charter_ref
+  - ownership.owner
+  - ownership.domain
+
+feeds_rules:
+  - shadow_agent
+  - ghost_agent
+  - charter_integrity

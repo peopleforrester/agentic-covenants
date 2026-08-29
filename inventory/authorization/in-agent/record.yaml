@@ -1,0 +1,16 @@
+# ABOUTME: What the self-declared layer records for the authorization concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: authorization.in-agent
+  concern: authorization
+  layer: in-agent
+  authority: self-declared
+  records: "The agent reports the scope it believes it holds: tools, MCP servers, environments."
+
+fields:
+  - authorization_runtime.rbac_role_ref
+  - authorized_scope.tools_allowlist
+
+feeds_rules:
+  - scope_drift

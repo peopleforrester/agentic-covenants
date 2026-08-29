@@ -1,0 +1,16 @@
+# ABOUTME: What the operator-declared layer records for the authorization concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: authorization.client-side
+  concern: authorization
+  layer: client-side
+  authority: operator-declared
+  records: "The registry records the scope the agent was authorized to hold at charter approval."
+
+fields:
+  - authorization_runtime.rbac_role_ref
+  - authorization_runtime.effective_scope_last_audited
+
+feeds_rules:
+  - scope_drift

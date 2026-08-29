@@ -56,6 +56,7 @@ cells:
   # ---- IDENTITY ----
   - concern: identity
     layer: in-agent
+    empty_by_design: true
     summary: "(no enforcement)"
     restorations_path: restorations/identity/in-agent/
     citations:
@@ -93,6 +94,7 @@ cells:
   # ---- AUTHORIZATION ----
   - concern: authorization
     layer: in-agent
+    empty_by_design: true
     summary: "(no enforcement)"
     restorations_path: restorations/authorization/in-agent/
     citations:
@@ -127,6 +129,7 @@ cells:
   # ---- BLAST RADIUS ----
   - concern: blast-radius
     layer: in-agent
+    empty_by_design: true
     summary: "(no enforcement)"
     restorations_path: restorations/blast-radius/in-agent/
     citations:
@@ -162,6 +165,7 @@ cells:
   # ---- APPROVAL GATING ----
   - concern: approval-gating
     layer: in-agent
+    empty_by_design: true
     summary: "(no enforcement)"
     restorations_path: restorations/approval-gating/in-agent/
     citations:
@@ -194,6 +198,7 @@ cells:
   # ---- SUPPLY CHAIN ----
   - concern: supply-chain
     layer: in-agent
+    empty_by_design: true
     summary: "(no enforcement)"
     restorations_path: restorations/supply-chain/in-agent/
     citations:

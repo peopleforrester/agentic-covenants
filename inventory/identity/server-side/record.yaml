@@ -1,0 +1,18 @@
+# ABOUTME: What the discovered layer records for the identity concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: identity.server-side
+  concern: identity
+  layer: server-side
+  authority: discovered
+  records: "Passive observation of principals actually authenticating: ServiceAccounts, IAM roles, OIDC subjects."
+
+fields:
+  - agent_identifier
+  - identity_runtime.k8s_serviceaccount
+  - identity_runtime.iam_role_arn
+
+feeds_rules:
+  - shadow_agent
+  - ghost_agent

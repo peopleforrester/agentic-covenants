@@ -1,0 +1,17 @@
+# ABOUTME: What the discovered layer records for the authorization concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: authorization.server-side
+  concern: authorization
+  layer: server-side
+  authority: discovered
+  records: "Effective permissions resolved from the platform: bound RBAC, attached IAM policies."
+
+fields:
+  - authorization_runtime.rbac_role_ref
+  - authorization_runtime.iam_policy_arns
+
+feeds_rules:
+  - scope_drift
+  - shadow_agent

@@ -81,6 +81,7 @@ cells:
   # ---- AUTHORIZATION ----
   - concern: authorization
     layer: in-agent
+    empty_by_design: true
     summary: Tool descriptions logged with each call (forensic).
     sentinels_path: sentinels/authorization/in-agent/
     citations:
@@ -144,6 +145,7 @@ cells:
   # ---- APPROVAL GATING ----
   - concern: approval-gating
     layer: in-agent
+    empty_by_design: true
     summary: Confirmation-prompt usage forensically logged.
     sentinels_path: sentinels/approval-gating/in-agent/
     citations:
@@ -175,6 +177,7 @@ cells:
   # ---- SUPPLY CHAIN ----
   - concern: supply-chain
     layer: in-agent
+    empty_by_design: true
     summary: '"Where did this dependency come from" forensically traceable through tool-call log.'
     sentinels_path: sentinels/supply-chain/in-agent/
     citations:

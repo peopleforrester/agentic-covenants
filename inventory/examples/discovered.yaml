@@ -1,0 +1,19 @@
+# ABOUTME: Passive observation of what is actually authenticating and running.
+# ABOUTME: Synthetic data for the worked reconciliation example.
+
+agents:
+  - agent_identifier: agent-release-bot-001
+    identity_runtime: {k8s_serviceaccount: agents/release-bot}
+    blast_radius_profile: {environments: [dev, staging]}
+    current_state: {status: running, instance_count: 2}
+
+  # Observed running, absent from the registry. This is the CSA finding in one record.
+  - agent_identifier: agent-unregistered-scraper-001
+    identity_runtime: {k8s_serviceaccount: default/scraper}
+    blast_radius_profile: {environments: [prod]}
+    current_state: {status: running, instance_count: 1}
+
+  - agent_identifier: agent-drifted-indexer-001
+    identity_runtime: {k8s_serviceaccount: agents/indexer}
+    blast_radius_profile: {environments: [dev]}
+    current_state: {status: running, instance_count: 1}

@@ -1,0 +1,18 @@
+# ABOUTME: What the discovered layer records for the blast-radius concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: blast-radius.server-side
+  concern: blast-radius
+  layer: server-side
+  authority: discovered
+  records: "Observed reach: namespaces touched, accounts assumed, data stores read."
+
+fields:
+  - blast_radius_profile.environments
+  - current_state.instance_count
+  - current_state.hostnames
+
+feeds_rules:
+  - tier_drift
+  - shadow_agent

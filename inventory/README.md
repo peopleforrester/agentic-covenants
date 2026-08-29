@@ -17,6 +17,26 @@ inventory/
 
 The structure is the same five concerns as the operational and Charter matrices, but with three different layers: **self-declared** (the agent reports itself), **operator-declared** (a human registry), and **discovered** (passive observation).
 
+## Reconciling the three layers
+
+Every cell ships [`record.yaml`](./identity/in-agent/record.yaml), declaring what that layer
+records for that concern and which mismatch rules consume it.
+[`scripts/reconcile_inventory.py`](../scripts/reconcile_inventory.py) reads all fifteen, compares
+the layers, and names every disagreement.
+
+```bash
+python3 scripts/reconcile_inventory.py --bundle inventory/examples
+python3 scripts/reconcile_inventory.py --bundle inventory/examples --format json
+```
+
+[`examples/`](./examples/) is a worked bundle carrying one clean agent, one shadow agent, one
+ghost agent and one drifted agent, so the rules below can be seen firing rather than described.
+Output marks each agent `[SOD]` for self-declared, operator-declared and discovered. A missing
+letter is the finding.
+
+The tool exits non-zero when any agent carries a mismatch, so a scheduled run surfaces a shadow
+agent instead of reporting silence.
+
 ## Cross-layer mismatch as a signal
 
 The principle that defines this matrix:

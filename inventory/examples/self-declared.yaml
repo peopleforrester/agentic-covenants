@@ -1,0 +1,38 @@
+# ABOUTME: What each agent reported about itself on start. Produced by the registration daemon.
+# ABOUTME: Synthetic data for the worked reconciliation example.
+
+agents:
+  - agent_identifier: agent-release-bot-001
+    charter_ref: charters/release-bot.yaml
+    charter_version: 1.0
+    risk_tier: 2
+    ownership: {owner: dana.whitfield@northgate-synthetic.test}
+    authorization_runtime: {rbac_role_ref: agent-release-bot-role}
+    dependencies_runtime:
+      foundation_model: claude-sonnet-5
+      mcp_servers:
+        - {name: filesystem, hash: sha256:a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4}
+        - {name: github, hash: sha256:a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4}
+
+  # Reports itself, never entered in the operator registry. Charter integrity failure,
+  # and because it is also observed running, a shadow agent.
+  - agent_identifier: agent-unregistered-scraper-001
+    charter_ref: null
+    risk_tier: 2
+    ownership: {owner: unknown}
+    dependencies_runtime:
+      foundation_model: claude-sonnet-5
+      mcp_servers:
+        - {name: fetch, hash: sha256:9f8e7d6c9f8e7d6c9f8e7d6c9f8e7d6c9f8e7d6c9f8e7d6c9f8e7d6c9f8e7d6c}
+
+  # Reports a model the registry never approved. Dependency drift.
+  - agent_identifier: agent-drifted-indexer-001
+    charter_ref: charters/indexer.yaml
+    charter_version: 1.0
+    risk_tier: 1
+    ownership: {owner: ravi.anand@northgate-synthetic.test}
+    authorization_runtime: {rbac_role_ref: agent-indexer-role}
+    dependencies_runtime:
+      foundation_model: claude-opus-5
+      mcp_servers:
+        - {name: filesystem, hash: sha256:9f8e7d6c9f8e7d6c9f8e7d6c9f8e7d6c9f8e7d6c9f8e7d6c9f8e7d6c9f8e7d6c}

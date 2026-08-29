@@ -1,0 +1,17 @@
+# ABOUTME: What the self-declared layer records for the approval-gating concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: approval-gating.in-agent
+  concern: approval-gating
+  layer: in-agent
+  authority: self-declared
+  records: "The agent reports the charter version it is running under and when it was last reviewed."
+
+fields:
+  - charter_version
+  - last_charter_review
+
+feeds_rules:
+  - charter_integrity
+  - review_overdue

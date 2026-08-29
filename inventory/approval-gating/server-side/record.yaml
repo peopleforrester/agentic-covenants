@@ -1,0 +1,16 @@
+# ABOUTME: What the discovered layer records for the approval-gating concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: approval-gating.server-side
+  concern: approval-gating
+  layer: server-side
+  authority: discovered
+  records: "Observed evidence that gates exist: branch protection state on the charter file, approval events."
+
+fields:
+  - charter_ref
+  - last_charter_review
+
+feeds_rules:
+  - charter_integrity

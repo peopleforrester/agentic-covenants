@@ -1,0 +1,17 @@
+# ABOUTME: What the discovered layer records for the supply-chain concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: supply-chain.server-side
+  concern: supply-chain
+  layer: server-side
+  authority: discovered
+  records: "Observed pulls and loads: image digests actually running, MCP endpoints actually reached."
+
+fields:
+  - dependencies_runtime.base_image
+  - dependencies_runtime.mcp_servers
+
+feeds_rules:
+  - dependency_drift
+  - shadow_agent

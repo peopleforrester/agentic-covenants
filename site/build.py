@@ -328,7 +328,7 @@ def cell_page(m: Matrix, data: dict, cell: dict, concern: dict) -> tuple[str, st
     rel_dir = (cell.get(m.path_key) or "").rstrip("/")
     summary = str(cell.get("summary", "")).strip()
 
-    empty = not summary or "empty by design" in summary.lower() or "no enforcement" in summary.lower()
+    empty = bool(cell.get("empty_by_design")) or not summary
 
     cites = cell.get("citations") or {}
     cite_rows = "".join(
@@ -409,7 +409,7 @@ def matrix_page(m: Matrix, data: dict) -> str:
                 tds.append('<td class="none"><span>not in this matrix</span></td>')
                 continue
             summary = str(cell.get("summary", "")).strip()
-            empty = "empty by design" in summary.lower() or "no enforcement" in summary.lower()
+            empty = bool(cell.get("empty_by_design"))
             n = len(artifacts_for((cell.get(m.path_key) or "").rstrip("/")))
             badge = ('<span class="badge empty">empty by design</span>' if empty
                      else f'<span class="badge">{n} artifact{"s" if n != 1 else ""}</span>')

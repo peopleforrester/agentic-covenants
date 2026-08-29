@@ -1,0 +1,18 @@
+# ABOUTME: What the self-declared layer records for the identity concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: identity.in-agent
+  concern: identity
+  layer: in-agent
+  authority: self-declared
+  records: "The agent announces itself on start: identifier, charter reference, owner, host."
+
+fields:
+  - agent_identifier
+  - charter_ref
+  - ownership.owner
+  - current_state.last_heartbeat
+
+feeds_rules:
+  - charter_integrity

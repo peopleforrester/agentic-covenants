@@ -1,0 +1,17 @@
+# ABOUTME: What the operator-declared layer records for the blast-radius concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: blast-radius.client-side
+  concern: blast-radius
+  layer: client-side
+  authority: operator-declared
+  records: "The registry records the tier assigned at charter approval and the worst-case impact accepted."
+
+fields:
+  - risk_tier
+  - blast_radius_profile.worst_case_impact
+  - blast_radius_profile.data_classes
+
+feeds_rules:
+  - tier_drift

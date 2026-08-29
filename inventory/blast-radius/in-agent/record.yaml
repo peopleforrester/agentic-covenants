@@ -1,0 +1,16 @@
+# ABOUTME: What the self-declared layer records for the blast-radius concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: blast-radius.in-agent
+  concern: blast-radius
+  layer: in-agent
+  authority: self-declared
+  records: "The agent reports the tier and environments it believes it operates under."
+
+fields:
+  - risk_tier
+  - blast_radius_profile.environments
+
+feeds_rules:
+  - tier_drift

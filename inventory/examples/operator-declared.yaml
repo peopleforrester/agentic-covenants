@@ -1,0 +1,43 @@
+# ABOUTME: The human registry of record. One entry per agent anyone approved.
+# ABOUTME: Synthetic data for the worked reconciliation example.
+
+agents:
+  - agent_identifier: agent-release-bot-001
+    charter_ref: charters/release-bot.yaml
+    charter_version: 1.0
+    risk_tier: 2
+    next_review_due: 2026-10-28
+    ownership: {owner: dana.whitfield@northgate-synthetic.test, domain: platform-engineering}
+    authorization_runtime: {rbac_role_ref: agent-release-bot-role}
+    blast_radius_profile: {environments: [dev, staging]}
+    dependencies_runtime:
+      foundation_model: claude-sonnet-5
+      pinned_at: 2026-08-01
+      mcp_servers:
+        - {name: filesystem, hash: sha256:a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4}
+        - {name: github, hash: sha256:a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4}
+
+  # Approved and registered, but nothing is running. Ghost agent: retired without
+  # being removed, or failing to start and nobody noticed.
+  - agent_identifier: agent-retired-etl-001
+    charter_ref: charters/etl.yaml
+    charter_version: 1.0
+    risk_tier: 3
+    next_review_due: 2026-10-28
+    ownership: {owner: priya.raghunathan@northgate-synthetic.test, domain: data-platform}
+    blast_radius_profile: {environments: [staging]}
+    dependencies_runtime: {foundation_model: claude-sonnet-5, pinned_at: 2026-06-01}
+
+  - agent_identifier: agent-drifted-indexer-001
+    charter_ref: charters/indexer.yaml
+    charter_version: 1.0
+    risk_tier: 1
+    next_review_due: 2026-10-28
+    ownership: {owner: ravi.anand@northgate-synthetic.test, domain: platform-engineering}
+    authorization_runtime: {rbac_role_ref: agent-indexer-role}
+    blast_radius_profile: {environments: [dev]}
+    dependencies_runtime:
+      foundation_model: claude-sonnet-5
+      pinned_at: 2026-07-01
+      mcp_servers:
+        - {name: filesystem, hash: sha256:a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4}

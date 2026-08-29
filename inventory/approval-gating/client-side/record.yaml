@@ -1,0 +1,17 @@
+# ABOUTME: What the operator-declared layer records for the approval-gating concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: approval-gating.client-side
+  concern: approval-gating
+  layer: client-side
+  authority: operator-declared
+  records: "The registry holds the approval record and the next review date."
+
+fields:
+  - charter_version
+  - next_review_due
+
+feeds_rules:
+  - charter_integrity
+  - review_overdue

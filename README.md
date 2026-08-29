@@ -146,7 +146,7 @@ Covenants is one of six. Each maps to a NIST CSF 2.0 function, and each is five 
 | [Interventions](./framework/INTERVENTIONS_MATRIX.md) | Respond (RS) | How do I stop the bleeding now? | [`interventions/`](./interventions), kill-switch runbooks |
 | [Restorations](./framework/RESTORATIONS_MATRIX.md) | Recover (RC) | How do I get back to known-good? | [`restorations/`](./restorations), rebuild runbooks |
 
-**All six are populated.** Artifact counts, as of the last commit: charter 24, inventory 25, controls 79, sentinels 57, interventions 42, restorations 33. Ninety-three cells across the six matrices.
+**All six are populated.** Files per matrix, as of the last commit: charter 42, inventory 43, controls 81, sentinels 57, interventions 42, restorations 33. Ninety-three cells across the six matrices, of which thirteen are deliberately empty and say so. Roughly half of those files are the per-cell READMEs; the rest are copy-ready artifacts. Charter and Inventory are documentation disciplines, so their artifacts are templates, scoring definitions and the two tools that read them ([`validate_charter.py`](./scripts/validate_charter.py) and [`reconcile_inventory.py`](./scripts/reconcile_inventory.py)). The runnable policy, hook and runbook artifacts live in `controls/`, `sentinels/`, `interventions/` and `restorations/`.
 
 A defensible *adoption order* is Charter, Inventory, and Covenants first, then Sentinels, then the two response matrices when you can carry the runbook complexity. That is a sequencing recommendation, not a statement about what is written here.
 
