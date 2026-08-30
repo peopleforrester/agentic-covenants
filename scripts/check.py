@@ -511,7 +511,66 @@ def check_root(staged: bool) -> Findings:
     return findings
 
 
+# Spelled forms used in prose. Only the counts this repo could plausibly reach.
+NUMBER_WORDS = {
+    75: "Seventy-five", 78: "Seventy-eight", 90: "Ninety", 93: "Ninety-three",
+    96: "Ninety-six", 108: "One hundred and eight",
+}
+
+
+def check_counts(staged: bool) -> Findings:
+    """Cell-count claims must match the data they describe.
+
+    The count appears in the README badge, twice in README prose as a spelled
+    word, and on the generated homepage as a numeral. Nothing tied those to the
+    YAML, so adding a concern moved the truth and left four stale claims behind.
+    A verification one-liner that greps for the wrong spelling is the same
+    failure from the other direction: it reported a problem that did not exist
+    while the real number was correct.
+
+    The count is derived here, never hardcoded.
+    """
+    findings = Findings("counts")
+    try:
+        import yaml
+    except ImportError:
+        return findings
+
+    data_dir = REPO_ROOT / "data"
+    if not data_dir.is_dir():
+        return findings
+
+    total = 0
+    for f in sorted(data_dir.glob("*.yaml")):
+        doc = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+        total += len(doc.get("cells", []))
+    if not total:
+        return findings
+
+    readme = REPO_ROOT / "README.md"
+    if readme.is_file():
+        text = readme.read_text(encoding="utf-8")
+        badge = f"cells-{total}"
+        if badge not in text:
+            findings.add(readme, None,
+                         f"badge does not say {badge}; the data has {total} cells")
+        word = NUMBER_WORDS.get(total)
+        if word and f"{word} cells" not in text:
+            findings.add(readme, None,
+                         f"prose does not say '{word} cells'; the data has {total}")
+
+    # The generated homepage states it as a numeral. Check the built output if
+    # it is present; the site check already guarantees it can be built.
+    index = REPO_ROOT / "site" / "dist" / "index.html"
+    if index.is_file() and f"{total} cells" not in index.read_text(encoding="utf-8"):
+        findings.add(index, None,
+                     f"generated homepage does not say '{total} cells'")
+
+    return findings
+
+
 CHECKS: dict[str, Callable[[bool], Findings]] = {
+    "counts": check_counts,
     "root": check_root,
     "diagrams": check_diagrams,
     "site": check_site,
