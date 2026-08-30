@@ -2,7 +2,7 @@
 
 **Governance for autonomous agents, enforced by infrastructure instead of by prompt.**
 
-Six matrices mapped to the six NIST CSF 2.0 functions. Ninety-three cells. Working Kyverno policies, RBAC, seccomp profiles, PreToolUse hooks, Falco rules, Sigma detections, and kill-switch runbooks in every populated cell.
+Six matrices mapped to the six NIST CSF 2.0 functions. Ninety-three cells. Every populated cell carries a working artifact: Kyverno policies, RBAC, seccomp profiles, PreToolUse hooks, Falco rules, Sigma detections, kill-switch runbooks, and the charter and inventory templates the two audit tools read.
 
 [![License: dual](https://img.shields.io/badge/license-Apache--2.0%20(code)%20%2F%20CC--BY--SA--4.0%20(content)-blue)](./LICENSE)
 [![Dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen)](#what-this-is-not)
@@ -85,7 +85,7 @@ That is the framework's thesis and its boundary. A whole class of agentic failur
 
 No admission controller catches any of those. They need scoring and classification, which are **probabilistic** controls with false positives, false negatives, and an evasion surface.
 
-The uncomfortable corollary is worth stating plainly: the framework's argument is "use deterministic controls to bound probabilistic agents," and some agentic failures are only detectable probabilistically, so the thesis cannot cover them by construction. That is a boundary rather than a flaw, but an unstated boundary reads as a claim to completeness.
+The uncomfortable corollary is worth stating plainly: the framework's argument is "use deterministic controls to bound probabilistic agents," and some agentic failures are only detectable probabilistically, so the thesis cannot cover them by construction. Every framework has an edge. Leaving it unstated is what turns an edge into a claim of completeness.
 
 So the boundary is stated, and the sixth concern is where the two meet:
 
@@ -125,7 +125,7 @@ Full essay: **[`MATRIX.md`](./framework/MATRIX.md)** · Bypass surface for every
   <img alt="Charter authorizes, Inventory tracks, Covenants binds, Sentinels watches, Interventions stops, Restorations rebuilds, mapped to the six NIST CSF 2.0 functions." src="assets/six-matrices-light.svg">
 </picture>
 
-Covenants is one of six. Each maps to a NIST CSF 2.0 function, and each is five concerns by three layers.
+Covenants is one of six. Each maps to a NIST CSF 2.0 function. Five are five concerns by three layers; Covenants carries a sixth concern, content integrity, and so has eighteen cells.
 
 ```
    GOVERN        IDENTIFY        PROTECT        DETECT        RESPOND         RECOVER
@@ -146,9 +146,9 @@ Covenants is one of six. Each maps to a NIST CSF 2.0 function, and each is five 
 | [Interventions](./framework/INTERVENTIONS_MATRIX.md) | Respond (RS) | How do I stop the bleeding now? | [`interventions/`](./interventions), kill-switch runbooks |
 | [Restorations](./framework/RESTORATIONS_MATRIX.md) | Recover (RC) | How do I get back to known-good? | [`restorations/`](./restorations), rebuild runbooks |
 
-**All six are populated.** Files per matrix, as of the last commit: charter 42, inventory 43, controls 81, sentinels 57, interventions 42, restorations 33. Ninety-three cells across the six matrices, of which thirteen are deliberately empty and say so. Roughly half of those files are the per-cell READMEs; the rest are copy-ready artifacts. Charter and Inventory are documentation disciplines, so their artifacts are templates, scoring definitions and the two tools that read them ([`validate_charter.py`](./scripts/validate_charter.py) and [`reconcile_inventory.py`](./scripts/reconcile_inventory.py)). The runnable policy, hook and runbook artifacts live in `controls/`, `sentinels/`, `interventions/` and `restorations/`.
+**All six are populated.** Files per matrix, as of the last commit: charter 42, inventory 43, controls 79, sentinels 57, interventions 42, restorations 33. Ninety-three cells across the six matrices, of which thirteen are deliberately empty and say so. Roughly half of those files are the per-cell READMEs; the rest are copy-ready artifacts. Charter and Inventory are documentation disciplines, so their artifacts are templates, scoring definitions and the two tools that read them ([`validate_charter.py`](./scripts/validate_charter.py) and [`reconcile_inventory.py`](./scripts/reconcile_inventory.py)). The runnable policy, hook and runbook artifacts live in `controls/`, `sentinels/`, `interventions/` and `restorations/`.
 
-A defensible *adoption order* is Charter, Inventory, and Covenants first, then Sentinels, then the two response matrices when you can carry the runbook complexity. That is a sequencing recommendation, not a statement about what is written here.
+A defensible *adoption order* is Charter, Inventory, and Covenants first, then Sentinels, then the two response matrices when you can carry the runbook complexity. Read that as advice on what to adopt when, since all six are already written.
 
 In Interventions and Restorations **every** in-agent cell is empty. An agent that is misbehaving cannot be told to stop, and it does not participate in its own recovery.
 
@@ -177,8 +177,8 @@ An undocumented control that fails to its bypass is worse than no control, becau
 ## What this is not
 
 - **Not a product.** No install, no runtime, no service. Templates you copy and adapt.
-- **Not a dependency.** No package manifest, no build, no test suite, by design. Nothing here executes in your pipeline unless you put it there.
-- **Not compliance.** The federal crosswalks are defensible starting points for a conversation with an authorizing official, not compliance claims. As of July 2026 there is still no official US government policy specifically on agentic AI.
+- **Not a dependency.** No package manifest and no runtime dependencies, by design, so nothing here executes in your pipeline unless you put it there. There is a build and a test suite, but both are for this repo's own artifacts: [`scripts/check.py`](./scripts/check.py) runs twelve checks locally and [`tests/`](./tests) verifies the policies actually deny what they claim.
+- **Not compliance.** The federal crosswalks are defensible starting points for a conversation with an authorizing official, not compliance claims. As of the Congressional Research Service update of 6 July 2026, there was no official US government policy specifically on agentic AI. Re-verify before relying on that.
 - **Not detection or response, in the Covenants matrix.** Those are separate matrices on purpose. Conflating prevention with detection is how you end up with a checklist that treats after-the-fact logging as equivalent to an admission policy.
 - **Not finished.** Placeholders like `REPLACE_WITH_DIGEST_FROM_CRANE` and `123456789012` are intentional and must be substituted.
 

@@ -69,7 +69,7 @@ The rest of this file speaks the language of NIST CSF 2.0, OWASP, and ISO. A US 
 
 ### Vendor and lab frameworks
 
-- **Anthropic, "Claude Code auto mode: a safer way to skip permissions"** (March 26, 2026). Source for the **93% permission-prompt approval rate**, the Sonnet 4.6 two-stage classifier architecture, and the 8.5% / 0.4% / 17% rate measurements.
+- **Anthropic, "Claude Code auto mode: a safer way to skip permissions"** (March 25, 2026). Source for the **93% permission-prompt approval rate**, the Sonnet 4.6 two-stage classifier architecture, and the 8.5% / 0.4% / 17% rate measurements.
 - **Anthropic, "Making Claude Code more secure and autonomous"**. Sandbox runtime built on Linux bubblewrap and macOS Seatbelt; **84% reduction in permission prompts**.
 - **Anthropic Responsible Scaling Policy, OpenAI Preparedness Framework, Google DeepMind Frontier Safety Framework**. Lab-side capability frameworks governing what models are released. This matrix governs what released models are allowed to do inside the perimeter.
 - **Google SAIF** (Secure AI Framework). Six elements with a detection-and-response extension.
@@ -82,6 +82,44 @@ The rest of this file speaks the language of NIST CSF 2.0, OWASP, and ISO. A US 
 - **Stuart Russell, "Human Compatible"** (2019). Assistance games, conceptual ancestor to the judgment-query escalation pattern.
 - **Capability-based security** (1970s onward). "Ask before doing the irreversible thing" predates LLMs by decades.
 - **AHRQ PSNet alarm-fatigue research**. Documented failure mode of high-frequency alerting; analog for human-in-the-loop fatigue.
+
+## Incident and survey sources
+
+Primary sources for the incidents in [`BYPASSES.md`](./BYPASSES.md) and for the survey
+figures quoted in the essays. Each was checked against the original on the date shown.
+Where a figure originates with a vendor, the vendor is named as the source rather than the
+finding being laundered into fact.
+
+- **Hugging Face, "Agent intrusion: technical timeline"** (July 27, 2026),
+  <https://huggingface.co/blog/agent-intrusion-technical-timeline>. Source for the projected
+  service-account token pivot, the missing admission policy, and the cluster-wide CSI driver
+  ClusterRole. Quoted phrases are verbatim; checked 2026-08-22. Note the duration: their own
+  summary says *roughly two and a half days inside our infrastructure*, within a
+  four-and-a-half-day campaign that started elsewhere. It was an OpenAI capability evaluation
+  with guardrails disabled, and Hugging Face assess the agent was trying to cheat the
+  evaluation.
+- **Adversa AI, GuardFall** (June 30, 2026). Eleven open-source coding agents, roughly 548,000
+  combined GitHub stars, ten with defeatable command guards. Vendor research; cited as such.
+- **Snyk, "How a Poisoned Security Scanner Became the Key to Backdooring LiteLLM"** (March
+  2026). Source for the causal link between the Trivy compromise and the LiteLLM PyPI
+  backdoor of March 24, 2026. Vendor research; cited as such.
+- **StepSecurity and Aqua Security** (March 19, 2026). Source for the Trivy scanner
+  compromise and the safe versions at disclosure.
+- **Cloud Security Alliance, "Autonomous but Not Controlled"** (April 21, 2026). N=418 IT and
+  security professionals, surveyed online by CSA in January 2026. Source for **82% having
+  discovered agents in their environment they did not know about** and **21% having any formal
+  decommissioning process**. **Sponsorship, stated because it matters:** Token Security
+  commissioned the report and co-developed the questionnaire, which CSA discloses. It remains
+  the best available number on a question most organisations cannot answer about themselves,
+  and the sponsorship should travel with the figure every time it is quoted.
+- **IBM Cost of a Data Breach 2026** (announced July 29, 2026). See
+  [`ECONOMICS.md`](../briefing/ECONOMICS.md) for the provenance caveat: the 92% access-control finding
+  and the 43% unapproved-tool share come from press coverage of the release rather than from
+  the report itself, which returned HTTP 403 to automated retrieval and was not read directly.
+
+**Deliberately not used**, because none trace to a primary source: "88% of enterprises already
+breached by AI agents", "70% of identity incidents linked to autonomous AI", "$4.7M average
+agentic breach cost".
 
 ## Identity row
 

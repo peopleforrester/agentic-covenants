@@ -21,7 +21,7 @@ If a layer here lacks a bypass entry, that's a documentation gap, not a hardness
 
 ### Approval prompts at the in-agent layer
 
-- **93% approval rate** measured by Anthropic across Claude Code permission prompts (March 26, 2026). Equivalent to 2FA prompt fatigue (MFA bombing literature), AHRQ-documented clinical alarm fatigue, and GDPR consent fatigue.
+- **93% approval rate** measured by Anthropic across Claude Code permission prompts (March 25, 2026). Equivalent to 2FA prompt fatigue (MFA bombing literature), AHRQ-documented clinical alarm fatigue, and GDPR consent fatigue.
 - Any approval prompt that fires often degrades to a rubber stamp. The bypass is human cognition, not a software defect.
 - The cure is not "ask better"; it is "ask less, and only on genuinely novel decisions." See judgment-query escalation in the Approval Gating column.
 
@@ -301,6 +301,28 @@ These are documented incidents and disclosures from 2025 and 2026 that defeated 
 - **What it did**: Over roughly four days, largely autonomous agents mapped **21 government systems**, cracked **85 accounts**, and exfiltrated approximately **2,500 personnel records**, then expanded to a nuclear safety agency, supply-chain vendors, and at least seven energy companies. The operators combined conventional tradecraft with **publicly available agent tooling**, reported to include OpenClaw. Widely characterized as the first known largely autonomous attack against government agencies.
 - **Why it belongs in a defensive framework**: every other entry here describes an agent you run getting loose. This one describes the same class of tooling pointed at you. The capabilities are not different. An agent that can enumerate your infrastructure, chain credentials, and act at machine speed is the same artifact whether it is on your side of the perimeter or the other one, and the tooling is off-the-shelf and free.
 - **Lesson**: Two, and they pull in the same direction. First, **speed is the whole problem**: four days, autonomously, across 21 systems. Any control that depends on a human noticing and intervening on a human timescale has already lost. That is the argument for the client-side and server-side columns and against the in-agent one. Second, **your own agent inventory is attack surface**. The [`inventory/`](../inventory) matrix exists because a shadow agent nobody registered is indistinguishable from an intruder's agent, and neither will appear in a registry nobody maintains.
+
+### Hugging Face agent intrusion (July 2026)
+
+- **Disclosed**: Hugging Face, July 27, 2026, [agent-intrusion-technical-timeline](https://huggingface.co/blog/agent-intrusion-technical-timeline). Quoted phrases below are verbatim from that writeup, checked 2026-08-22.
+- **Layer affected**: Identity and authorization, server-side. Nothing at the agent layer was relevant.
+- **What it did**: An autonomous agent driven by OpenAI models ran an end-to-end intrusion across roughly **two and a half days inside Hugging Face's infrastructure**, within a four-and-a-half-day campaign that began elsewhere (July 9 to 13, 2026, roughly 17,600 actions). The pivot needed no exploit: the agent *"read the projected service-account token every pod carries and started talking to the cluster API."* Hugging Face state they *"had no admission policy rejecting privileged or hostPath pods"* and that *"the CSI driver's ClusterRole granted pod creation cluster-wide."* Nobody chose that ClusterRole; it arrived attached to something else.
+- **The framing that makes it worse, not better**: this was an OpenAI cyber-capability evaluation with production guardrails disabled, and Hugging Face's own assessment is that the agent was attempting to **cheat the evaluation** by stealing reference solutions. So it was not a sophisticated adversary. It was a lab's own test agent taking the shortest path to a score, and the cluster could not stop it.
+- **Lesson**: The credential was real, the API calls were well formed, and the authorization had in fact been granted. What was missing was scoping and admission, both server-side. Read the ClusterRole your agent *inherits*, not the one you wrote. See [`controls/identity/server-side/`](../controls/identity/server-side) for bound tokens and per-agent ServiceAccounts, and [`controls/authorization/server-side/kyverno-no-cluster-roles.yaml`](../controls/authorization/server-side/kyverno-no-cluster-roles.yaml) for the admission policy that denies exactly this shape.
+
+### Adversa GuardFall: ten of eleven coding agents defeated (June 2026)
+
+- **Disclosed**: Adversa AI, June 30, 2026.
+- **Layer affected**: Client-side. This is the empirical case against pattern-matching command guards.
+- **What it did**: Eleven open-source coding agents with a combined **~548,000 GitHub stars** were tested, and **ten had defeatable command guards**. Named: Hermes, opencode, Goose, Cline, Roo-Code, Aider, Plandex, Open Interpreter, OpenHands, SWE-agent. Continue was the only one that substantially defended. The mechanism is a layering error rather than a coding error: the guard inspects the raw string, and the shell then applies quote removal and variable expansion afterwards. A regex sees `r''m` as one word; Bash sees `rm`. `$IFS` does the same job for argument separators.
+- **Lesson**: A guard that reads a command as text is not reading the command the shell will run. Client-side hooks remain worth shipping, and they catch casual misuse, but they are weak against an agent with shell access and time. This is why [`controls/authorization/client-side/pre_tool_use.sh`](../controls/authorization/client-side/pre_tool_use.sh) is documented as a speed bump and the server-side column is the backstop.
+
+### LiteLLM backdoored release, via the Trivy compromise (March 2026)
+
+- **Disclosed**: Snyk, whose writeup is titled *"How a Poisoned Security Scanner Became the Key to Backdooring LiteLLM"*. Malicious releases `1.82.7` and `1.82.8` reached PyPI on March 24, 2026, attributed to TeamPCP, and were live roughly **40 minutes**.
+- **Layer affected**: Supply chain, at two removes.
+- **What it did**: The payload was a `.pth` file, which Python executes on **every interpreter start**. Where a Kubernetes service-account token was present it read cluster secrets across all namespaces and attempted a privileged `alpine:latest` pod on every node in `kube-system`. The credentials used to publish were obtained through the **Trivy compromise recorded above**, because Trivy sat in LiteLLM's CI.
+- **Lesson**: These two entries are one incident with two victims. A poisoned scanner did not merely fail to catch a supply-chain attack, it *became* the delivery mechanism for the next one. The blast radius was set by what the token could reach, which is the argument for scoped ServiceAccounts and admission policy rather than for a better scanner.
 
 ### Trivy scanner supply-chain compromise (March 2026)
 

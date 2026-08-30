@@ -559,6 +559,26 @@ def check_counts(staged: bool) -> Findings:
             findings.add(readme, None,
                          f"prose does not say '{word} cells'; the data has {total}")
 
+    # Per-matrix file counts are quoted in the README and drift every time a
+    # cell gains an artifact. controls/ was quoted as 81 while the tree held 79.
+    if readme.is_file():
+        text = readme.read_text(encoding="utf-8")
+        claimed = re.search(
+            r"charter (\d+), inventory (\d+), controls (\d+), sentinels (\d+), "
+            r"interventions (\d+), restorations (\d+)", text)
+        if claimed:
+            names = ["charter", "inventory", "controls", "sentinels",
+                     "interventions", "restorations"]
+            tracked = subprocess.run(
+                ["git", "ls-files"], cwd=REPO_ROOT,
+                capture_output=True, text=True, check=False).stdout.split()
+            for i, name in enumerate(names):
+                actual = sum(1 for f in tracked if f.startswith(f"{name}/"))
+                if int(claimed.group(i + 1)) != actual:
+                    findings.add(readme, None,
+                                 f"claims {name} {claimed.group(i + 1)} files; "
+                                 f"the tree has {actual}")
+
     # The generated homepage states it as a numeral. Check the built output if
     # it is present; the site check already guarantees it can be built.
     index = REPO_ROOT / "site" / "dist" / "index.html"
