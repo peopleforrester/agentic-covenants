@@ -36,7 +36,24 @@
   <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">Self-declared</a><a class="" href="../client-side/index.html">Operator-declared</a><a class="here" href="../server-side/index.html">Discovered</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>K8s RBAC API list, AWS IAM Access Analyzer effective permissions, Kyverno PolicyReports of policies actually applied.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>record.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/authorization/server-side/record.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: What the discovered layer records for the authorization concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: authorization.server-side
+  concern: authorization
+  layer: server-side
+  authority: discovered
+  records: &quot;Effective permissions resolved from the platform: bound RBAC, attached IAM policies.&quot;
+
+fields:
+  - authorization_runtime.rbac_role_ref
+  - authorization_runtime.iam_policy_arns
+
+feeds_rules:
+  - scope_drift
+  - shadow_agent
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Inventory, Authorization / Discovered</h2>
 <p><strong>What this cell records.</strong> The runtime-effective permissions, regardless of declared scope.</p>
 <h3>Sources</h3>

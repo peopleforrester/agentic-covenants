@@ -36,7 +36,27 @@
   <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">Self-declared</a><a class="here" href="../client-side/index.html">Operator-declared</a><a class="" href="../server-side/index.html">Discovered</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Operator-maintained registry; agents.yaml in GitOps; ServiceNow CMDB; internal AI inventory tool. Owner-confirmed. Updated on charter signature.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>record.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/client-side/record.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: What the operator-declared layer records for the identity concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: identity.client-side
+  concern: identity
+  layer: client-side
+  authority: operator-declared
+  records: &quot;The human registry of record: who owns this agent, in which domain, under which charter.&quot;
+
+fields:
+  - agent_identifier
+  - charter_ref
+  - ownership.owner
+  - ownership.domain
+
+feeds_rules:
+  - shadow_agent
+  - ghost_agent
+  - charter_integrity
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Inventory, Identity / Operator-declared</h2>
 <p><strong>What this cell records.</strong> The operator&#x27;s intent: every agent the org has approved, by name, with owner, charter reference, and creation date.</p>
 <h3>Where it lives</h3>

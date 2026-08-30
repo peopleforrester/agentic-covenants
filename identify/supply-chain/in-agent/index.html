@@ -36,7 +36,24 @@
   <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="here" href="../in-agent/index.html">Self-declared</a><a class="" href="../client-side/index.html">Operator-declared</a><a class="" href="../server-side/index.html">Discovered</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Agent reports current dependency manifest on registration: foundation model + version, MCP server names + hashes, base image SHA, lockfile fingerprint. Updates on change.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>record.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/supply-chain/in-agent/record.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: What the self-declared layer records for the supply-chain concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: supply-chain.in-agent
+  concern: supply-chain
+  layer: in-agent
+  authority: self-declared
+  records: &quot;The agent reports the model, MCP servers and image digest it actually loaded.&quot;
+
+fields:
+  - dependencies_runtime.foundation_model
+  - dependencies_runtime.mcp_servers
+  - dependencies_runtime.base_image
+
+feeds_rules:
+  - dependency_drift
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Inventory, Supply chain / Self-declared</h2>
 <p><strong>What this cell records.</strong> The agent&#x27;s report of its current dependency state at registration and on dependency changes.</p>
 <h3>Fields</h3>

@@ -36,7 +36,54 @@
   <blockquote class="q">Who is allowed to put this agent into the world, under what authority, accountable to what policy, with what retirement criteria?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">Agent charter</a><a class="" href="../client-side/index.html">Domain charter</a><a class="here" href="../server-side/index.html">Organizational charter</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>AI Governance Council approves new agent classes, ratifies risk-tier policy. Member roles named (CISO, Chief AI Officer, GC, Privacy, Domain Leads). Quorum and voting rules defined.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>checks.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/charter/approval-gating/server-side/checks.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Machine-checkable definition of the Charter approval-gating / organizational cell.
+# ABOUTME: The audit prompts in this cell&#x27;s README, expressed so a validator can score them.
+
+cell:
+  id: approval-gating.server-side
+  concern: approval-gating
+  layer: server-side
+  authority: organizational
+  document: organizational-policy
+  owner: &quot;AI Governance Council itself; minutes ratified by the chair.&quot;
+  question: &quot;Does the org have a named AI Governance Council with member roles, quorum, voting rules, and recorded minutes?&quot;
+
+mappings:
+  csf: &quot;GV.RR-01, GV.OV-01, GV.OV-03&quot;
+  ai_rmf: &quot;GOVERN 2.1, GOVERN 4.1&quot;
+  iso42001: &quot;A.3, A.9&quot;
+  eu_ai_act: &quot;Art. 17&quot;
+
+checks:
+  - id: GV-AG-O-01
+    description: &quot;Council members are named with their roles.&quot;
+    type: min_items
+    target: &quot;governance_council.members:3&quot;
+    document: organizational-policy
+    severity: blocking
+    evidence: &quot;Named roles. A council of one is an officer.&quot;
+  - id: GV-AG-O-02
+    description: &quot;Quorum is defined as a number or a fraction.&quot;
+    type: required_field
+    target: &quot;governance_council.quorum&quot;
+    document: organizational-policy
+    severity: blocking
+    evidence: &quot;A rule that can settle a disputed vote.&quot;
+  - id: GV-AG-O-03
+    description: &quot;Minutes are recorded at a resolvable location.&quot;
+    type: required_field
+    target: &quot;governance_council.minutes_location&quot;
+    document: organizational-policy
+    severity: blocking
+    evidence: &quot;The most common emptiness pattern is a council that never meets.&quot;
+  - id: GV-AG-O-04
+    description: &quot;The council has met within the last two quarters.&quot;
+    type: date_within_days
+    target: &quot;governance_council.last_met:183&quot;
+    document: organizational-policy
+    severity: blocking
+    evidence: &quot;A named council that has not met is not a control.&quot;
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Charter, Approval gating / Organizational</h2>
 <p><strong>Structural question.</strong> Does the org have a named AI Governance Council with member roles, quorum, voting rules, and recorded minutes?</p>
 <p><strong>Owner.</strong> AI Governance Council itself; minutes ratified by the chair.</p>

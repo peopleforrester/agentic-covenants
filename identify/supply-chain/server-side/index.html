@@ -36,7 +36,24 @@
   <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">Self-declared</a><a class="" href="../client-side/index.html">Operator-declared</a><a class="here" href="../server-side/index.html">Discovered</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Image-registry pull events, package-manager logs, runtime introspection of loaded models and connected MCP servers, SBOM scanning. Drift between actual and authorized = alert.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>record.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/supply-chain/server-side/record.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: What the discovered layer records for the supply-chain concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: supply-chain.server-side
+  concern: supply-chain
+  layer: server-side
+  authority: discovered
+  records: &quot;Observed pulls and loads: image digests actually running, MCP endpoints actually reached.&quot;
+
+fields:
+  - dependencies_runtime.base_image
+  - dependencies_runtime.mcp_servers
+
+feeds_rules:
+  - dependency_drift
+  - shadow_agent
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Inventory, Supply chain / Discovered</h2>
 <p><strong>What this cell records.</strong> Independent observation of what the agent actually loads, regardless of declared dependencies.</p>
 <h3>Sources</h3>

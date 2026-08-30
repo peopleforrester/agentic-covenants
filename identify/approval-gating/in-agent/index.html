@@ -36,7 +36,24 @@
   <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="here" href="../in-agent/index.html">Self-declared</a><a class="" href="../client-side/index.html">Operator-declared</a><a class="" href="../server-side/index.html">Discovered</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Agent reports last charter signature date, next review due, current charter version on registration. Refuses to start if charter is expired.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>record.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/approval-gating/in-agent/record.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: What the self-declared layer records for the approval-gating concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: approval-gating.in-agent
+  concern: approval-gating
+  layer: in-agent
+  authority: self-declared
+  records: &quot;The agent reports the charter version it is running under and when it was last reviewed.&quot;
+
+fields:
+  - charter_version
+  - last_charter_review
+
+feeds_rules:
+  - charter_integrity
+  - review_overdue
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Inventory, Approval gating / Self-declared</h2>
 <p><strong>What this cell records.</strong> The agent&#x27;s report of its charter freshness and its refusal to operate beyond the review window.</p>
 <h3>Fields</h3>

@@ -36,7 +36,47 @@
   <blockquote class="q">Who is allowed to put this agent into the world, under what authority, accountable to what policy, with what retirement criteria?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">Agent charter</a><a class="here" href="../client-side/index.html">Domain charter</a><a class="" href="../server-side/index.html">Organizational charter</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Per-class scope, inherits org hard prohibitions, adds domain-specific restrictions.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>checks.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/charter/authorization/client-side/checks.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Machine-checkable definition of the Charter authorization / domain cell.
+# ABOUTME: The audit prompts in this cell&#x27;s README, expressed so a validator can score them.
+
+cell:
+  id: authorization.client-side
+  concern: authorization
+  layer: client-side
+  authority: domain
+  document: domain-charter
+  owner: &quot;Domain authority.&quot;
+  question: &quot;Does the domain charter define the per-class scope (which APIs, data classes, environments, destructive verbs are allowed), inherit org-wide hard prohibitions, and add domain-specific ones?&quot;
+
+mappings:
+  csf: &quot;GV.PO-01, GV.RR-03&quot;
+  ai_rmf: &quot;GOVERN 1.2&quot;
+  iso42001: &quot;A.6&quot;
+  eu_ai_act: &quot;Art. 26&quot;
+
+checks:
+  - id: GV-AZ-D-01
+    description: &quot;Permitted data classes are enumerated for the domain.&quot;
+    type: min_items
+    target: &quot;scope.data_classes:1&quot;
+    document: domain-charter
+    severity: blocking
+    evidence: &quot;Named classifications.&quot;
+  - id: GV-AZ-D-02
+    description: &quot;The domain inherits the organisational hard prohibitions explicitly.&quot;
+    type: required_field
+    target: &quot;scope.inherits_prohibitions_from&quot;
+    document: domain-charter
+    severity: blocking
+    evidence: &quot;A reference to the org policy document.&quot;
+  - id: GV-AZ-D-03
+    description: &quot;Domain-specific prohibitions are recorded, even when the list is empty by decision.&quot;
+    type: field_present
+    target: &quot;scope.domain_prohibitions&quot;
+    document: domain-charter
+    severity: advisory
+    evidence: &quot;An explicit empty list beats a missing key.&quot;
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Charter, Authorization / Domain</h2>
 <p><strong>Structural question.</strong> Does the domain charter define the per-class scope (which APIs, data classes, environments, destructive verbs are allowed), inherit org-wide hard prohibitions, and add domain-specific ones?</p>
 <p><strong>Owner.</strong> Domain authority.</p>

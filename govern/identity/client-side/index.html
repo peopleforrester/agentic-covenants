@@ -36,7 +36,47 @@
   <blockquote class="q">Who is allowed to put this agent into the world, under what authority, accountable to what policy, with what retirement criteria?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">Agent charter</a><a class="here" href="../client-side/index.html">Domain charter</a><a class="" href="../server-side/index.html">Organizational charter</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Domain leadership signs charter authorizing a class of agents. Names roles permitted to create agents and the escalation path.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>checks.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/charter/identity/client-side/checks.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Machine-checkable definition of the Charter identity / domain cell.
+# ABOUTME: The audit prompts in this cell&#x27;s README, expressed so a validator can score them.
+
+cell:
+  id: identity.client-side
+  concern: identity
+  layer: client-side
+  authority: domain
+  document: domain-charter
+  owner: &quot;Domain authority, counter-signed by the AI Governance Council.&quot;
+  question: &quot;Does each domain that operates agents have a signed domain charter naming who in the domain is permitted to create agents, what the escalation path is, and what audit trail location records charter signatures?&quot;
+
+mappings:
+  csf: &quot;GV.RR-01, GV.RR-02&quot;
+  ai_rmf: &quot;GOVERN 2.1, GOVERN 3.2&quot;
+  iso42001: &quot;A.3&quot;
+  eu_ai_act: &quot;Art. 26&quot;
+
+checks:
+  - id: GV-ID-D-01
+    description: &quot;The domain names who may create agents within it.&quot;
+    type: min_items
+    target: &quot;agent_creation_authorized:1&quot;
+    document: domain-charter
+    severity: blocking
+    evidence: &quot;Named roles, not &#x27;engineering&#x27;.&quot;
+  - id: GV-ID-D-02
+    description: &quot;An escalation path is recorded with a destination that is a person or a rota.&quot;
+    type: required_field
+    target: &quot;escalation_path&quot;
+    document: domain-charter
+    severity: blocking
+    evidence: &quot;Where a page goes at 03:00.&quot;
+  - id: GV-ID-D-03
+    description: &quot;The audit-trail location for charter signatures is recorded.&quot;
+    type: required_field
+    target: &quot;audit_trail_location&quot;
+    document: domain-charter
+    severity: blocking
+    evidence: &quot;A repo path or record system, resolvable by a reviewer.&quot;
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Charter, Identity / Domain</h2>
 <p><strong>Structural question.</strong> Does each domain that operates agents have a signed domain charter naming who in the domain is permitted to create agents, what the escalation path is, and what audit trail location records charter signatures?</p>
 <p><strong>Owner.</strong> Domain authority (Platform Engineering Director, Security Director, Customer Engineering Director, etc.). Counter-signed by the AI Governance Council.</p>

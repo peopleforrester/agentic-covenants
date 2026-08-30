@@ -36,7 +36,47 @@
   <blockquote class="q">Who is allowed to put this agent into the world, under what authority, accountable to what policy, with what retirement criteria?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">Agent charter</a><a class="" href="../client-side/index.html">Domain charter</a><a class="here" href="../server-side/index.html">Organizational charter</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Org-wide allowlist of approved foundation models. Org-wide policy on MCP server approval, third-party dependency approval, vendor risk assessment integrated with procurement.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>checks.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/charter/supply-chain/server-side/checks.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Machine-checkable definition of the Charter supply-chain / organizational cell.
+# ABOUTME: The audit prompts in this cell&#x27;s README, expressed so a validator can score them.
+
+cell:
+  id: supply-chain.server-side
+  concern: supply-chain
+  layer: server-side
+  authority: organizational
+  document: organizational-policy
+  owner: &quot;AI Governance Council with Procurement and Security.&quot;
+  question: &quot;Does the org maintain an allowlist of approved foundation models, an MCP server approval policy, a third-party dependency approval policy, and integrate AI vendor risk into procurement?&quot;
+
+mappings:
+  csf: &quot;GV.SC-01, GV.SC-03, GV.SC-04, GV.SC-07&quot;
+  ai_rmf: &quot;GOVERN 6.1, GOVERN 6.2&quot;
+  iso42001: &quot;A.10&quot;
+  eu_ai_act: &quot;Art. 25&quot;
+
+checks:
+  - id: GV-SC-O-01
+    description: &quot;An approved foundation-model allowlist exists and is non-empty.&quot;
+    type: min_items
+    target: &quot;supply_chain.approved_models:1&quot;
+    document: organizational-policy
+    severity: blocking
+    evidence: &quot;Named models with versions.&quot;
+  - id: GV-SC-O-02
+    description: &quot;An MCP server approval policy is recorded.&quot;
+    type: required_field
+    target: &quot;supply_chain.mcp_approval_policy&quot;
+    document: organizational-policy
+    severity: blocking
+    evidence: &quot;How a server gets onto the list, and who decides.&quot;
+  - id: GV-SC-O-03
+    description: &quot;AI vendor risk is integrated into procurement, with the owning function named.&quot;
+    type: required_field
+    target: &quot;supply_chain.procurement_integration&quot;
+    document: organizational-policy
+    severity: blocking
+    evidence: &quot;Names the function, not the intention.&quot;
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Charter, Supply chain / Organizational</h2>
 <p><strong>Structural question.</strong> Does the org maintain an allowlist of approved foundation models, an MCP server approval policy, a third-party dependency approval policy, and integrate AI vendor risk into procurement?</p>
 <p><strong>Owner.</strong> AI Governance Council with Procurement and Security.</p>

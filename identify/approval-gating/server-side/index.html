@@ -36,7 +36,23 @@
   <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">Self-declared</a><a class="" href="../client-side/index.html">Operator-declared</a><a class="here" href="../server-side/index.html">Discovered</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Registry of charter files in source control. Last-modified, last-PR-merged. Cross-reference with self-declared and operator-declared.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>record.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/approval-gating/server-side/record.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: What the discovered layer records for the approval-gating concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: approval-gating.server-side
+  concern: approval-gating
+  layer: server-side
+  authority: discovered
+  records: &quot;Observed evidence that gates exist: branch protection state on the charter file, approval events.&quot;
+
+fields:
+  - charter_ref
+  - last_charter_review
+
+feeds_rules:
+  - charter_integrity
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Inventory, Approval gating / Discovered</h2>
 <p><strong>What this cell records.</strong> Independent verification that charter files actually exist and have been touched on cadence.</p>
 <h3>Sources</h3>

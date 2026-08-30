@@ -36,7 +36,54 @@
   <blockquote class="q">Who is allowed to put this agent into the world, under what authority, accountable to what policy, with what retirement criteria?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">Agent charter</a><a class="" href="../client-side/index.html">Domain charter</a><a class="here" href="../server-side/index.html">Organizational charter</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>AI Acceptable Use Policy names categories of agents allowed to exist. AI Governance Council holds authority to create new agent classes. Director of AI Workforce Transformation is the named org-wide owner.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>checks.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/charter/identity/server-side/checks.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Machine-checkable definition of the Charter identity / organizational cell.
+# ABOUTME: The audit prompts in this cell&#x27;s README, expressed so a validator can score them.
+
+cell:
+  id: identity.server-side
+  concern: identity
+  layer: server-side
+  authority: organizational
+  document: organizational-policy
+  owner: &quot;AI Governance Council, signed by board representative or CEO.&quot;
+  question: &quot;Does the org have a written, signed AI Acceptable Use Policy that names the categories of agents permitted to exist, the body that authorizes new categories, and the named org-wide owner of the agent program?&quot;
+
+mappings:
+  csf: &quot;GV.OC-01, GV.OC-02, GV.PO-01, GV.PO-02&quot;
+  ai_rmf: &quot;GOVERN 1.1, GOVERN 1.4&quot;
+  iso42001: &quot;A.2, A.3&quot;
+  eu_ai_act: &quot;Art. 9, Art. 17&quot;
+
+checks:
+  - id: GV-ID-O-01
+    description: &quot;The AUP names the categories of agent permitted to exist.&quot;
+    type: min_items
+    target: &quot;acceptable_use.permitted_categories:1&quot;
+    document: organizational-policy
+    severity: blocking
+    evidence: &quot;An enumerated list, not &#x27;agents that support the business&#x27;.&quot;
+  - id: GV-ID-O-02
+    description: &quot;The body authorised to create new categories is named.&quot;
+    type: required_field
+    target: &quot;acceptable_use.authorizing_body&quot;
+    document: organizational-policy
+    severity: blocking
+    evidence: &quot;A named council or officer.&quot;
+  - id: GV-ID-O-03
+    description: &quot;A single org-wide owner of the agent programme is named, with an acceptance date.&quot;
+    type: required_field
+    target: &quot;acceptable_use.program_owner.accepted_on&quot;
+    document: organizational-policy
+    severity: blocking
+    evidence: &quot;A date on which a named person accepted the role.&quot;
+  - id: GV-ID-O-04
+    description: &quot;The policy has been signed, and the signature is dated.&quot;
+    type: required_field
+    target: &quot;signed.date&quot;
+    document: organizational-policy
+    severity: blocking
+    evidence: &quot;Signature block with signer, role, and date.&quot;
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Charter, Identity / Organizational</h2>
 <p><strong>Structural question.</strong> Does the org have a written, signed AI Acceptable Use Policy that names the categories of agents permitted to exist, the body that authorizes new categories, and the named org-wide owner of the agent program?</p>
 <p><strong>Owner.</strong> AI Governance Council, signed by board representative or CEO.</p>

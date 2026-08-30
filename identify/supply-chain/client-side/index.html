@@ -36,7 +36,24 @@
   <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">Self-declared</a><a class="here" href="../client-side/index.html">Operator-declared</a><a class="" href="../server-side/index.html">Discovered</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Operator records authorized-dependency manifest from agent charter. Linked to Covenants L2-C5 and L3-C5 allowlists. Version-controlled audit trail.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>record.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/supply-chain/client-side/record.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: What the operator-declared layer records for the supply-chain concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: supply-chain.client-side
+  concern: supply-chain
+  layer: client-side
+  authority: operator-declared
+  records: &quot;The registry holds the dependency set the charter approved, pinned by hash and digest.&quot;
+
+fields:
+  - dependencies_runtime.foundation_model
+  - dependencies_runtime.mcp_servers
+  - dependencies_runtime.pinned_at
+
+feeds_rules:
+  - dependency_drift
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Inventory, Supply chain / Operator-declared</h2>
 <p><strong>What this cell records.</strong> The authorized dependency manifest from the agent charter, version-controlled with audit trail.</p>
 <h3>Fields</h3>

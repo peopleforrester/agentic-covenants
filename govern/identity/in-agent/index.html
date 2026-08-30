@@ -36,7 +36,54 @@
   <blockquote class="q">Who is allowed to put this agent into the world, under what authority, accountable to what policy, with what retirement criteria?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="here" href="../in-agent/index.html">Agent charter</a><a class="" href="../client-side/index.html">Domain charter</a><a class="" href="../server-side/index.html">Organizational charter</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Named human owner accountable for the agent&#x27;s actions. Backup owner identified. Identity claims tied to charter via registered agent identifier.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>checks.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/charter/identity/in-agent/checks.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Machine-checkable definition of the Charter identity / agent cell.
+# ABOUTME: The audit prompts in this cell&#x27;s README, expressed so a validator can score them.
+
+cell:
+  id: identity.in-agent
+  concern: identity
+  layer: in-agent
+  authority: agent
+  document: agent-charter
+  owner: &quot;The named human owner. Counter-signed by domain authority.&quot;
+  question: &quot;Does each agent have a charter file naming a specific accountable human owner, a backup owner, and a registered agent identifier that ties runtime identity claims back to the charter?&quot;
+
+mappings:
+  csf: &quot;GV.RR-02, ID.AM-01&quot;
+  ai_rmf: &quot;GOVERN 2.1, MAP 1.1&quot;
+  iso42001: &quot;A.3, A.4&quot;
+  eu_ai_act: &quot;Art. 26&quot;
+
+checks:
+  - id: GV-ID-A-01
+    description: &quot;A specific human is named as owner, not a team or a distribution list.&quot;
+    type: required_field
+    target: &quot;ownership.owner_name&quot;
+    document: agent-charter
+    severity: blocking
+    evidence: &quot;A personal name, plus the role and a reachable address.&quot;
+  - id: GV-ID-A-02
+    description: &quot;A backup owner is named and is a different person from the owner.&quot;
+    type: distinct_from
+    target: &quot;ownership.backup_owner_name|ownership.owner_name&quot;
+    document: agent-charter
+    severity: blocking
+    evidence: &quot;Two different named humans.&quot;
+  - id: GV-ID-A-03
+    description: &quot;The agent carries a registered identifier that runtime identity can be traced to.&quot;
+    type: required_field
+    target: &quot;agent.identifier&quot;
+    document: agent-charter
+    severity: blocking
+    evidence: &quot;An identifier that also appears on the workload&#x27;s ServiceAccount or IAM principal.&quot;
+  - id: GV-ID-A-04
+    description: &quot;No placeholder survives in the ownership block.&quot;
+    type: no_placeholder
+    target: &quot;ownership&quot;
+    document: agent-charter
+    severity: blocking
+    evidence: &quot;No REPLACE_WITH, no example.com, no angle brackets.&quot;
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Charter, Identity / Agent</h2>
 <p><strong>Structural question.</strong> Does each agent have a charter file naming a specific accountable human owner, a backup owner, and a registered agent identifier that ties runtime identity claims back to the charter?</p>
 <p><strong>Owner.</strong> The named human owner. Counter-signed by domain authority.</p>

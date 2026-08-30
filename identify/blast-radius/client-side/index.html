@@ -36,7 +36,24 @@
   <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">Self-declared</a><a class="here" href="../client-side/index.html">Operator-declared</a><a class="" href="../server-side/index.html">Discovered</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Operator records blast-radius profile per agent. Worst-case impact statement (revenue, customer, compliance).</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>record.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/blast-radius/client-side/record.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: What the operator-declared layer records for the blast-radius concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: blast-radius.client-side
+  concern: blast-radius
+  layer: client-side
+  authority: operator-declared
+  records: &quot;The registry records the tier assigned at charter approval and the worst-case impact accepted.&quot;
+
+fields:
+  - risk_tier
+  - blast_radius_profile.worst_case_impact
+  - blast_radius_profile.data_classes
+
+feeds_rules:
+  - tier_drift
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Inventory, Blast radius / Operator-declared</h2>
 <p><strong>What this cell records.</strong> The operator&#x27;s worst-case impact statement and theoretical blast envelope.</p>
 <h3>Fields</h3>

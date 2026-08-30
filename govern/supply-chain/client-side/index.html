@@ -36,7 +36,40 @@
   <blockquote class="q">Who is allowed to put this agent into the world, under what authority, accountable to what policy, with what retirement criteria?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">Agent charter</a><a class="here" href="../client-side/index.html">Domain charter</a><a class="" href="../server-side/index.html">Organizational charter</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Inherits org-wide approved-model list, adds domain-specific restrictions (e.g., &quot;no models that train on user data&quot;, &quot;SOC 2 Type II vendors only&quot;). Approves or denies MCP servers for the domain.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>checks.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/charter/supply-chain/client-side/checks.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Machine-checkable definition of the Charter supply-chain / domain cell.
+# ABOUTME: The audit prompts in this cell&#x27;s README, expressed so a validator can score them.
+
+cell:
+  id: supply-chain.client-side
+  concern: supply-chain
+  layer: client-side
+  authority: domain
+  document: domain-charter
+  owner: &quot;Domain authority.&quot;
+  question: &quot;Does the domain charter inherit the org&#x27;s approved-models list, add domain-specific restrictions, and maintain its own MCP server approval list?&quot;
+
+mappings:
+  csf: &quot;GV.SC-04, GV.SC-07&quot;
+  ai_rmf: &quot;GOVERN 6.1&quot;
+  iso42001: &quot;A.10&quot;
+  eu_ai_act: &quot;Art. 25&quot;
+
+checks:
+  - id: GV-SC-D-01
+    description: &quot;The domain references the organisational approved-models list.&quot;
+    type: required_field
+    target: &quot;supply_chain.inherits_models_from&quot;
+    document: domain-charter
+    severity: blocking
+    evidence: &quot;A reference, so drift is visible.&quot;
+  - id: GV-SC-D-02
+    description: &quot;The domain maintains its own MCP server approval list.&quot;
+    type: field_present
+    target: &quot;supply_chain.approved_mcp_servers&quot;
+    document: domain-charter
+    severity: blocking
+    evidence: &quot;An explicit list, empty by decision if that is the decision.&quot;
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Charter, Supply chain / Domain</h2>
 <p><strong>Structural question.</strong> Does the domain charter inherit the org&#x27;s approved-models list, add domain-specific restrictions, and maintain its own MCP server approval list?</p>
 <p><strong>Owner.</strong> Domain authority.</p>

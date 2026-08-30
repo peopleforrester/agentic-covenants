@@ -36,7 +36,25 @@
   <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">Self-declared</a><a class="" href="../client-side/index.html">Operator-declared</a><a class="here" href="../server-side/index.html">Discovered</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Threat-modeling output (MAESTRO Layer 7, MITRE ATLAS, lateral-movement path analysis). Behavioral observation of what the agent has touched.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>record.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/blast-radius/server-side/record.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: What the discovered layer records for the blast-radius concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: blast-radius.server-side
+  concern: blast-radius
+  layer: server-side
+  authority: discovered
+  records: &quot;Observed reach: namespaces touched, accounts assumed, data stores read.&quot;
+
+fields:
+  - blast_radius_profile.environments
+  - current_state.instance_count
+  - current_state.hostnames
+
+feeds_rules:
+  - tier_drift
+  - shadow_agent
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Inventory, Blast radius / Discovered</h2>
 <p><strong>What this cell records.</strong> Threat-modeled and behaviorally-observed actual blast surface, regardless of declared envelope.</p>
 <h3>Sources</h3>

@@ -36,7 +36,23 @@
   <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="here" href="../in-agent/index.html">Self-declared</a><a class="" href="../client-side/index.html">Operator-declared</a><a class="" href="../server-side/index.html">Discovered</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Agent reports allowed-tools list, MCP allowlist hashes, effective scope on registration. Updates on scope change.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>record.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/authorization/in-agent/record.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: What the self-declared layer records for the authorization concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: authorization.in-agent
+  concern: authorization
+  layer: in-agent
+  authority: self-declared
+  records: &quot;The agent reports the scope it believes it holds: tools, MCP servers, environments.&quot;
+
+fields:
+  - authorization_runtime.rbac_role_ref
+  - authorized_scope.tools_allowlist
+
+feeds_rules:
+  - scope_drift
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Inventory, Authorization / Self-declared</h2>
 <p><strong>What this cell records.</strong> The agent&#x27;s report of its current effective scope at startup and on scope changes.</p>
 <h3>Fields</h3>

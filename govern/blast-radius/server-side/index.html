@@ -36,7 +36,47 @@
   <blockquote class="q">Who is allowed to put this agent into the world, under what authority, accountable to what policy, with what retirement criteria?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">Agent charter</a><a class="" href="../client-side/index.html">Domain charter</a><a class="here" href="../server-side/index.html">Organizational charter</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Org-wide risk tier taxonomy (1 read-only, 2 scoped writes, 3 destructive, 4 production-critical) with damage caps and matching control requirements.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>checks.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/charter/blast-radius/server-side/checks.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Machine-checkable definition of the Charter blast-radius / organizational cell.
+# ABOUTME: The audit prompts in this cell&#x27;s README, expressed so a validator can score them.
+
+cell:
+  id: blast-radius.server-side
+  concern: blast-radius
+  layer: server-side
+  authority: organizational
+  document: organizational-policy
+  owner: &quot;AI Governance Council.&quot;
+  question: &quot;Does the org have a written risk tier taxonomy with explicit damage caps and the matching control requirements per tier?&quot;
+
+mappings:
+  csf: &quot;GV.RM-01, GV.RM-02&quot;
+  ai_rmf: &quot;GOVERN 1.3, MAP 5.1&quot;
+  iso42001: &quot;A.5&quot;
+  eu_ai_act: &quot;Art. 9&quot;
+
+checks:
+  - id: GV-BR-O-01
+    description: &quot;A tier taxonomy exists and defines all four tiers.&quot;
+    type: min_items
+    target: &quot;risk_tiers:4&quot;
+    document: organizational-policy
+    severity: blocking
+    evidence: &quot;Four tier definitions.&quot;
+  - id: GV-BR-O-02
+    description: &quot;Every tier carries an explicit damage cap.&quot;
+    type: every_has_key
+    target: &quot;risk_tiers|damage_cap&quot;
+    document: organizational-policy
+    severity: blocking
+    evidence: &quot;No tier defined without a cap.&quot;
+  - id: GV-BR-O-03
+    description: &quot;Every tier names the controls required at that tier.&quot;
+    type: every_has_key
+    target: &quot;risk_tiers|required_controls&quot;
+    document: organizational-policy
+    severity: blocking
+    evidence: &quot;The link from Charter to the operational matrices.&quot;
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Charter, Blast radius / Organizational</h2>
 <p><strong>Structural question.</strong> Does the org have a written risk tier taxonomy with explicit damage caps and the matching control requirements per tier?</p>
 <p><strong>Owner.</strong> AI Governance Council.</p>

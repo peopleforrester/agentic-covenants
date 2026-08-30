@@ -36,7 +36,7 @@
   <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="here" href="../in-agent/index.html">Self-declared</a><a class="" href="../client-side/index.html">Operator-declared</a><a class="" href="../server-side/index.html">Discovered</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Agent registers on startup with name, charter ref, owner email, instance ID. Heartbeats. Deregister on shutdown. Dead-mans-switch alerts on heartbeat lapse.</p></section>
-  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>agent-register.py</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/in-agent/agent-register.py">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env python3
+  <section class="artifacts"><h2>Artifacts (2)</h2><figure class="artifact"><figcaption><code>agent-register.py</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/in-agent/agent-register.py">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env python3
 # ABOUTME: Minimal agent self-registration daemon. POSTs registration on start, heartbeats every N sec, deregisters on shutdown.
 # ABOUTME: Refuses to start if the agent&#x27;s charter is missing or expired. Wrap your agent process so this runs alongside.
 
@@ -178,6 +178,24 @@ def main() -&gt; int:
 
 if __name__ == &quot;__main__&quot;:
     sys.exit(main())
+</code></pre></figure><figure class="artifact"><figcaption><code>record.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/in-agent/record.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: What the self-declared layer records for the identity concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: identity.in-agent
+  concern: identity
+  layer: in-agent
+  authority: self-declared
+  records: &quot;The agent announces itself on start: identifier, charter reference, owner, host.&quot;
+
+fields:
+  - agent_identifier
+  - charter_ref
+  - ownership.owner
+  - current_state.last_heartbeat
+
+feeds_rules:
+  - charter_integrity
 </code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Inventory, Identity / Self-declared</h2>
 <p><strong>What this cell records.</strong> The agent&#x27;s own report of its identity, charter binding, and liveness.</p>

@@ -36,7 +36,40 @@
   <blockquote class="q">Who is allowed to put this agent into the world, under what authority, accountable to what policy, with what retirement criteria?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">Agent charter</a><a class="here" href="../client-side/index.html">Domain charter</a><a class="" href="../server-side/index.html">Organizational charter</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Domain authority approves charters within its domain. Multi-party signature for Tier 3+. Charter amendments require the same process as originals.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>checks.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/charter/approval-gating/client-side/checks.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Machine-checkable definition of the Charter approval-gating / domain cell.
+# ABOUTME: The audit prompts in this cell&#x27;s README, expressed so a validator can score them.
+
+cell:
+  id: approval-gating.client-side
+  concern: approval-gating
+  layer: client-side
+  authority: domain
+  document: domain-charter
+  owner: &quot;Domain authority.&quot;
+  question: &quot;Does the domain charter define which approvers are required for new agent charters at each tier, and the process for charter amendments?&quot;
+
+mappings:
+  csf: &quot;GV.PO-02, GV.RR-02&quot;
+  ai_rmf: &quot;GOVERN 2.2&quot;
+  iso42001: &quot;A.9&quot;
+  eu_ai_act: &quot;Art. 14&quot;
+
+checks:
+  - id: GV-AG-D-01
+    description: &quot;Required approvers are defined per tier.&quot;
+    type: required_field
+    target: &quot;approvals_required_by_tier&quot;
+    document: domain-charter
+    severity: blocking
+    evidence: &quot;A mapping from tier to approver roles.&quot;
+  - id: GV-AG-D-02
+    description: &quot;An amendment process is recorded.&quot;
+    type: required_field
+    target: &quot;amendment_process&quot;
+    document: domain-charter
+    severity: blocking
+    evidence: &quot;How a charter changes, and who signs the change.&quot;
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Charter, Approval gating / Domain</h2>
 <p><strong>Structural question.</strong> Does the domain charter define which approvers are required for new agent charters at each tier, and the process for charter amendments?</p>
 <p><strong>Owner.</strong> Domain authority.</p>

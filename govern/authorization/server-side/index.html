@@ -36,7 +36,47 @@
   <blockquote class="q">Who is allowed to put this agent into the world, under what authority, accountable to what policy, with what retirement criteria?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">Agent charter</a><a class="" href="../client-side/index.html">Domain charter</a><a class="here" href="../server-side/index.html">Organizational charter</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>AI Risk Appetite Statement defines hard prohibitions and change-control process for evolving scope policy.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>checks.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/charter/authorization/server-side/checks.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Machine-checkable definition of the Charter authorization / organizational cell.
+# ABOUTME: The audit prompts in this cell&#x27;s README, expressed so a validator can score them.
+
+cell:
+  id: authorization.server-side
+  concern: authorization
+  layer: server-side
+  authority: organizational
+  document: organizational-policy
+  owner: &quot;AI Governance Council.&quot;
+  question: &quot;Does the org have an AI Risk Appetite Statement that names hard prohibitions every agent must obey, and a change-control process for evolving scope policy?&quot;
+
+mappings:
+  csf: &quot;GV.RM-01, GV.RM-02, GV.PO-02&quot;
+  ai_rmf: &quot;GOVERN 1.3, MANAGE 1.1&quot;
+  iso42001: &quot;A.5&quot;
+  eu_ai_act: &quot;Art. 9&quot;
+
+checks:
+  - id: GV-AZ-O-01
+    description: &quot;Hard prohibitions binding on every agent are enumerated.&quot;
+    type: min_items
+    target: &quot;risk_appetite.hard_prohibitions:1&quot;
+    document: organizational-policy
+    severity: blocking
+    evidence: &quot;Absolute prohibitions, not guidance.&quot;
+  - id: GV-AZ-O-02
+    description: &quot;Risk appetite carries at least one quantitative cap.&quot;
+    type: min_items
+    target: &quot;risk_appetite.quantitative_caps:1&quot;
+    document: organizational-policy
+    severity: blocking
+    evidence: &quot;A number with a unit. &#x27;Low risk&#x27; fails.&quot;
+  - id: GV-AZ-O-03
+    description: &quot;A change-control process for scope policy is named.&quot;
+    type: required_field
+    target: &quot;risk_appetite.change_control&quot;
+    document: organizational-policy
+    severity: blocking
+    evidence: &quot;Who may amend, and through what process.&quot;
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Charter, Authorization / Organizational</h2>
 <p><strong>Structural question.</strong> Does the org have an AI Risk Appetite Statement that names hard prohibitions every agent must obey, and a change-control process for evolving scope policy?</p>
 <p><strong>Owner.</strong> AI Governance Council.</p>

@@ -36,7 +36,7 @@
   <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">Self-declared</a><a class="" href="../client-side/index.html">Operator-declared</a><a class="here" href="../server-side/index.html">Discovered</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>CloudTrail / GCP Audit Logs of SA and IAM principal usage. K8s controller watching SA+RoleBinding by naming pattern. Reverse-lookup from credential fingerprints in Sentinels.</p></section>
-  <section class="artifacts"><h2>Artifacts (2)</h2><figure class="artifact"><figcaption><code>discover-cloudtrail-agents.sql</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/server-side/discover-cloudtrail-agents.sql">view on GitHub</a></figcaption><p class="note">1,056 bytes. Too large to inline; open it on GitHub.</p></figure><figure class="artifact"><figcaption><code>discover-k8s-agents.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/server-side/discover-k8s-agents.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
+  <section class="artifacts"><h2>Artifacts (3)</h2><figure class="artifact"><figcaption><code>discover-cloudtrail-agents.sql</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/server-side/discover-cloudtrail-agents.sql">view on GitHub</a></figcaption><p class="note">1,056 bytes. Too large to inline; open it on GitHub.</p></figure><figure class="artifact"><figcaption><code>discover-k8s-agents.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/server-side/discover-k8s-agents.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
 # ABOUTME: Lists every K8s ServiceAccount that looks like an agent (by namespace prefix or SA name pattern).
 # ABOUTME: Output goes to stdout as JSON lines. Feed into the operator-declared cross-reference job to surface shadow agents.
 
@@ -84,6 +84,24 @@ for pattern in &quot;${SA_PATTERNS[@]}&quot;; do
           &#x27;{source:$source, pattern:$pattern, namespace:$namespace, sa_name:$sa_name, created_at:$created}&#x27;
       done
 done
+</code></pre></figure><figure class="artifact"><figcaption><code>record.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/identity/server-side/record.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: What the discovered layer records for the identity concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: identity.server-side
+  concern: identity
+  layer: server-side
+  authority: discovered
+  records: &quot;Passive observation of principals actually authenticating: ServiceAccounts, IAM roles, OIDC subjects.&quot;
+
+fields:
+  - agent_identifier
+  - identity_runtime.k8s_serviceaccount
+  - identity_runtime.iam_role_arn
+
+feeds_rules:
+  - shadow_agent
+  - ghost_agent
 </code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Inventory, Identity / Discovered</h2>
 <p><strong>What this cell records.</strong> Independent observation of which agent identities are actually in use, regardless of whether they declared themselves or appear in operator records.</p>

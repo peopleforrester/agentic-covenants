@@ -36,7 +36,23 @@
   <blockquote class="q">What agents exist, what they touch, what threats they face?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="" href="../in-agent/index.html">Self-declared</a><a class="here" href="../client-side/index.html">Operator-declared</a><a class="" href="../server-side/index.html">Discovered</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Operator records authorized scope in registry, linked to RBAC manifest paths and IAM policy ARNs.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>record.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/inventory/authorization/client-side/record.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: What the operator-declared layer records for the authorization concern, and which mismatch rules consume it.
+# ABOUTME: Read by scripts/reconcile_inventory.py to compare the three layers against each other.
+
+cell:
+  id: authorization.client-side
+  concern: authorization
+  layer: client-side
+  authority: operator-declared
+  records: &quot;The registry records the scope the agent was authorized to hold at charter approval.&quot;
+
+fields:
+  - authorization_runtime.rbac_role_ref
+  - authorization_runtime.effective_scope_last_audited
+
+feeds_rules:
+  - scope_drift
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Inventory, Authorization / Operator-declared</h2>
 <p><strong>What this cell records.</strong> The operator&#x27;s intent for what each agent is authorized to do, linked back to source manifests.</p>
 <h3>Fields</h3>

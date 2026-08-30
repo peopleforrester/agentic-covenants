@@ -36,7 +36,47 @@
   <blockquote class="q">Who is allowed to put this agent into the world, under what authority, accountable to what policy, with what retirement criteria?</blockquote>
   <nav class="layerswitch" aria-label="Layers"><a class="here" href="../in-agent/index.html">Agent charter</a><a class="" href="../client-side/index.html">Domain charter</a><a class="" href="../server-side/index.html">Organizational charter</a></nav>
   <section class="summary"><h2>What this cell does</h2><p>Specific dependencies declared. Named foundation model and version, named MCP servers (with hashes from Covenants L2-C5), named base images, named tool versions. Dependency changes require charter amendment.</p></section>
-  
+  <section class="artifacts"><h2>Artifacts (1)</h2><figure class="artifact"><figcaption><code>checks.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/charter/supply-chain/in-agent/checks.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Machine-checkable definition of the Charter supply-chain / agent cell.
+# ABOUTME: The audit prompts in this cell&#x27;s README, expressed so a validator can score them.
+
+cell:
+  id: supply-chain.in-agent
+  concern: supply-chain
+  layer: in-agent
+  authority: agent
+  document: agent-charter
+  owner: &quot;Named human owner. Counter-signed by domain authority.&quot;
+  question: &quot;Does the agent charter declare specific dependencies (named foundation model, MCP servers with hashes, base image digest, runtime version), and require charter amendment for changes?&quot;
+
+mappings:
+  csf: &quot;GV.SC-04, GV.SC-07, ID.AM-08&quot;
+  ai_rmf: &quot;GOVERN 6.1, MAP 4.1&quot;
+  iso42001: &quot;A.10&quot;
+  eu_ai_act: &quot;Art. 25&quot;
+
+checks:
+  - id: GV-SC-A-01
+    description: &quot;The foundation model is named and pinned to a date.&quot;
+    type: required_field
+    target: &quot;dependencies.foundation_model_pinned_at&quot;
+    document: agent-charter
+    severity: blocking
+    evidence: &quot;A pinned model, not a floating alias.&quot;
+  - id: GV-SC-A-02
+    description: &quot;The base image is pinned by digest rather than tag.&quot;
+    type: matches
+    target: &quot;dependencies.base_image_digest:^sha256:[0-9a-f]{64}$&quot;
+    document: agent-charter
+    severity: blocking
+    evidence: &quot;A real digest. A tag floats and a digest does not.&quot;
+  - id: GV-SC-A-03
+    description: &quot;Every declared MCP server carries a hash.&quot;
+    type: every_value_matches
+    target: &quot;dependencies.mcp_server_hashes:^sha256:[0-9a-f]{64}$&quot;
+    document: agent-charter
+    severity: blocking
+    evidence: &quot;This is the list the runtime allowlist is generated from.&quot;
+</code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Charter, Supply chain / Agent</h2>
 <p><strong>Structural question.</strong> Does the agent charter declare specific dependencies (named foundation model, MCP servers with hashes, base image digest, runtime version), and require charter amendment for changes?</p>
 <p><strong>Owner.</strong> Named human owner. Counter-signed by domain authority.</p>
