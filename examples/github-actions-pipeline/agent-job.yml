@@ -1,0 +1,114 @@
+# ABOUTME: A constrained agent job for GitHub Actions. Proposes a PR; never pushes or deploys.
+# ABOUTME: Template, not an active workflow. Copy to .github/workflows/ after reading verify.sh output.
+#
+# The agent proposes, the pipeline disposes. This job writes a branch and opens
+# a pull request. It does not push to a protected branch, apply infrastructure,
+# or publish an artifact, because those gates are only real if the agent cannot
+# reach around them. Anything that acts belongs in a separate job gated on a
+# GitHub environment with required reviewers, which is enforced by the forge
+# rather than by this file.
+name: agent (proposal only)
+
+on:
+  # Deliberately NOT pull_request_target. That trigger runs in the context of
+  # the base repository with access to secrets, and combining it with a
+  # checkout of the PR head executes fork-authored code with those secrets.
+  # It is the most exploited pattern in Actions and there is no safe way to
+  # pair the two.
+  workflow_dispatch:
+    inputs:
+      task:
+        description: What the agent should attempt
+        required: true
+  issues:
+    types: [labeled]
+
+# Least privilege at the job level. The repository-wide default is a SETTING,
+# not a file, and is frequently write-all; an explicit block here is what makes
+# the job's authority independent of that setting. Verify the default with
+# ./verify.sh rather than assuming it.
+permissions:
+  contents: read
+
+concurrency:
+  # One agent run per ref. Without this a label storm starts N agents that race
+  # each other on the same branch.
+  group: agent-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  propose:
+    # Gate on the label so an arbitrary issue cannot start the agent.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.label.name == 'agent-task'
+    runs-on: ubuntu-latest
+
+    # A runaway agent is bounded by wall clock as well as by permissions.
+    # The default is 360 minutes, which is a long time to be wrong.
+    timeout-minutes: 20
+
+    permissions:
+      contents: write        # to push its own branch, never to main
+      pull-requests: write   # to open the PR
+      id-token: write        # OIDC, so no long-lived cloud secret is present
+
+    steps:
+      # Pin by commit SHA, not by tag. A tag is mutable, so a pinned tag is a
+      # supply-chain dependency on the action author's account staying intact.
+      # Resolve with: gh api repos/actions/checkout/commits/v5 --jq .sha
+      - name: Checkout
+        uses: actions/checkout@REPLACE_WITH_COMMIT_SHA  # actions/checkout v5
+        with:
+          persist-credentials: false   # do not leave the token in .git/config
+
+      - name: Mint a scoped cloud credential
+        uses: aws-actions/configure-aws-credentials@REPLACE_WITH_COMMIT_SHA
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/agent-ci-readonly
+          aws-region: us-east-1
+          # The role's trust policy must pin the OIDC subject to this repo AND
+          # this ref. Without the ref condition any workflow in the repo can
+          # assume it. See controls/identity/server-side/aws-iam-trust-policy.json
+
+      - name: Run the agent
+        env:
+          AGENT_TASK: ${{ github.event.inputs.task || github.event.issue.title }}
+        run: |
+          set -euo pipefail
+          # The task text is attacker-controlled when the trigger is an issue.
+          # Pass it as an environment variable rather than interpolating it
+          # into the script: ${{ }} interpolation happens before the shell runs,
+          # so a title containing a quote or a backtick becomes shell syntax.
+          ./scripts/run-agent.sh   # REPLACE_WITH_YOUR_AGENT_ENTRYPOINT
+
+      - name: Open a pull request
+        # The output is a proposal. A human, or a gated job, decides.
+        uses: peter-evans/create-pull-request@REPLACE_WITH_COMMIT_SHA
+        with:
+          branch: agent/${{ github.run_id }}
+          title: "Agent proposal: ${{ github.run_id }}"
+          body: |
+            Opened by the agent job. Not reviewed by a human yet.
+
+            Changes here are a proposal. Review before merging, and note that
+            CODEOWNERS reserves `/.github/` so a change to the workflow or to
+            CODEOWNERS itself cannot be approved by this pipeline.
+          labels: agent-proposal
+
+  # Anything that ACTS is a separate job gated on an environment. The gate is a
+  # GitHub setting with required reviewers, so it holds even if this file is
+  # edited: a change to this file is itself a pull request that CODEOWNERS
+  # sends to a human.
+  apply:
+    needs: propose
+    if: false   # REPLACE: enable once the environment and reviewers exist
+    runs-on: ubuntu-latest
+    environment:
+      name: production     # required reviewers configured in repo settings
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Apply
+        run: echo "gated; see controls/blast-radius/server-side/iac-gated-pipeline.yml"
