@@ -1,0 +1,70 @@
+# ABOUTME: Fixtures for the multi-agent isolation policy in examples/kubernetes-cluster.
+# ABOUTME: Each resource isolates one rule so a failure names the rule that failed.
+# A RoleBinding in agent-a granting rights to agent-b's ServiceAccount. Valid
+# Kubernetes, and exactly the cross-tenant grant the policy exists to stop.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cross-tenant-binding
+  namespace: agent-alpha
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: agent-alpha
+subjects:
+- kind: ServiceAccount
+  name: agent-beta
+  namespace: agent-beta
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: same-namespace-binding
+  namespace: agent-alpha
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: agent-alpha
+subjects:
+- kind: ServiceAccount
+  name: agent-alpha
+  namespace: agent-alpha
+---
+# Runs as 'default': two agents sharing this are one agent in every audit log.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: agent-on-default-sa
+  namespace: agent-alpha
+  labels:
+    app.kubernetes.io/component: agent
+spec:
+  serviceAccountName: default
+  containers:
+  - name: agent
+    image: registry.example.com/agent@sha256:0000000000000000000000000000000000000000000000000000000000000000
+---
+# Named SA but no component label, so the egress allowlist would not select it.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: agent-missing-label
+  namespace: agent-alpha
+spec:
+  serviceAccountName: agent-alpha
+  containers:
+  - name: agent
+    image: registry.example.com/agent@sha256:0000000000000000000000000000000000000000000000000000000000000000
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: agent-compliant
+  namespace: agent-alpha
+  labels:
+    app.kubernetes.io/component: agent
+spec:
+  serviceAccountName: agent-alpha
+  containers:
+  - name: agent
+    image: registry.example.com/agent@sha256:0000000000000000000000000000000000000000000000000000000000000000

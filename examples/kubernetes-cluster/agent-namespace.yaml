@@ -1,0 +1,160 @@
+# ABOUTME: Per-agent namespace stack: identity, authorization, quota, and default-deny egress.
+# ABOUTME: Parameterized by AGENT_NAME; applied in dependency order by bootstrap.sh.
+#
+# One agent per namespace. That is the unit of isolation, and it is what makes
+# "which agent did this" answerable from an audit log: a distinct namespace and
+# a distinct ServiceAccount per agent. Two agents sharing a ServiceAccount are
+# one agent as far as every log is concerned.
+#
+# Substitute AGENT_NAME, the IAM account id, and the egress allowlist. Every
+# placeholder here is intentional.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: AGENT_NAME
+  labels:
+    # Evaluated at admission and not applied retroactively, so this label has to
+    # be present before the first pod rather than added afterwards.
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+    agentic-covenants.io/role: agent
+    agentic-covenants.io/agent-name: AGENT_NAME
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: AGENT_NAME
+  namespace: AGENT_NAME
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/AGENT_NAME
+# The pod gets a projected token with a bound audience and a short TTL instead.
+# See controls/identity/server-side/pod-with-projected-token.yaml.
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: AGENT_NAME
+  namespace: AGENT_NAME
+# Namespace-scoped, read-mostly, no wildcards. Widen deliberately and narrowly.
+# Note what is absent: secrets, and any verb that mutates. An agent that needs
+# to create a Deployment should do it through a gated pipeline, not directly.
+rules:
+- apiGroups: [""]
+  resources: ["pods", "configmaps", "services", "endpoints"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "statefulsets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: AGENT_NAME
+  namespace: AGENT_NAME
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: AGENT_NAME
+subjects:
+- kind: ServiceAccount
+  name: AGENT_NAME
+  namespace: AGENT_NAME
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: AGENT_NAME
+  namespace: AGENT_NAME
+# One agent starving the others is a multi-agent failure mode that does not
+# exist with a single agent, and it looks like a platform outage rather than an
+# agent problem when it happens.
+spec:
+  hard:
+    requests.cpu: "2"
+    requests.memory: 4Gi
+    limits.cpu: "4"
+    limits.memory: 8Gi
+    pods: "10"
+    count/jobs.batch: "5"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: AGENT_NAME
+  namespace: AGENT_NAME
+spec:
+  limits:
+  - type: Container
+    default:
+      cpu: 500m
+      memory: 512Mi
+    defaultRequest:
+      cpu: 100m
+      memory: 128Mi
+    max:
+      cpu: "2"
+      memory: 4Gi
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: AGENT_NAME
+# Applied BEFORE any allowlist. An allowlist applied first leaves the namespace
+# permissive until the deny lands, which is a window nobody notices.
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: agent-egress-allowlist
+  namespace: AGENT_NAME
+# Everything the agent legitimately needs, and nothing else. Note there is no
+# rule permitting traffic to another agent's namespace: agent-to-agent is denied
+# by omission, and kyverno-multi-agent.yaml stops anyone adding one.
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: agent
+  policyTypes: [Egress]
+  egress:
+  # DNS, to the cluster resolver only. An external resolver is a covert channel.
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+  # The Kubernetes API. Without this the agent cannot use the RBAC it was given.
+  - to:
+    - ipBlock:
+        cidr: 10.100.0.1/32   # REPLACE_WITH_APISERVER_CLUSTERIP
+    ports:
+    - port: 443
+      protocol: TCP
+  # The model API. FQDN egress needs a CNI that supports it; with plain
+  # NetworkPolicy this is a CIDR and therefore coarser than you want.
+  # See controls/supply-chain/server-side/cilium-mcp-fqdn-egress.yaml.
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 10.0.0.0/8
+        - 172.16.0.0/12
+        - 192.168.0.0/16
+    ports:
+    - port: 443
+      protocol: TCP

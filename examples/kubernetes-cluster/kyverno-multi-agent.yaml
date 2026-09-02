@@ -1,0 +1,77 @@
+# ABOUTME: Admission policies that only matter once more than one agent shares a cluster.
+# ABOUTME: Verified against Kyverno CLI by tests/kyverno/; see that suite for the cases.
+#
+# The single-agent policies live in controls/. These are the ones that have no
+# meaning until there are two agents, which is why they are here in the
+# multi-agent example rather than in a per-cell directory.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: agents-multi-tenant-isolation
+  annotations:
+    policies.kyverno.io/title: Agents are isolated from each other
+    policies.kyverno.io/category: Authorization, Blast radius
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      One agent reaching another agent's namespace is the failure that only
+      appears at N greater than one. RBAC alone does not stop it, because a
+      RoleBinding in namespace B can name a ServiceAccount from namespace A and
+      is perfectly valid Kubernetes. These rules deny that at admission.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+
+  - name: deny-cross-namespace-agent-binding
+    match:
+      any:
+      - resources:
+          kinds: [RoleBinding]
+          namespaces: ["agent-*"]
+    validate:
+      message: >-
+        A RoleBinding in an agent namespace may only name ServiceAccounts from
+        that same namespace. Granting agent A rights inside agent B's namespace
+        collapses the isolation boundary that makes per-agent attribution work.
+      foreach:
+      - list: "request.object.subjects[]"
+        deny:
+          conditions:
+            all:
+            - key: "{{ element.kind }}"
+              operator: Equals
+              value: ServiceAccount
+            - key: "{{ element.namespace || request.object.metadata.namespace }}"
+              operator: NotEquals
+              value: "{{ request.object.metadata.namespace }}"
+
+  - name: require-distinct-serviceaccount
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+          namespaces: ["agent-*"]
+    validate:
+      message: >-
+        An agent pod must run as a named ServiceAccount, never 'default'. Two
+        agents sharing an identity are one agent in every audit log, and that is
+        discovered during an incident rather than before one.
+      pattern:
+        spec:
+          serviceAccountName: "!default"
+
+  - name: require-agent-component-label
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+          namespaces: ["agent-*"]
+    validate:
+      message: >-
+        Agent pods must carry app.kubernetes.io/component=agent. The egress
+        allowlist selects on it, so a pod without it is unmatched by the
+        allowlist and governed only by the namespace default-deny.
+      pattern:
+        metadata:
+          labels:
+            app.kubernetes.io/component: agent

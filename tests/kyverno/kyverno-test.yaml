@@ -7,10 +7,12 @@ metadata:
 policies:
 - ../../controls/authorization/server-side/kyverno-no-cluster-roles.yaml
 - ../../controls/content-integrity/server-side/egress-audit-policy.yaml
+- ../../examples/kubernetes-cluster/kyverno-multi-agent.yaml
 resources:
 - resources/roles.yaml
 - resources/clusterrolebindings.yaml
 - resources/agent-pods.yaml
+- resources/multi-agent.yaml
 results:
 
 # --- must be DENIED ---
@@ -66,5 +68,43 @@ results:
 - policy: agents-require-egress-audit
   rule: require-egress-audit-annotation
   resources: [agent-audited]
+  kind: Pod
+  result: pass
+
+# --- multi-agent isolation: only meaningful once N > 1 ---
+
+- policy: agents-multi-tenant-isolation
+  rule: deny-cross-namespace-agent-binding
+  resources: [cross-tenant-binding]
+  kind: RoleBinding
+  result: fail
+
+- policy: agents-multi-tenant-isolation
+  rule: deny-cross-namespace-agent-binding
+  resources: [same-namespace-binding]
+  kind: RoleBinding
+  result: pass
+
+- policy: agents-multi-tenant-isolation
+  rule: require-distinct-serviceaccount
+  resources: [agent-on-default-sa]
+  kind: Pod
+  result: fail
+
+- policy: agents-multi-tenant-isolation
+  rule: require-distinct-serviceaccount
+  resources: [agent-compliant]
+  kind: Pod
+  result: pass
+
+- policy: agents-multi-tenant-isolation
+  rule: require-agent-component-label
+  resources: [agent-missing-label]
+  kind: Pod
+  result: fail
+
+- policy: agents-multi-tenant-isolation
+  rule: require-agent-component-label
+  resources: [agent-compliant]
   kind: Pod
   result: pass
