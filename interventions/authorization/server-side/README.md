@@ -1,5 +1,13 @@
 # Interventions, Authorization / Server-side
 
+> **Kyverno API deprecation, verified 2026-09-17.** The policies here are legacy
+> `kyverno.io/v1` `ClusterPolicy` resources. Kyverno **1.19 deprecates** that API
+> group and emits an admission warning naming the `policies.kyverno.io`
+> replacement, and **1.20 removes it**. Current release is **v1.19.1**
+> (2026-09-10). These policies still load and enforce on 1.19; they will not on
+> 1.20. Migration is tracked in
+> [#11](https://github.com/peopleforrester/agentic-covenants/issues/11).
+
 **Trigger.** RBAC denial spike, Kyverno PolicyReport failures from agent SAs, IAM Access Analyzer findings, Git pre-receive rejection spike.
 
 **Authority.** On-call, no second approval.
@@ -10,7 +18,7 @@
 
 - `kubectl` with permission to apply ClusterPolicies and Roles in agent namespaces.
 - AWS CLI with permission to attach IAM policies.
-- Kyverno 1.18+ in `Enforce` mode (audit-only does not block).
+- Kyverno 1.18 to 1.19 in `Enforce` mode (audit-only does not block).
 
 ## Files in this directory
 

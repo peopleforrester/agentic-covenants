@@ -1,12 +1,20 @@
 # Sentinels, Authorization / Server-side
 
+> **Kyverno API deprecation, verified 2026-09-17.** The policies here are legacy
+> `kyverno.io/v1` `ClusterPolicy` resources. Kyverno **1.19 deprecates** that API
+> group and emits an admission warning naming the `policies.kyverno.io`
+> replacement, and **1.20 removes it**. Current release is **v1.19.1**
+> (2026-09-10). These policies still load and enforce on 1.19; they will not on
+> 1.20. Migration is tracked in
+> [#11](https://github.com/peopleforrester/agentic-covenants/issues/11).
+
 **Control.** RBAC denial events from Kubernetes audit. IAM Access Analyzer findings reporting unused permissions. Kyverno PolicyReports surface admission failures. OPA decision logs centralized.
 
 **Strength.** Deterministic and external. Failure modes: Kyverno in `Audit` mode (logs but does not enforce; the violation already happened); OPA decision log streams everything (floods SIEM unless filtered); Access Analyzer is regional (configure per-region).
 
 ## Tooling
 
-- Kyverno 1.18+ Reports controller.
+- Kyverno 1.18 to 1.19 Reports controller.
 - OPA Gatekeeper with decision logging configured.
 - AWS IAM Access Analyzer enabled per region.
 - A SIEM with field-level filtering.

@@ -1,5 +1,13 @@
 # Supply chain / Server-side
 
+> **Kyverno API deprecation, verified 2026-09-17.** The policies here are legacy
+> `kyverno.io/v1` `ClusterPolicy` resources. Kyverno **1.19 deprecates** that API
+> group and emits an admission warning naming the `policies.kyverno.io`
+> replacement, and **1.20 removes it**. Current release is **v1.19.1**
+> (2026-09-10). These policies still load and enforce on 1.19; they will not on
+> 1.20. Migration is tracked in
+> [#11](https://github.com/peopleforrester/agentic-covenants/issues/11).
+
 **Control.** Image registry restrictions in admission policy. OCI signature verification (cosign). SBOM admission requirements. Egress NetworkPolicy to approved registries only. OPA policy denying images without provenance attestation. SLSA build-provenance attestation gates. MCP domain allowlist enforced at the network layer. Server-side lockfile-integrity validation.
 
 **Strength.** Deterministic at admission. Bypass requires compromise of signing infrastructure (KMS key theft), signature stripping at a registry mirror, policy misconfigured to allow unsigned images in some namespaces ("the tools namespace exception"), or cosign trust policy with `subject: "*"` accepting anyone's keyless signature.
@@ -8,7 +16,7 @@
 
 - Cosign for OCI signing and verification.
 - Syft and Grype (or Trivy) for SBOM generation and scanning.
-- Kyverno 1.18+ or OPA Gatekeeper for admission control.
+- Kyverno 1.18 to 1.19 or OPA Gatekeeper for admission control.
 - A signing key managed in KMS (AWS KMS, GCP KMS, or HashiCorp Vault), or keyless signing via GitHub OIDC + Sigstore.
 - A SLSA provenance generator (`slsa-github-generator`).
 - Cilium with FQDN policy support (or another CNI that enforces L7 DNS at egress).
@@ -16,7 +24,7 @@
 ## Files in this directory
 
 - [`build-and-sign.yml`](./build-and-sign.yml), GitHub Actions workflow that builds the agent image, signs it with `cosign --yes` (keyless), generates an SPDX SBOM with `syft`, and attaches the SBOM as a cosign attestation. Drop in `.github/workflows/`.
-- [`kyverno-verify-image-signatures.yaml`](./kyverno-verify-image-signatures.yaml), Kyverno ClusterPolicy verifying cosign signatures from a specific GitHub OIDC subject and verifying the SPDX attestation. Requires Kyverno 1.18+ for the `attestors`/`entries`/`keyless` block shape.
+- [`kyverno-verify-image-signatures.yaml`](./kyverno-verify-image-signatures.yaml), Kyverno ClusterPolicy verifying cosign signatures from a specific GitHub OIDC subject and verifying the SPDX attestation. Requires Kyverno 1.18 to 1.19 for the `attestors`/`entries`/`keyless` block shape.
 - [`kyverno-require-sbom.yaml`](./kyverno-require-sbom.yaml), Kyverno ClusterPolicy requiring an SPDX SBOM attestation on every image and verifying it was created by `syft` (heuristic; tune for your build).
 - [`cilium-mcp-fqdn-egress.yaml`](./cilium-mcp-fqdn-egress.yaml), CiliumNetworkPolicy restricting agent egress to a fixed list of approved FQDNs (api.anthropic.com, api.github.com, registry.example.com). Requires Cilium with `enable-l7-proxy: true` or DNS denials are not enforced.
 - [`lockfile-integrity.yml`](./lockfile-integrity.yml), CI workflow that runs `npm ci --dry-run`, `pip-compile --check`, and `pip-audit` regardless of whether pre-commit was used locally. **The real backstop for client-side lockfile pinning.**
