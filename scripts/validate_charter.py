@@ -119,6 +119,42 @@ def _nonempty(value: Any) -> bool:
     return True
 
 
+def _is_unbounded(entry: str) -> bool:
+    """True when an allowlist entry grants everything.
+
+    A scoped wildcard is legitimate and common: `Bash(git:*)` and
+    `arn:aws:s3:::my-bucket/*` are bounded by a literal prefix, and this repo's
+    own settings.json relies on that form. What is not legitimate is an entry
+    with no literal constraint at all, which permits every value it could.
+
+    The earlier version tested only for a bare "*" or a trailing ":*:*", so
+    `Bash(*)` scored clean while granting every command. An allowlist of one
+    such entry is indistinguishable from no allowlist, and the validator
+    reported the control as present. See issue #9.
+    """
+    text = entry.strip()
+    if not text:
+        return False
+
+    # arn:aws:*:*:*:* grants every service and region. Kept from the original
+    # check, which got this case right.
+    if text.endswith(":*:*"):
+        return True
+
+    # Unwrap a tool call, `Bash(...)`, and test what it actually permits.
+    if text.endswith(")") and "(" in text:
+        text = text[text.index("(") + 1:-1].strip()
+
+    if not text:
+        return True
+
+    # Bounded when any segment carries a literal. Splitting on the separators
+    # these entries use means `*.example.com` and `Bash(git:*)` both keep a
+    # literal and pass, while `*`, `**` and `*:*` do not.
+    segments = [s for s in re.split(r"[:./|,\s]+", text) if s]
+    return all(set(s) == {"*"} for s in segments) if segments else True
+
+
 def run_check(chk: Check, docs: dict[str, Any]) -> tuple[bool, str]:
     """Return (passed, reason). Reason is empty when the check passes."""
     doc = docs.get(chk.document)
@@ -165,8 +201,8 @@ def run_check(chk: Check, docs: dict[str, Any]) -> tuple[bool, str]:
 
     if t == "no_wildcard":
         val = dig(doc, target) or []
-        bad = [v for v in val if isinstance(v, str) and (v.strip() == "*" or v.strip().endswith(":*:*"))]
-        return (True, "") if not bad else (False, f"wildcard entries in {target}: {bad}")
+        bad = [v for v in val if isinstance(v, str) and _is_unbounded(v)]
+        return (True, "") if not bad else (False, f"unbounded entries in {target}: {bad}")
 
     if t == "every_has_key":
         path, _, key = target.partition("|")

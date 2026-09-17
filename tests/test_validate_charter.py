@@ -82,3 +82,85 @@ def test_json_output_is_machine_readable():
     payload = json.loads(result.stdout)
     assert "cells" in payload and "concerns" in payload
     assert len(payload["cells"]) == 15
+
+
+# --------------------------------------------------------------------------
+# no_wildcard: an allowlist of one entry that permits everything is not clean
+# --------------------------------------------------------------------------
+# Issue #9. The check caught a bare "*" and anything ending ":*:*", so
+# "Bash(*)" scored clean while granting every command. A validator that
+# reports a control is in place when it is not is the highest-severity defect
+# this repo can ship, per SECURITY.md.
+
+import validate_charter  # noqa: E402
+
+
+def wildcard(entries: list[str]) -> tuple[bool, str]:
+    """Run the no_wildcard check against an allowlist."""
+    chk = validate_charter.Check(
+        check_id="t", description="t", type="no_wildcard",
+        target="allow", document="charter", severity="high", evidence="t",
+    )
+    return validate_charter.run_check(chk, {"charter": {"allow": entries}})
+
+
+def test_bare_asterisk_is_unbounded():
+    ok, _ = wildcard(["*"])
+    assert not ok
+
+
+def test_tool_wrapped_asterisk_is_unbounded():
+    """Bash(*) permits every command. This is the reported bug."""
+    ok, msg = wildcard(["Bash(*)"])
+    assert not ok, "Bash(*) grants everything and must not score clean"
+    assert "Bash(*)" in msg
+
+
+def test_double_asterisk_is_unbounded():
+    assert not wildcard(["**"])[0]
+    assert not wildcard(["Read(**)"])[0]
+
+
+def test_whitespace_does_not_hide_an_unbounded_entry():
+    assert not wildcard([" Bash( * ) "])[0]
+
+
+def test_all_wildcard_segments_are_unbounded():
+    assert not wildcard(["Bash(*:*)"])[0]
+
+
+def test_arn_granting_every_service_is_unbounded():
+    assert not wildcard(["arn:aws:*:*:*:*"])[0]
+
+
+def test_one_unbounded_entry_condemns_the_whole_list():
+    """An allowlist is only as tight as its loosest entry."""
+    ok, msg = wildcard(["Bash(git:status)", "Read", "Bash(*)"])
+    assert not ok
+    assert "Bash(*)" in msg
+
+
+# --- scoped wildcards are legitimate and must not be flagged --------------
+# This repo's own settings.json uses Bash(git:add:*) and Bash(kubectl:delete:*).
+# Flagging those would break the artifacts the framework ships.
+
+
+def test_scoped_tool_wildcard_is_bounded():
+    assert wildcard(["Bash(git:*)"])[0]
+    assert wildcard(["Bash(kubectl:delete:*)"])[0]
+
+
+def test_fully_literal_entries_are_bounded():
+    assert wildcard(["Bash(git:status)", "Read", "Glob"])[0]
+
+
+def test_wildcard_subdomain_is_bounded():
+    assert wildcard(["*.internal.example.com"])[0]
+
+
+def test_arn_scoped_to_a_bucket_is_bounded():
+    assert wildcard(["arn:aws:s3:::my-bucket/*"])[0]
+
+
+def test_empty_allowlist_is_not_a_wildcard_finding():
+    assert wildcard([])[0]
