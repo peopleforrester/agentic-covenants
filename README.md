@@ -178,7 +178,7 @@ An undocumented control that fails to its bypass is worse than no control, becau
 
 - **Not a product.** No install, no runtime, no service. Templates you copy and adapt.
 - **Not a dependency.** No package manifest and no runtime dependencies, by design, so nothing here executes in your pipeline unless you put it there. There is a build and a test suite, but both are for this repo's own artifacts: [`scripts/check.py`](./scripts/check.py) runs twelve checks locally and [`tests/`](./tests) verifies the policies actually deny what they claim.
-- **Not compliance.** The federal crosswalks are defensible starting points for a conversation with an authorizing official, not compliance claims. As of the Congressional Research Service update of 6 July 2026, there was no official US government policy specifically on agentic AI. Re-verify before relying on that.
+- **Not compliance.** The federal crosswalks are defensible starting points for a conversation with an authorizing official, not compliance claims. As of 17 September 2026 there is still no official US government policy specifically on agentic AI (CRS IF13151), though three bills are pending. See [`CITATIONS.md`](./framework/CITATIONS.md).
 - **Not detection or response, in the Covenants matrix.** Those are separate matrices on purpose. Conflating prevention with detection is how you end up with a checklist that treats after-the-fact logging as equivalent to an admission policy.
 - **Not finished.** Placeholders like `REPLACE_WITH_DIGEST_FROM_CRANE` and `123456789012` are intentional and must be substituted.
 

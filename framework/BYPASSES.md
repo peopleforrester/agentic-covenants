@@ -45,6 +45,15 @@ If a layer here lacks a bypass entry, that's a documentation gap, not a hardness
 - Bypass if the agent can edit its own config and start a new session.
 - Pattern matching on tool names misses semantically equivalent tools (e.g., allowlist blocks `kubectl` but allows `kubectl-cnpg`).
 
+### Claude Code read-only validation bypass via `$IFS` and short flags (CVE-2025-66032)
+
+- **Source**: [GHSA-xq4m-mc3c-vvg3](https://github.com/advisories/GHSA-xq4m-mc3c-vvg3), published 3 December 2025. CVSS v4 **8.7**, high. Fixed in `@anthropic-ai/claude-code` 1.0.93. Reported by RyotaK of GMO Flatt Security.
+- **Layer affected**: Client-side, and it is the sharpest example in this file of how that layer actually fails.
+- **What it did**: Errors parsing `$IFS` and short CLI flags let a command defeat Claude Code's own read-only validation and reach arbitrary code execution. The advisory notes that reliable exploitation needs the ability to put untrusted content into the context window, so prompt injection is the delivery vehicle and the parser is the vulnerability.
+- **Why it matters more than an ordinary CVE**: every other entry in this section describes a control being *worked around*. This one is the control **agreeing**. The allowlist was present, configured, and enforcing; it parsed the command, decided it was read-only, and was wrong. A deterministic control is only as deterministic as the parser that decides what it is looking at, and shell quoting is a famously bad thing to decide anything from.
+- **Lesson**: this is why [`MATURITY.md`](../examples/claude-code-laptop/MATURITY.md) requires that protected paths be **enforced by the filesystem, not only by policy**, and why the framework puts the load on the server-side column. An agent whose allowlist can be mis-parsed still cannot use a verb its ServiceAccount does not have. Pattern-matching a command string is a filter; RBAC on the target is a boundary.
+- **Note on secondary reporting**: a CSA research note attributes this CVE number to a different chain (a `claude-code-action` permission bypass leading to OIDC token theft), with a CVSS of 7.8 and a June 2026 disclosure. Neither the score, the date, nor the described defect matches the GitHub advisory. The advisory's own account is used above. Treat the secondary framing as unconfirmed.
+
 ### `--dangerously-skip-permissions` ("yolo mode")
 
 - Disables all PreToolUse permission checks by design. **Documented and intended.** Mitigation: organizational policy plus runtime monitoring for the flag in process arguments.
@@ -344,11 +353,12 @@ These are documented incidents and disclosures from 2025 and 2026 that defeated 
 - **What it did**: Two CVSS 9.8 vulnerabilities allowing unauthenticated remote code execution against MCP installations (unvalidated user-supplied strings reaching system calls; improper allowed-command handling). Part of a wave: 30+ MCP CVEs were filed in January to February 2026 alone, and independent scans place the share of public MCP servers carrying exploitable flaws somewhere between 30% and 82%.
 - **Lesson**: The MCP ecosystem is an attack surface, not a convenience layer. Treat every MCP server as untrusted remote code: allowlist by hash ([`controls/supply-chain/client-side/mcp-allowlist.json`](../controls/supply-chain/client-side/mcp-allowlist.json)), fence egress to approved MCP domains at the network layer ([`controls/supply-chain/server-side/cilium-mcp-fqdn-egress.yaml`](../controls/supply-chain/server-side/cilium-mcp-fqdn-egress.yaml)), and never run an MCP server with more privilege than the covenant allows.
 
-### Agent-framework CVE wave (mid-2026)
+### Agent-framework CVE wave (2026)
 
 - **Layer affected**: Identity, authorization, and blast radius, depending on the entry.
 - **What they did**:
-  - **CVE-2026-25592**: Microsoft Semantic Kernel for .NET below 1.71.0. Fixed in 1.71.0; the remediation is a version bump, which is exactly the class of claim the currency discipline in [`CONTRIBUTING.md`](../CONTRIBUTING.md) exists to keep honest.
+  - **CVE-2026-25592**: Microsoft Semantic Kernel, arbitrary file write **via AI agent function calling** in the .NET SDK. Published 6 February 2026. Remediation is a version bump, which is exactly the class of claim the currency discipline in [`CONTRIBUTING.md`](../CONTRIBUTING.md) exists to keep honest.
+  - **CVE-2026-26030**: Microsoft Semantic Kernel again, remote code execution through the `InMemoryVectorStore` filter. Published 19 February 2026, rated **critical** ([GHSA-xjw9-4gw8-4rqx](https://github.com/advisories/GHSA-xjw9-4gw8-4rqx)). Two critical defects in one framework within a fortnight, and both reachable through the surface the agent uses to do its job: function calling in one, the retrieval filter in the other. The tool-calling and retrieval paths are the framework's attack surface, not an accident around its edges.
   - **CVE-2026-25253**: OpenClaw token leakage, CVSS 8.8. A leaked agent token is a leaked identity, and it is indistinguishable from legitimate use on the target side unless the credential is short-lived and bound.
   - **CVE-2026-32922**: privilege escalation to remote code execution, CVSS 9.9. The near-maximum score reflects that the escalation path ends outside the agent's intended scope entirely.
 - **Also**: Tenable tracked a cluster of **seven distinct agentic-AI incidents between November 2025 and August 2026**, including JADEPUFFER (exploiting CVE-2025-3248 in Langflow) and the knaithe/KnYuan activity documented by Unit 42. The interesting property of the cluster is not any single entry, it is the rate.

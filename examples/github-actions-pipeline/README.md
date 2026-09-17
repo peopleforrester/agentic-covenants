@@ -26,6 +26,27 @@ A CI agent is an untrusted interpreter holding trusted credentials. Three specif
 | Long-lived cloud secrets in the environment | OIDC federation, so the credential is minted per job, scoped, and expires |
 | `pull_request_target` running fork code with secrets | Never combine it with a checkout of the PR head. This is the single most exploited Actions pattern |
 
+## The allowlist that permits everything
+
+A recurring shape in reported agent-pipeline incidents is an allowlist with one
+entry that grants everything: a `*` in the field naming who may trigger the
+agent, or which commands it may run. The control is present, the config is
+populated, and an audit that checks for the *existence* of an allowlist passes.
+
+This repo's own `validate_charter.py` had the same defect and it was fixed in
+[#9](https://github.com/peopleforrester/agentic-covenants/issues/9): the
+`no_wildcard` check tested for a bare `*` and missed `Bash(*)`, so an allowlist
+permitting every command scored clean. The fix asks whether an entry carries any
+literal constraint at all, so `Bash(git:*)` still passes and `Bash(*)` does not.
+
+Two consequences for this environment:
+
+- **Audit for the value, not the key.** "Is there an allowlist" is the wrong
+  question. "Does any entry in it have no literal constraint" is the right one.
+- **A wildcard in a trigger-permission field is the same bug at a higher
+  privilege.** A setting that admits any actor, combined with `id-token: write`,
+  hands an OIDC credential to whoever can open an issue.
+
 ## What the agent job may and may not do
 
 The rule that makes the rest work: **the agent proposes, the pipeline disposes.**
