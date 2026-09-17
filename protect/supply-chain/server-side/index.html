@@ -374,13 +374,20 @@ jobs:
         run: cargo update --workspace --locked
 </code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Supply chain / Server-side</h2>
+<p>&gt; <strong>Kyverno API deprecation, verified 2026-09-17.</strong> The policies here are legacy</p>
+<p>&gt; <code>kyverno.io/v1</code> <code>ClusterPolicy</code> resources. Kyverno <strong>1.19 deprecates</strong> that API</p>
+<p>&gt; group and emits an admission warning naming the <code>policies.kyverno.io</code></p>
+<p>&gt; replacement, and <strong>1.20 removes it</strong>. Current release is <strong>v1.19.1</strong></p>
+<p>&gt; (2026-09-10). These policies still load and enforce on 1.19; they will not on</p>
+<p>&gt; 1.20. Migration is tracked in</p>
+<p>&gt; <a href="https://github.com/peopleforrester/agentic-covenants/issues/11">#11</a>.</p>
 <p><strong>Control.</strong> Image registry restrictions in admission policy. OCI signature verification (cosign). SBOM admission requirements. Egress NetworkPolicy to approved registries only. OPA policy denying images without provenance attestation. SLSA build-provenance attestation gates. MCP domain allowlist enforced at the network layer. Server-side lockfile-integrity validation.</p>
 <p><strong>Strength.</strong> Deterministic at admission. Bypass requires compromise of signing infrastructure (KMS key theft), signature stripping at a registry mirror, policy misconfigured to allow unsigned images in some namespaces (&quot;the tools namespace exception&quot;), or cosign trust policy with <code>subject: &quot;*&quot;</code> accepting anyone&#x27;s keyless signature.</p>
 <h3>Tooling</h3>
 <ul>
 <li>- Cosign for OCI signing and verification.</li>
 <li>- Syft and Grype (or Trivy) for SBOM generation and scanning.</li>
-<li>- Kyverno 1.18+ or OPA Gatekeeper for admission control.</li>
+<li>- Kyverno 1.18 to 1.19 or OPA Gatekeeper for admission control.</li>
 <li>- A signing key managed in KMS (AWS KMS, GCP KMS, or HashiCorp Vault), or keyless signing via GitHub OIDC + Sigstore.</li>
 <li>- A SLSA provenance generator (<code>slsa-github-generator</code>).</li>
 <li>- Cilium with FQDN policy support (or another CNI that enforces L7 DNS at egress).</li>
@@ -388,7 +395,7 @@ jobs:
 <h3>Files in this directory</h3>
 <ul>
 <li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/server-side/build-and-sign.yml"><code>build-and-sign.yml</code></a>, GitHub Actions workflow that builds the agent image, signs it with <code>cosign --yes</code> (keyless), generates an SPDX SBOM with <code>syft</code>, and attaches the SBOM as a cosign attestation. Drop in <code>.github/workflows/</code>.</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/server-side/kyverno-verify-image-signatures.yaml"><code>kyverno-verify-image-signatures.yaml</code></a>, Kyverno ClusterPolicy verifying cosign signatures from a specific GitHub OIDC subject and verifying the SPDX attestation. Requires Kyverno 1.18+ for the <code>attestors</code>/<code>entries</code>/<code>keyless</code> block shape.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/server-side/kyverno-verify-image-signatures.yaml"><code>kyverno-verify-image-signatures.yaml</code></a>, Kyverno ClusterPolicy verifying cosign signatures from a specific GitHub OIDC subject and verifying the SPDX attestation. Requires Kyverno 1.18 to 1.19 for the <code>attestors</code>/<code>entries</code>/<code>keyless</code> block shape.</li>
 <li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/server-side/kyverno-require-sbom.yaml"><code>kyverno-require-sbom.yaml</code></a>, Kyverno ClusterPolicy requiring an SPDX SBOM attestation on every image and verifying it was created by <code>syft</code> (heuristic; tune for your build).</li>
 <li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/server-side/cilium-mcp-fqdn-egress.yaml"><code>cilium-mcp-fqdn-egress.yaml</code></a>, CiliumNetworkPolicy restricting agent egress to a fixed list of approved FQDNs (api.anthropic.com, api.github.com, registry.example.com). Requires Cilium with <code>enable-l7-proxy: true</code> or DNS denials are not enforced.</li>
 <li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/server-side/lockfile-integrity.yml"><code>lockfile-integrity.yml</code></a>, CI workflow that runs <code>npm ci --dry-run</code>, <code>pip-compile --check</code>, and <code>pip-audit</code> regardless of whether pre-commit was used locally. <strong>The real backstop for client-side lockfile pinning.</strong></li>

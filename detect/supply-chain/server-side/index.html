@@ -211,11 +211,18 @@ tags:
   - sentinels
 </code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Sentinels, Supply chain / Server-side</h2>
+<p>&gt; <strong>Kyverno API deprecation, verified 2026-09-17.</strong> The policies here are legacy</p>
+<p>&gt; <code>kyverno.io/v1</code> <code>ClusterPolicy</code> resources. Kyverno <strong>1.19 deprecates</strong> that API</p>
+<p>&gt; group and emits an admission warning naming the <code>policies.kyverno.io</code></p>
+<p>&gt; replacement, and <strong>1.20 removes it</strong>. Current release is <strong>v1.19.1</strong></p>
+<p>&gt; (2026-09-10). These policies still load and enforce on 1.19; they will not on</p>
+<p>&gt; 1.20. Migration is tracked in</p>
+<p>&gt; <a href="https://github.com/peopleforrester/agentic-covenants/issues/11">#11</a>.</p>
 <p><strong>Control.</strong> Image-pull events captured via Kyverno mutate. Daily SBOM-diff CronJob. Cosign verification failures surface as PolicyReport entries. Cilium FQDN denial flow events shipped to SIEM.</p>
 <p><strong>Strength.</strong> Deterministic at admission and at the network layer. Failure modes: SBOM diff that compares only top-level package counts (misses transitive dependency changes); image-pull annotation policy in Audit mode (does not actually annotate); cosign failure alert without context (operator gets paged with image SHA but no PR or build context); Hubble FQDN logs disabled by default in some Cilium installs (verify <code>enable-l7-proxy: true</code>).</p>
 <h3>Tooling</h3>
 <ul>
-<li>- Kyverno 1.18+.</li>
+<li>- Kyverno 1.18 to 1.19.</li>
 <li>- syft for SBOM generation.</li>
 <li>- Cilium with Hubble and L7 proxy enabled.</li>
 </ul>

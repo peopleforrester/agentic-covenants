@@ -293,12 +293,19 @@ spec:
           name: &quot;?*&quot;
 </code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Authorization / Server-side</h2>
+<p>&gt; <strong>Kyverno API deprecation, verified 2026-09-17.</strong> The policies here are legacy</p>
+<p>&gt; <code>kyverno.io/v1</code> <code>ClusterPolicy</code> resources. Kyverno <strong>1.19 deprecates</strong> that API</p>
+<p>&gt; group and emits an admission warning naming the <code>policies.kyverno.io</code></p>
+<p>&gt; replacement, and <strong>1.20 removes it</strong>. Current release is <strong>v1.19.1</strong></p>
+<p>&gt; (2026-09-10). These policies still load and enforce on 1.19; they will not on</p>
+<p>&gt; 1.20. Migration is tracked in</p>
+<p>&gt; <a href="https://github.com/peopleforrester/agentic-covenants/issues/11">#11</a>.</p>
 <p><strong>Control.</strong> Scoped RBAC Roles, never ClusterRoles. IAM policies scoped to specific resources with explicit ARN. Kyverno or OPA admission policies. Namespace-scoped permissions. Deny <code>*</code> verbs. Deny prod namespaces from agent ServiceAccounts. Server-side Git pre-receive hooks for repo-level enforcement.</p>
 <p><strong>Strength.</strong> Deterministic and external to both the agent and the operator&#x27;s machine. Bypass requires escalation primitives in RBAC (<code>escalate</code>, <code>bind</code>, impersonation), aggregated roles missed by the policy author, subresource access not denied (<code>pods/exec</code> when only <code>pods</code> is denied), admission webhook fail-open, IAM condition logic bugs, or operator manipulation through a persuasive PR description.</p>
 <h3>Tooling</h3>
 <ul>
 <li>- Kubernetes RBAC (built-in).</li>
-<li>- Kyverno 1.18+ (older releases use a different <code>attestors</code> block shape) or OPA Gatekeeper.</li>
+<li>- Kyverno 1.18 to 1.19 (older releases use a different <code>attestors</code> block shape) or OPA Gatekeeper.</li>
 <li>- <strong>Kubernetes-native admission (no controller to install): ValidatingAdmissionPolicy (GA since 1.30) and MutatingAdmissionPolicy (GA and default-on in 1.36 &quot;Haru&quot;, April 2026).</strong> These are in-tree CEL admission policies with no webhook, which removes the &quot;admission webhook fail-open&quot; bypass listed below. Prefer VAP for the deny-wildcard-verbs / deny-ClusterRoleBinding rules where you want zero external dependencies; reach for Kyverno/OPA when you need <code>verifyImages</code>, generate rules, or cross-cluster policy libraries. The two compose.</li>
 <li>- AWS IAM, GCP IAM, or Azure RBAC.</li>
 <li>- <strong>Managed deterministic pre-action authorization (this cell as a product).</strong> <strong>Amazon Bedrock AgentCore Policy went GA March 3, 2026</strong>: authorization rules written in the <strong>Cedar</strong> policy language, default-deny, evaluated <strong>at the Gateway</strong> on every agent-to-tool request, outside the agent&#x27;s code, outside the model&#x27;s reasoning, and therefore not reachable by prompt injection. Microsoft shipped comparable runtime enforcement starting with Copilot in Q1 2026. This is the same control the rest of this cell builds by hand; if you are on Bedrock, use it rather than reimplementing it, and keep the Kubernetes-side admission policies as the second layer for anything the gateway does not mediate. The design point to preserve either way: <strong>policy is evaluated before the tool executes, by something the agent does not control.</strong></li>

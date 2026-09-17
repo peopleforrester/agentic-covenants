@@ -144,6 +144,13 @@ spec:
       deny: {}
 </code></pre></figure></section>
   <section class="readme"><h2>Cell notes</h2><h2>Interventions, Authorization / Server-side</h2>
+<p>&gt; <strong>Kyverno API deprecation, verified 2026-09-17.</strong> The policies here are legacy</p>
+<p>&gt; <code>kyverno.io/v1</code> <code>ClusterPolicy</code> resources. Kyverno <strong>1.19 deprecates</strong> that API</p>
+<p>&gt; group and emits an admission warning naming the <code>policies.kyverno.io</code></p>
+<p>&gt; replacement, and <strong>1.20 removes it</strong>. Current release is <strong>v1.19.1</strong></p>
+<p>&gt; (2026-09-10). These policies still load and enforce on 1.19; they will not on</p>
+<p>&gt; 1.20. Migration is tracked in</p>
+<p>&gt; <a href="https://github.com/peopleforrester/agentic-covenants/issues/11">#11</a>.</p>
 <p><strong>Trigger.</strong> RBAC denial spike, Kyverno PolicyReport failures from agent SAs, IAM Access Analyzer findings, Git pre-receive rejection spike.</p>
 <p><strong>Authority.</strong> On-call, no second approval.</p>
 <p><strong>Speed target.</strong> Under 10 seconds.</p>
@@ -151,7 +158,7 @@ spec:
 <ul>
 <li>- <code>kubectl</code> with permission to apply ClusterPolicies and Roles in agent namespaces.</li>
 <li>- AWS CLI with permission to attach IAM policies.</li>
-<li>- Kyverno 1.18+ in <code>Enforce</code> mode (audit-only does not block).</li>
+<li>- Kyverno 1.18 to 1.19 in <code>Enforce</code> mode (audit-only does not block).</li>
 </ul>
 <h3>Files in this directory</h3>
 <ul>
