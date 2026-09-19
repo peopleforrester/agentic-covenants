@@ -164,7 +164,7 @@ Independent work converged on the same five concerns. On 30 April 2026, six alli
 | Structural cascading failures | Blast radius |
 | Accountability opacity | Charter + Inventory |
 
-Every cell is also crosswalked to NIST CSF 2.0, NIST AI RMF, OWASP LLM Top 10, OWASP Agentic Top 10, OWASP MCP Top 10, ISO/IEC 42001, the EU AI Act, and (for federal readers) NIST SP 800-53, DoD Zero Trust, RMF/cATO/CSRMC, and DoD Responsible AI. See [`CITATIONS.md`](./framework/CITATIONS.md).
+Every cell is also crosswalked to NIST CSF 2.0, NIST AI RMF, OWASP LLM Top 10 (2025 numbering), OWASP Agentic Top 10, OWASP MCP Top 10 (beta), ISO/IEC 42001, the EU AI Act, and (for federal readers) NIST SP 800-53, DoD Zero Trust, RMF/cATO/CSRMC, and DoD Responsible AI. See [`CITATIONS.md`](./framework/CITATIONS.md).
 
 ## Every control here can be bypassed
 
