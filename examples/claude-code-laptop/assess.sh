@@ -14,6 +14,19 @@ SETTINGS="$AGENT_HOME/settings.json"
 RED=$'\033[0;31m'; YEL=$'\033[0;33m'; GRN=$'\033[0;32m'; DIM=$'\033[2m'; BLD=$'\033[1m'; RST=$'\033[0m'
 [ -t 1 ] || { RED=""; YEL=""; GRN=""; DIM=""; BLD=""; RST=""; }
 
+# A level is granted on evidence, never on a filename. An earlier version of
+# this script tested `[ -f tier-config.yaml ]` and `[ -x ./launch-agent ]` and
+# granted Level 2 and Level 3 on existence alone, so eight shell commands
+# creating empty files and an `exec "$@"` wrapper produced an overall Level 2
+# with no control in place. That is the exact shape BYPASSES.md condemns
+# elsewhere: a control that fails open while reporting closed.
+has_content() {   # file is present and not effectively empty
+    [ -f "$1" ] && [ "$(grep -cvE '^\s*(#|$)' "$1" 2>/dev/null || echo 0)" -gt 0 ]
+}
+mentions() {      # file is present and actually references the mechanism
+    [ -f "$1" ] && grep -qE "$2" "$1" 2>/dev/null
+}
+
 declare -A LEVEL          # concern -> achieved level
 declare -A BLOCKER        # concern -> what stops the next level
 UNKNOWNS=()
@@ -126,10 +139,16 @@ else
     fail "no sandbox mechanism available on this platform"
 fi
 
-if [ -x "./launch-agent" ] || [ -x "$AGENT_HOME/launch-agent" ]; then
-    pass "a launch wrapper is present"
+wrapper=""
+for w in "./launch-agent" "$AGENT_HOME/launch-agent"; do
+    [ -x "$w" ] && { wrapper="$w"; break; }
+done
+if [ -n "$wrapper" ] && mentions "$wrapper" 'bwrap|sandbox-exec|nsjail|firejail|gvisor|runsc'; then
+    pass "a launch wrapper is present and invokes a sandbox mechanism"
     [ -n "$sandbox_tool" ] && { br_level=2; br_block="sandbox inheritance by child processes not verified"; }
     unk "child-process inheritance not verified; spawn a subshell and re-test"
+elif [ -n "$wrapper" ]; then
+    fail "launch wrapper at ${wrapper} never invokes a sandbox; it is a passthrough"
 else
     fail "no launch wrapper; a sandbox not applied at launch is not applied"
 fi
@@ -145,12 +164,16 @@ LEVEL[blast-radius]=$br_level; BLOCKER[blast-radius]=$br_block
 head2 "Approval gating"
 ag_level=0; ag_block="no tiered approval configuration"
 
-if [ -f "$AGENT_HOME/tier-config.yaml" ] || [ -f "./tier-config.yaml" ]; then
-    pass "a tiered approval configuration is present"
+tiercfg=""
+for c in "$AGENT_HOME/tier-config.yaml" "./tier-config.yaml"; do
+    has_content "$c" && { tiercfg="$c"; break; }
+done
+if [ -n "$tiercfg" ] && mentions "$tiercfg" 'tier|level|severity'; then
+    pass "a tiered approval configuration is present and defines tiers"
     ag_level=2; ag_block="no out-of-band path for the highest tier"
     if [ -n "${AGENT_OOB_APPROVAL_URL:-}" ]; then
-        pass "an out-of-band approval endpoint is configured"
-        ag_level=3; ag_block="approval timing not recorded, so fatigue is unmeasured"
+        unk "AGENT_OOB_APPROVAL_URL is set but not reachable from here; an endpoint that does not answer is not an approval path"
+        ag_block="out-of-band approval endpoint declared but unverified"
     else
         fail "no out-of-band approval; the top tier approves on the agent's own machine"
     fi
@@ -196,8 +219,10 @@ else
     fail "no off-box log shipping; deleting the local log destroys the record"
     observed=0
 fi
-if [ -f "$AGENT_HOME/.killswitch-drill" ]; then
-    pass "a kill-switch drill has been recorded"
+if has_content "$AGENT_HOME/.killswitch-drill" && mentions "$AGENT_HOME/.killswitch-drill" '[0-9]'; then
+    pass "a kill-switch drill has been recorded with a measurement"
+elif [ -f "$AGENT_HOME/.killswitch-drill" ]; then
+    fail "kill-switch drill file is empty; MATURITY.md requires time-to-stop measured, not estimated"
 else
     fail "no kill-switch drill recorded; time-to-stop is estimated, not measured"
     observed=0
