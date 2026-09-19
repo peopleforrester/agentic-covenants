@@ -14,7 +14,7 @@
 #       verify against it. Simpler, but you lose the transparency log, so key custody
 #       and rotation become the control you must document to the AO.
 #
-# Satisfies (crosswalk): SR-3, SR-4, SR-11 (supply chain provenance and component
+# Crosswalks to (not a compliance claim): SR-3, SR-4, SR-11 (supply chain provenance and component
 # authenticity), CM-14 (signed components), SI-7 (software integrity).
 ---
 apiVersion: v1

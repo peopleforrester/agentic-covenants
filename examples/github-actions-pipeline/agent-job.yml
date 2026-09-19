@@ -31,9 +31,13 @@ permissions:
   contents: read
 
 concurrency:
-  # One agent run per ref. Without this a label storm starts N agents that race
-  # each other on the same branch.
-  group: agent-${{ github.ref }}
+  # One agent run per ISSUE, not per ref. On an issues trigger github.ref
+  # resolves to the default branch for every issue, so keying on it puts every
+  # agent run in one group and cancel-in-progress turns a second labelled issue
+  # into a cancellation of the first. That is a denial of service reachable by
+  # anyone who can label. Branches are already unique per run below, so the
+  # same-branch race the earlier comment described could not happen anyway.
+  group: agent-${{ github.event.issue.number || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -67,9 +71,14 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::123456789012:role/agent-ci-readonly
           aws-region: us-east-1
-          # The role's trust policy must pin the OIDC subject to this repo AND
-          # this ref. Without the ref condition any workflow in the repo can
-          # assume it. See controls/identity/server-side/aws-iam-trust-policy.json
+          # Pin the trust policy to this repo. Pinning to a ref is worth doing
+          # and does NOT narrow the trigger this file ships: on an issues
+          # trigger the ref is the default branch, so a policy pinned to
+          # refs/heads/main is assumable by exactly the attacker-reachable path
+          # this example is about. Ref pinning narrows push and pull_request.
+          # What narrows this trigger is the role's own permissions, which is
+          # why the role above is named readonly and must actually be one.
+          # See controls/identity/server-side/aws-iam-trust-policy.json
 
       - name: Run the agent
         env:

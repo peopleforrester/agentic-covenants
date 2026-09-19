@@ -1,0 +1,30 @@
+# ABOUTME: Reserves the paths that define this repo's own constraints.
+# ABOUTME: Adapted from controls/approval-gating/server-side/CODEOWNERS, which is the template.
+#
+# The github-actions-pipeline example argues that a CI agent's constraints are
+# files it can propose changing, so the only real control is the forge. This
+# file is that argument applied to this repo: a change to the workflow surface,
+# to the checks, or to the licence split needs a named reviewer.
+#
+# Single maintainer today, so this is attribution and intent rather than a
+# second pair of eyes. It becomes enforcement the moment a second contributor
+# exists, and it is what verify.sh looks for.
+
+*                       @peopleforrester
+
+# The loop the pipeline example is about: the constraints themselves.
+/.github/                @peopleforrester
+/.githooks/              @peopleforrester
+/scripts/                @peopleforrester
+
+# The data the site and the checks read as source of truth.
+/data/                   @peopleforrester
+
+# Claims that have to survive scrutiny.
+/framework/CITATIONS.md  @peopleforrester
+/framework/ASSURANCE.md  @peopleforrester
+/framework/BYPASSES.md   @peopleforrester
+
+# Licence split.
+/LICENSE                 @peopleforrester
+/LICENSE-CONTENT         @peopleforrester

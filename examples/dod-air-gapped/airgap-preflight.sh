@@ -7,7 +7,7 @@
 # lets an agent reach a public registry." Find that at deploy time, not during an
 # assessment or an incident.
 #
-# Satisfies (crosswalk): SC-7 (boundary protection) verification evidence;
+# Crosswalks to (not a compliance claim): SC-7 (boundary protection) verification evidence;
 # CA-2/CA-7 (assessment and continuous monitoring) supporting artifact.
 
 set -uo pipefail

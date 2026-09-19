@@ -10,7 +10,7 @@
 # (GA since Kubernetes 1.30), so there is no Helm chart to mirror and no webhook
 # that can fail open under load.
 #
-# Satisfies (crosswalk): CM-7 (least functionality), SR-3/SR-4 (supply chain
+# Crosswalks to (not a compliance claim): CM-7 (least functionality), SR-3/SR-4 (supply chain
 # provenance), SI-7 (software integrity), SC-7 (boundary protection, in support).
 ---
 apiVersion: admissionregistration.k8s.io/v1
