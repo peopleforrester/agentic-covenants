@@ -61,6 +61,8 @@ Issue #5's definition of done is that every [`BYPASSES.md`](./BYPASSES.md) entry
 | **Check Point CVE-2025-59536 / CVE-2026-21852** | Nothing here | **Not prevented.** Hook auto-execution from repo-local config is a client platform defect. Operator-owned config placement mitigates; the artifact for it is advisory |
 | **Claude Code symlink sandbox escape** (CVE-2026-39861) | Nothing here | **Not prevented.** A sandbox escape defeats the cell that would otherwise contain it. Patch is the only control |
 | **Agent-framework CVE wave** (CVE-2026-25592, -25253, -32922) | [`inventory/`](../inventory), [`blast-radius/`](../controls/blast-radius) | **Not prevented.** Inventory tells you what to patch; blast radius buys time between disclosure and patch |
+| **Agent CLI read-only bypass** (CVE-2025-66032) | Nothing here | **Not prevented, and the worst case in the table.** The client-side allowlist was present, enforcing, and wrong: it parsed the command and decided it was read-only. A control that fails *open while reporting closed* is worse than an absent one. Only the server-side column bounds this, because RBAC does not consult a shell parser |
+| **Semantic Kernel RCE and file write** (CVE-2026-26030, CVE-2026-25592) | [`inventory/`](../inventory/), [`blast-radius/`](../controls/blast-radius/) | **Not prevented.** Framework defects reachable through function calling and the retrieval filter. Inventory tells you what to patch; blast radius buys time between disclosure and patch |
 | **Taiwan government campaign** (July 2026) | Not applicable | **Out of scope, deliberately.** This is agentic tooling used *against* a target. Nothing in a framework for governing your own agents defends against someone else's. It is in the corpus because the capability is symmetric and the tooling is free |
 
 ### Control-layer bypasses
@@ -78,9 +80,9 @@ The first 29 entries in `BYPASSES.md` are bypasses *of* the controls this framew
 
 ### The tally, stated plainly
 
-Of the 15 ecosystem incidents: **3 prevented, 5 bounded or partial, 6 not prevented, 1 out of scope.**
+Of the 17 ecosystem incidents: **3 prevented, 5 bounded or partial, 8 not prevented, 1 out of scope.**
 
-Six of fifteen is not a failure of the framework. It is what an honest coverage map looks like, and the alternative is a matrix that claims everything and is checked by nobody. The not-prevented column is dominated by two classes, and neither is closable by adding cells:
+Eight of seventeen is not a failure of the framework. It is what an honest coverage map looks like, and the alternative is a matrix that claims everything and is checked by nobody. The not-prevented column is dominated by two classes, and neither is closable by adding cells:
 
 1. **Platform defects.** A sandbox escape or a hook auto-execution bug is fixed by the vendor, not by policy.
 2. **Trusted-component compromise.** When the scanner, the signed extension, or the official marketplace is the vector, provenance controls confirm the wrong thing correctly.

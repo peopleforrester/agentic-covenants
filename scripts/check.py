@@ -589,7 +589,56 @@ def check_counts(staged: bool) -> Findings:
     return findings
 
 
+def check_assurance(staged: bool) -> Findings:
+    """The coverage tally must match the coverage table it summarizes.
+
+    ASSURANCE.md states a headline count ("Of the N ecosystem incidents") and
+    then a table. Two CVEs added to BYPASSES on 2026-09-17 grew the table
+    without the tally, so the number readers trust disagreed with the rows
+    under it.
+
+    An earlier version of this check required every CVE in BYPASSES to appear
+    by number in ASSURANCE. That was wrong: the coverage map deliberately
+    handles control-layer bypasses by class and groups several CVEs into one
+    row, so the check reported five findings of which four were correct
+    behavior. A check that cries wolf trains people to skip it, so it asserts
+    the tally against the table instead, which is the thing that actually
+    drifts.
+    """
+    findings = Findings("assurance")
+    asr = REPO_ROOT / "framework" / "ASSURANCE.md"
+    if not asr.is_file():
+        return findings
+
+    text = asr.read_text(encoding="utf-8")
+    claimed = re.search(r"Of the (\d+) ecosystem incidents", text)
+    if not claimed:
+        findings.add(asr, None, "no 'Of the N ecosystem incidents' tally found")
+        return findings
+
+    section = re.search(
+        r"### Ecosystem incidents.*?(?=\n### |\n## )", text, re.S
+    )
+    rows = len(re.findall(r"^\| \*\*", section.group(0), re.M)) if section else 0
+
+    if rows != int(claimed.group(1)):
+        findings.add(asr, None,
+                     f"tally says {claimed.group(1)} ecosystem incidents; "
+                     f"the table has {rows} rows")
+
+    breakdown = re.search(
+        r"\*\*(\d+) prevented, (\d+) bounded or partial, (\d+) not prevented, (\d+) out of scope",
+        text)
+    if breakdown:
+        total = sum(int(g) for g in breakdown.groups())
+        if total != rows:
+            findings.add(asr, None,
+                         f"breakdown sums to {total}; the table has {rows} rows")
+    return findings
+
+
 CHECKS: dict[str, Callable[[bool], Findings]] = {
+    "assurance": check_assurance,
     "counts": check_counts,
     "root": check_root,
     "diagrams": check_diagrams,
