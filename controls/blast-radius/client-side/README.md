@@ -55,4 +55,4 @@ kubectl exec claude-agent -- dmesg | head
 
 ## Citation
 
-NIST CSF 2.0 PR.PS-01, PR.PS-05, PR.PS-06 (secure software development practices), PR.IR-01 (networks protected). NIST AI RMF MANAGE 2.4. OWASP LLM05, LLM10 (Unbounded Consumption). OWASP ASI05 (Unexpected Code Execution). NIST SP 800-160 Vol. 1 (defense in depth).
+NIST CSF 2.0 PR.PS-01, PR.PS-05, PR.PS-06 (secure software development practices), PR.IR-01 (networks protected). NIST AI RMF MANAGE 2.4. OWASP LLM05:2025, LLM10:2025 (Unbounded Consumption). OWASP ASI05:2026 (Unexpected Code Execution). NIST SP 800-160 Vol. 1 (defense in depth).

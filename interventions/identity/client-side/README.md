@@ -38,4 +38,4 @@ journalctl -t agent-incident --since "1 minute ago"
 
 ## Citation
 
-NIST CSF 2.0 RS.MI-01 (incident contained), RS.MI-02 (incident eradicated). NIST SP 800-61 Rev. 2 (Computer Security Incident Handling Guide). NIST AI RMF MANAGE 4.1. OWASP ASI03, ASI10.
+NIST CSF 2.0 RS.MI-01 (incident contained), RS.MI-02 (incident eradicated). NIST SP 800-61 Rev. 2 (Computer Security Incident Handling Guide). NIST AI RMF MANAGE 4.1. OWASP ASI03:2026, ASI10:2026.

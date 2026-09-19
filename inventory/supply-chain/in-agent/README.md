@@ -18,4 +18,4 @@ Self-declared dependencies should equal operator-declared (charter-authoritative
 
 ## Citation
 
-NIST CSF 2.0 ID.AM-04, ID.RA-09. NIST AI RMF MAP 4.1. CSA MAESTRO Layer 1, Layer 7. OWASP MCP04, MCP09.
+NIST CSF 2.0 ID.AM-04, ID.RA-09. NIST AI RMF MAP 4.1. CSA MAESTRO Layer 1, Layer 7. OWASP MCP04:2025, MCP09:2025.

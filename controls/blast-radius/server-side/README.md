@@ -71,4 +71,4 @@ aws --profile claude-code-prod sts assume-role \
 
 ## Citation
 
-NIST CSF 2.0 PR.IR-01 (networks protected), PR.IR-02 (technology assets protected from environmental threats), PR.IR-03 (mechanisms achieving resilience requirements), PR.IR-04 (adequate resource capacity), PR.DS-11 (backups created, protected, maintained, tested). NIST AI RMF MANAGE 2.4, MANAGE 4.1. OWASP LLM10 (Unbounded Consumption). OWASP ASI05, ASI08 (Cascading Failures). NIST SP 800-160 Vol. 1. NIST SP 800-34 Rev. 1 (contingency planning).
+NIST CSF 2.0 PR.IR-01 (networks protected), PR.IR-02 (technology assets protected from environmental threats), PR.IR-03 (mechanisms achieving resilience requirements), PR.IR-04 (adequate resource capacity), PR.DS-11 (backups created, protected, maintained, tested). NIST AI RMF MANAGE 2.4, MANAGE 4.1. OWASP LLM10:2025 (Unbounded Consumption). OWASP ASI05:2026, ASI08:2026 (Cascading Failures). NIST SP 800-160 Vol. 1. NIST SP 800-34 Rev. 1 (contingency planning).

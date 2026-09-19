@@ -71,4 +71,4 @@ kubectl get clusterpolicyreport -A
 
 ## Citation
 
-NIST CSF 2.0 PR.AA-05 (least privilege, separation of duties), PR.PS-01 (configuration management practices), PR.PS-05 (unauthorized software prevented). NIST SP 800-207 (Zero Trust). OWASP ASI02, ASI03, ASI05. CIS Kubernetes Benchmark.
+NIST CSF 2.0 PR.AA-05 (least privilege, separation of duties), PR.PS-01 (configuration management practices), PR.PS-05 (unauthorized software prevented). NIST SP 800-207 (Zero Trust). OWASP ASI02:2026, ASI03:2026, ASI05:2026. CIS Kubernetes Benchmark.

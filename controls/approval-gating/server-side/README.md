@@ -52,4 +52,4 @@ gh variable set DEPLOY_FREEZE -b false
 
 ## Citation
 
-NIST CSF 2.0 PR.AA-05 (least privilege, separation of duties), PR.PS-01, GV.RR-02. NIST AI RMF GOVERN 4.1 (organizational practices supporting AI risk management), MANAGE 4.1. OWASP LLM06. OWASP ASI02, ASI03. EU AI Act Art. 14 (human oversight), Art. 26 (deployer obligations). ISO/IEC 42001 §A.4. NIST SP 800-160 Vol. 1 (separation of duties as a security principle).
+NIST CSF 2.0 PR.AA-05 (least privilege, separation of duties), PR.PS-01, GV.RR-02. NIST AI RMF GOVERN 4.1 (organizational practices supporting AI risk management), MANAGE 4.1. OWASP LLM06:2025. OWASP ASI02:2026, ASI03:2026. EU AI Act Art. 14 (human oversight), Art. 26 (deployer obligations). ISO/IEC 42001 §A.4. NIST SP 800-160 Vol. 1 (separation of duties as a security principle).

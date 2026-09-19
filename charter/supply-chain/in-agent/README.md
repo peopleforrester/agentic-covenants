@@ -39,4 +39,4 @@ Manifest is updated in Charter but allowlist hashes in Covenants L2-C5 are not r
 
 ## Citation
 
-NIST CSF 2.0 GV.SC-07; ID.RA-09 (authenticity and integrity assessed prior to acquisition). NIST AI RMF GOVERN 6.2, MAP 4.1. ISO/IEC 42001 §A.10. EU AI Act Art. 25. OWASP MCP04, MCP09.
+NIST CSF 2.0 GV.SC-07; ID.RA-09 (authenticity and integrity assessed prior to acquisition). NIST AI RMF GOVERN 6.2, MAP 4.1. ISO/IEC 42001 §A.10. EU AI Act Art. 25. OWASP MCP04:2025, MCP09:2025.

@@ -35,4 +35,4 @@ sudo -u agent-runner /usr/local/bin/agent-bwrap /tmp -- /bin/sh -c 'unshare -n e
 
 ## Citation
 
-NIST CSF 2.0 RC.RP-01. NIST AI RMF MANAGE 4.1. OWASP ASI05, ASI08. NIST SP 800-160 Vol. 1.
+NIST CSF 2.0 RC.RP-01. NIST AI RMF MANAGE 4.1. OWASP ASI05:2026, ASI08:2026. NIST SP 800-160 Vol. 1.

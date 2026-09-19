@@ -58,4 +58,4 @@ git add . && git commit -m "test"
 
 ## Citation
 
-NIST CSF 2.0 PR.AA-05 (least privilege, separation of duties), PR.PS-01 (configuration management practices). NIST AI RMF MANAGE 2.4, MANAGE 4.1. OWASP LLM06 (Excessive Agency); LLM05 (Improper Output Handling). OWASP ASI02 (Tool Misuse), ASI05 (Unexpected Code Execution). OWASP MCP02, MCP05. OWASP Agentic Least Agency principle. NIST SP 800-207 §2.1 (least privilege).
+NIST CSF 2.0 PR.AA-05 (least privilege, separation of duties), PR.PS-01 (configuration management practices). NIST AI RMF MANAGE 2.4, MANAGE 4.1. OWASP LLM06:2025 (Excessive Agency); LLM05:2025 (Improper Output Handling). OWASP ASI02:2026 (Tool Misuse), ASI05:2026 (Unexpected Code Execution). OWASP MCP02:2025, MCP05:2025. OWASP Agentic Least Agency principle. NIST SP 800-207 §2.1 (least privilege).

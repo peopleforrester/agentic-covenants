@@ -32,6 +32,6 @@ For each layer ask: *if the agent does the wrong thing, how much can break befor
 
 See [`../../CITATIONS.md`](../../framework/CITATIONS.md). Quick reference:
 
-- **In-agent**: advisory; thematically MAP 5.1, MEASURE 2.6 (safety risks evaluated); OWASP LLM06; OWASP ASI02, ASI05.
-- **Client-side**: NIST CSF 2.0 PR.PS-01, PR.PS-05, PR.PS-06, PR.IR-01; OWASP LLM05, LLM10; OWASP ASI05; NIST SP 800-160 Vol. 1 (defense in depth).
-- **Server-side**: NIST CSF 2.0 PR.IR-01 through PR.IR-04, PR.DS-11 (backups); OWASP LLM10 (Unbounded Consumption); OWASP ASI05, ASI08 (Cascading Failures); NIST SP 800-160 Vol. 1; NIST SP 800-34 Rev. 1 (contingency planning).
+- **In-agent**: advisory; thematically MAP 5.1, MEASURE 2.6 (safety risks evaluated); OWASP LLM06:2025; OWASP ASI02:2026, ASI05:2026.
+- **Client-side**: NIST CSF 2.0 PR.PS-01, PR.PS-05, PR.PS-06, PR.IR-01; OWASP LLM05:2025, LLM10:2025; OWASP ASI05:2026; NIST SP 800-160 Vol. 1 (defense in depth).
+- **Server-side**: NIST CSF 2.0 PR.IR-01 through PR.IR-04, PR.DS-11 (backups); OWASP LLM10:2025 (Unbounded Consumption); OWASP ASI05:2026, ASI08:2026 (Cascading Failures); NIST SP 800-160 Vol. 1; NIST SP 800-34 Rev. 1 (contingency planning).

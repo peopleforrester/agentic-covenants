@@ -23,4 +23,4 @@ You cannot verify this layer. Models hallucinate package names with non-trivial 
 
 ## Citation
 
-Advisory; no direct framework mapping. Thematic: NIST AI RMF MAP 4.1 (third-party risks identified). OWASP LLM03 (Supply Chain), related risk. OWASP ASI04 (Agentic Supply Chain Vulnerabilities), mitigation principle.
+Advisory; no direct framework mapping. Thematic: NIST AI RMF MAP 4.1 (third-party risks identified). OWASP LLM03:2025 (Supply Chain), related risk. OWASP ASI04:2026 (Agentic Supply Chain Vulnerabilities), mitigation principle.

@@ -40,4 +40,4 @@ journalctl -t agent-sentinel | grep mcp_tool_desc_mismatch
 
 ## Citation
 
-NIST CSF 2.0 DE.CM-09, ID.RA-09. OWASP MCP08, MCP09.
+NIST CSF 2.0 DE.CM-09, ID.RA-09. OWASP MCP08:2025, MCP09:2025.

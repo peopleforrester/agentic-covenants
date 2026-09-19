@@ -43,4 +43,4 @@ gh variable list -R example-org/agent-config | grep DEPLOY_FREEZE
 
 ## Citation
 
-NIST CSF 2.0 RS.MI-01, RS.CO-02; GV.RR-02 (response dimension). EU AI Act Art. 14, Art. 26. NIST AI RMF GOVERN 4.1, MANAGE 4.1. OWASP ASI02, ASI09.
+NIST CSF 2.0 RS.MI-01, RS.CO-02; GV.RR-02 (response dimension). EU AI Act Art. 14, Art. 26. NIST AI RMF GOVERN 4.1, MANAGE 4.1. OWASP ASI02:2026, ASI09:2026.

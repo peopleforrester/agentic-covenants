@@ -45,4 +45,4 @@ kubectl get deployment -n agent-claude-code-prod claude-code -o jsonpath='{.spec
 
 ## Citation
 
-NIST CSF 2.0 RS.MI-01, RS.MI-02; ID.RA-09 (response dimension); GV.SC-07 (response dimension). NIST SP 800-218A. SLSA framework. OWASP ASI04. NIST AI RMF MANAGE 3.1.
+NIST CSF 2.0 RS.MI-01, RS.MI-02; ID.RA-09 (response dimension); GV.SC-07 (response dimension). NIST SP 800-218A. SLSA framework. OWASP ASI04:2026. NIST AI RMF MANAGE 3.1.

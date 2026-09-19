@@ -53,4 +53,4 @@ aws iam get-role-policy --role-name claude-code-prod --policy-name EmergencyDeny
 
 ## Citation
 
-NIST CSF 2.0 RS.MI-01, RS.MI-02; PR.AA-05 (response dimension). NIST SP 800-207 (Zero Trust). OWASP ASI02, ASI03, ASI05. NIST AI RMF MANAGE 4.1.
+NIST CSF 2.0 RS.MI-01, RS.MI-02; PR.AA-05 (response dimension). NIST SP 800-207 (Zero Trust). OWASP ASI02:2026, ASI03:2026, ASI05:2026. NIST AI RMF MANAGE 4.1.

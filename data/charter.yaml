@@ -203,4 +203,4 @@ cells:
       nist_ai_rmf: ["GOVERN 6.2", "MAP 4.1"]
       iso_iec_42001: ["§A.10"]
       eu_ai_act: ["Art. 25"]
-      owasp_mcp: ["MCP04", "MCP09"]
+      owasp_mcp: ["MCP04:2025", "MCP09:2025"]

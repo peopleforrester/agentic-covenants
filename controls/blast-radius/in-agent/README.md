@@ -24,4 +24,4 @@ You cannot verify this layer the way you verify the others. The "verification" h
 
 ## Citation
 
-Advisory; no direct framework mapping. Thematic: NIST AI RMF MAP 5.1; MEASURE 2.6 (safety risks evaluated). OWASP LLM06 (Excessive Agency). OWASP ASI02, ASI05.
+Advisory; no direct framework mapping. Thematic: NIST AI RMF MAP 5.1; MEASURE 2.6 (safety risks evaluated). OWASP LLM06:2025 (Excessive Agency). OWASP ASI02:2026, ASI05:2026.

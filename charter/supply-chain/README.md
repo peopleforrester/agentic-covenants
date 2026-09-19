@@ -8,4 +8,4 @@
 | Domain | [`client-side/`](./client-side), Inherits org list; adds domain restrictions; approves or denies MCP servers for the domain. |
 | Agent | [`in-agent/`](./in-agent), Specific named foundation model + version, MCP servers with hashes, base image digest, runtime version. Dependency changes require charter amendment. |
 
-Feeds [`../../controls/supply-chain/`](../../controls/supply-chain). Per OWASP MCP Top 10 (MCP04, MCP09), supply chain inventory is a charter property, not a runtime property.
+Feeds [`../../controls/supply-chain/`](../../controls/supply-chain). Per OWASP MCP Top 10 (MCP04:2025, MCP09:2025), supply chain inventory is a charter property, not a runtime property.

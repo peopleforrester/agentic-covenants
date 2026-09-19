@@ -24,4 +24,4 @@ You cannot verify this layer the way you verify the others. Confirmation-rate me
 
 ## Citation
 
-Advisory; no direct framework mapping. Thematic: NIST AI RMF MANAGE 4.1 (override mechanisms). OWASP LLM06. OWASP ASI09 (Human-Agent Trust Exploitation), related risk.
+Advisory; no direct framework mapping. Thematic: NIST AI RMF MANAGE 4.1 (override mechanisms). OWASP LLM06:2025. OWASP ASI09:2026 (Human-Agent Trust Exploitation), related risk.

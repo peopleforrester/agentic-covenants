@@ -41,4 +41,4 @@ gh variable list -R $REPO | grep DEPLOY_FREEZE
 
 ## Citation
 
-NIST CSF 2.0 RC.RP-01, RC.IM-01; GV.RR-02 (recovery dimension). NIST AI RMF GOVERN 4.1, MANAGE 4.1. OWASP ASI02, ASI09. EU AI Act Art. 14, Art. 26.
+NIST CSF 2.0 RC.RP-01, RC.IM-01; GV.RR-02 (recovery dimension). NIST AI RMF GOVERN 4.1, MANAGE 4.1. OWASP ASI02:2026, ASI09:2026. EU AI Act Art. 14, Art. 26.

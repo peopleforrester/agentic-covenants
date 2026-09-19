@@ -40,4 +40,4 @@ curl -sS https://escalate.example.com/api/status?agent=claude-code-prod
 
 ## Citation
 
-NIST CSF 2.0 RS.MI-01. NIST AI RMF MANAGE 4.1. OWASP ASI09. EU AI Act Art. 14 (response dimension).
+NIST CSF 2.0 RS.MI-01. NIST AI RMF MANAGE 4.1. OWASP ASI09:2026. EU AI Act Art. 14 (response dimension).

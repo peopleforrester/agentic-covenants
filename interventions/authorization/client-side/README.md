@@ -39,4 +39,4 @@ sudo -u agent-runner /usr/local/bin/claude --print "test" 2>&1 | grep "emergency
 
 ## Citation
 
-NIST CSF 2.0 RS.MI-01, RS.MI-02. NIST AI RMF MANAGE 4.1. OWASP ASI02, ASI05.
+NIST CSF 2.0 RS.MI-01, RS.MI-02. NIST AI RMF MANAGE 4.1. OWASP ASI02:2026, ASI05:2026.

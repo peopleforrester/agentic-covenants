@@ -30,6 +30,6 @@ Pre-2.1.40 Claude Code allowed `allow` in `settings.json` `permissions` to overr
 
 See [`../../CITATIONS.md`](../../framework/CITATIONS.md). Quick reference:
 
-- **In-agent**: advisory; thematically MAP 5.1; OWASP LLM06 (Excessive Agency); OWASP ASI02 (Tool Misuse).
-- **Client-side**: NIST CSF 2.0 PR.AA-05 (least privilege, separation of duties), PR.PS-01; OWASP LLM05, LLM06; OWASP ASI02, ASI05; OWASP MCP02, MCP05; OWASP Agentic Least Agency principle.
-- **Server-side**: NIST CSF 2.0 PR.AA-05, PR.PS-01, PR.PS-05; NIST SP 800-207; OWASP ASI02, ASI03, ASI05; CIS Kubernetes Benchmark.
+- **In-agent**: advisory; thematically MAP 5.1; OWASP LLM06:2025 (Excessive Agency); OWASP ASI02:2026 (Tool Misuse).
+- **Client-side**: NIST CSF 2.0 PR.AA-05 (least privilege, separation of duties), PR.PS-01; OWASP LLM05:2025, LLM06:2025; OWASP ASI02:2026, ASI05:2026; OWASP MCP02:2025, MCP05:2025; OWASP Agentic Least Agency principle.
+- **Server-side**: NIST CSF 2.0 PR.AA-05, PR.PS-01, PR.PS-05; NIST SP 800-207; OWASP ASI02:2026, ASI03:2026, ASI05:2026; CIS Kubernetes Benchmark.

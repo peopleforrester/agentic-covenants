@@ -43,6 +43,6 @@ The agent platform's tooling support for the second pattern is limited as of May
 
 See [`../../CITATIONS.md`](../../framework/CITATIONS.md). Quick reference:
 
-- **In-agent**: advisory; thematically NIST AI RMF MANAGE 4.1 (override mechanisms); OWASP LLM06; OWASP ASI09 (Human-Agent Trust Exploitation).
-- **Client-side**: NIST CSF 2.0 PR.AA-05, PR.PS-01; NIST AI RMF MANAGE 4.1 (post-deployment monitoring, appeal and override); OWASP LLM06; OWASP ASI02, ASI09; OWASP Agentic Least Agency principle; assistance-games framing (Russell, 2019); EU AI Act Art. 14 (human oversight); Singapore IMDA "meaningful human accountability."
-- **Server-side**: NIST CSF 2.0 PR.AA-05, PR.PS-01, GV.RR-02; NIST AI RMF GOVERN 4.1, MANAGE 4.1; OWASP LLM06; OWASP ASI02, ASI03; EU AI Act Art. 14, Art. 26; ISO/IEC 42001 §A.4; NIST SP 800-160 Vol. 1 (separation of duties).
+- **In-agent**: advisory; thematically NIST AI RMF MANAGE 4.1 (override mechanisms); OWASP LLM06:2025; OWASP ASI09:2026 (Human-Agent Trust Exploitation).
+- **Client-side**: NIST CSF 2.0 PR.AA-05, PR.PS-01; NIST AI RMF MANAGE 4.1 (post-deployment monitoring, appeal and override); OWASP LLM06:2025; OWASP ASI02:2026, ASI09:2026; OWASP Agentic Least Agency principle; assistance-games framing (Russell, 2019); EU AI Act Art. 14 (human oversight); Singapore IMDA "meaningful human accountability."
+- **Server-side**: NIST CSF 2.0 PR.AA-05, PR.PS-01, GV.RR-02; NIST AI RMF GOVERN 4.1, MANAGE 4.1; OWASP LLM06:2025; OWASP ASI02:2026, ASI03:2026; EU AI Act Art. 14, Art. 26; ISO/IEC 42001 §A.4; NIST SP 800-160 Vol. 1 (separation of duties).

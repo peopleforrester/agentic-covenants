@@ -180,7 +180,7 @@ cells:
       nist_csf_2_0: ["ID.AM-04", "ID.RA-09"]
       nist_ai_rmf: ["MAP 4.1"]
       csa_maestro: ["Layer 1", "Layer 7"]
-      owasp_mcp: ["MCP04", "MCP09"]
+      owasp_mcp: ["MCP04:2025", "MCP09:2025"]
 
   - concern: supply-chain
     layer: client-side

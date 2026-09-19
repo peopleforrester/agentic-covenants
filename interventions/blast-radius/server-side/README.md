@@ -45,4 +45,4 @@ kubectl get pods -n agent-claude-code-prod
 
 ## Citation
 
-NIST CSF 2.0 RS.MI-01, RS.MI-02; PR.IR-01 (response dimension). NIST SP 800-61 Rev. 2. NISTIR 8596. OWASP ASI05, ASI08. NIST AI RMF MANAGE 4.1.
+NIST CSF 2.0 RS.MI-01, RS.MI-02; PR.IR-01 (response dimension). NIST SP 800-61 Rev. 2. NISTIR 8596. OWASP ASI05:2026, ASI08:2026. NIST AI RMF MANAGE 4.1.

@@ -69,7 +69,7 @@ cells:
     citations:
       nist_csf_2_0: ["RC.RP-01", "RC.IM-01"]
       nist_ai_rmf: ["MANAGE 4.1"]
-      owasp_agentic: ["ASI03", "ASI10"]
+      owasp_agentic: ["ASI03:2026", "ASI10:2026"]
       other: ["NIST SP 800-61 Rev. 2", "NIST SP 800-63B Rev. 4"]
     primary_failure_modes:
       - new credential issued with default long TTL
@@ -83,7 +83,7 @@ cells:
     citations:
       nist_csf_2_0: ["RC.RP-01", "RC.IM-01", "PR.AA-01"]
       nist_ai_rmf: ["MANAGE 4.1"]
-      owasp_agentic: ["ASI03", "ASI10"]
+      owasp_agentic: ["ASI03:2026", "ASI10:2026"]
       other: ["NIST SP 800-207", "NIST NCCoE Concept Paper on AI Agent Identity"]
     primary_failure_modes:
       - SA YAML in source has drifted; cluster has no SA after delete-and-recreate
@@ -107,7 +107,7 @@ cells:
     citations:
       nist_csf_2_0: ["RC.RP-01", "RC.IM-01"]
       nist_ai_rmf: ["MANAGE 4.1"]
-      owasp_agentic: ["ASI02", "ASI05"]
+      owasp_agentic: ["ASI02:2026", "ASI05:2026"]
     primary_failure_modes:
       - chattr +i remained from intervention; restore fails to overwrite
       - hook ownership returned to agent's user instead of operator
@@ -119,7 +119,7 @@ cells:
     citations:
       nist_csf_2_0: ["RC.RP-01", "RC.IM-01", "PR.AA-05"]
       nist_ai_rmf: ["MANAGE 4.1"]
-      owasp_agentic: ["ASI02", "ASI03", "ASI05"]
+      owasp_agentic: ["ASI02:2026", "ASI03:2026", "ASI05:2026"]
       other: ["NIST SP 800-207", "CIS Kubernetes Benchmark"]
     primary_failure_modes:
       - declarative source itself was compromised during incident
@@ -142,7 +142,7 @@ cells:
     citations:
       nist_csf_2_0: ["RC.RP-01"]
       nist_ai_rmf: ["MANAGE 4.1"]
-      owasp_agentic: ["ASI05", "ASI08"]
+      owasp_agentic: ["ASI05:2026", "ASI08:2026"]
       other: ["NIST SP 800-160 Vol. 1"]
     primary_failure_modes:
       - host firmware/BIOS-level compromise survives reimage
@@ -155,7 +155,7 @@ cells:
     citations:
       nist_csf_2_0: ["RC.RP-01", "RC.IM-01", "PR.IR-01", "PR.DS-11"]
       nist_ai_rmf: ["MANAGE 4.1"]
-      owasp_agentic: ["ASI05", "ASI08"]
+      owasp_agentic: ["ASI05:2026", "ASI08:2026"]
       other: ["NIST SP 800-34 Rev. 1", "NISTIR 8596"]
     primary_failure_modes:
       - backup taken after contamination point
@@ -178,7 +178,7 @@ cells:
     citations:
       nist_csf_2_0: ["RC.RP-01"]
       nist_ai_rmf: ["MANAGE 4.1"]
-      owasp_agentic: ["ASI09"]
+      owasp_agentic: ["ASI09:2026"]
       other: ["EU AI Act Art. 14 (recovery dimension)"]
 
   - concern: approval-gating
@@ -188,7 +188,7 @@ cells:
     citations:
       nist_csf_2_0: ["RC.RP-01", "RC.IM-01", "GV.RR-02"]
       nist_ai_rmf: ["GOVERN 4.1", "MANAGE 4.1"]
-      owasp_agentic: ["ASI02", "ASI09"]
+      owasp_agentic: ["ASI02:2026", "ASI09:2026"]
       other: ["EU AI Act Art. 14, Art. 26"]
     primary_failure_modes:
       - protection config not version-controlled; restored from incomplete copy
@@ -211,8 +211,8 @@ cells:
     citations:
       nist_csf_2_0: ["RC.RP-01"]
       nist_ai_rmf: ["MANAGE 3.1"]
-      owasp_agentic: ["ASI04", "ASI06"]
-      owasp_mcp: ["MCP04", "MCP09"]
+      owasp_agentic: ["ASI04:2026", "ASI06:2026"]
+      owasp_mcp: ["MCP04:2025", "MCP09:2025"]
     primary_failure_modes:
       - re-pin to "current" pins to a poisoned current
       - lockfile regenerated against possibly-tainted manifest
@@ -224,7 +224,7 @@ cells:
     citations:
       nist_csf_2_0: ["RC.RP-01", "RC.IM-01", "ID.RA-09", "GV.SC-07"]
       nist_ai_rmf: ["MAP 4.1", "MANAGE 3.1"]
-      owasp_agentic: ["ASI04"]
+      owasp_agentic: ["ASI04:2026"]
       other: ["NIST SP 800-218 Rev. 1", "NIST SP 800-218A", "SLSA framework"]
     primary_failure_modes:
       - signing key rebuild without rotation when key was exposed

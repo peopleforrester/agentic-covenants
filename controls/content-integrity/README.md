@@ -59,4 +59,4 @@ Version and status claims above are as reported by secondary sources in August 2
 
 ## Crosswalk
 
-OWASP LLM Top 10 **LLM01** (prompt injection), **LLM02** (sensitive information disclosure), **LLM05** (improper output handling). OWASP Agentic **ASI02** (tool misuse). NIST AI RMF **MEASURE 2.7**. See [`CITATIONS.md`](../../framework/CITATIONS.md).
+OWASP LLM Top 10 **LLM01:2025** (prompt injection), **LLM02:2025** (sensitive information disclosure), **LLM05:2025** (improper output handling). OWASP Agentic **ASI02:2026** (tool misuse). NIST AI RMF **MEASURE 2.7**. See [`CITATIONS.md`](../../framework/CITATIONS.md).

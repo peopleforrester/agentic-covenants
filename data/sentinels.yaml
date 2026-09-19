@@ -189,7 +189,7 @@ cells:
     sentinels_path: sentinels/supply-chain/client-side/
     citations:
       nist_csf_2_0: ["DE.CM-09", "ID.RA-09"]
-      owasp_mcp: ["MCP08", "MCP09"]
+      owasp_mcp: ["MCP08:2025", "MCP09:2025"]
     primary_failure_modes:
       - MCP wrapper logs only successful connections (failures are interesting events)
       - lockfile diff log includes full diff for huge PRs (truncate)

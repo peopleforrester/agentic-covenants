@@ -51,4 +51,4 @@ echo '{"question":"This action affects 40% of ARR. Should we proceed?","context"
 
 ## Citation
 
-NIST CSF 2.0 PR.AA-05 (separation of duties), PR.PS-01. NIST AI RMF MANAGE 4.1 (post-deployment monitoring, appeal and override mechanisms). OWASP LLM06 (Excessive Agency). OWASP ASI02, ASI09 (Human-Agent Trust Exploitation). OWASP Agentic Least Agency principle. Assistance-games framing (Russell, 2019). EU AI Act Art. 14 (human oversight). Singapore IMDA "meaningful human accountability."
+NIST CSF 2.0 PR.AA-05 (separation of duties), PR.PS-01. NIST AI RMF MANAGE 4.1 (post-deployment monitoring, appeal and override mechanisms). OWASP LLM06:2025 (Excessive Agency). OWASP ASI02:2026, ASI09:2026 (Human-Agent Trust Exploitation). OWASP Agentic Least Agency principle. Assistance-games framing (Russell, 2019). EU AI Act Art. 14 (human oversight). Singapore IMDA "meaningful human accountability."

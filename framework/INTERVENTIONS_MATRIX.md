@@ -123,4 +123,4 @@ The pre-engagement order is Sentinels → Interventions → Restorations. You ca
 
 ## Citations
 
-NIST CSF 2.0 RS.MI-* (Mitigation), RS.CO-* (Communications). NIST SP 800-61 Rev. 2 (Computer Security Incident Handling Guide). EU AI Act Articles 14 and 26. NIST AI RMF MANAGE 4.1. OWASP Agentic ASI02, ASI03, ASI04, ASI05, ASI08, ASI09, ASI10. Per-cell crosswalk in [`CITATIONS.md`](./CITATIONS.md) (interventions section to be added).
+NIST CSF 2.0 RS.MI-* (Mitigation), RS.CO-* (Communications). NIST SP 800-61 Rev. 2 (Computer Security Incident Handling Guide). EU AI Act Articles 14 and 26. NIST AI RMF MANAGE 4.1. OWASP Agentic ASI02:2026, ASI03:2026, ASI04:2026, ASI05:2026, ASI08:2026, ASI09:2026, ASI10:2026. Per-cell crosswalk in [`CITATIONS.md`](./CITATIONS.md) (interventions section to be added).

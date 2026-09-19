@@ -637,8 +637,32 @@ def check_assurance(staged: bool) -> Findings:
     return findings
 
 
+OWASP_ID = re.compile(r"\b(?:LLM|ASI|MCP)\d{2}\b(?!:)")
+
+
+def check_owasp_ids(staged: bool) -> Findings:
+    """Every OWASP identifier must carry its edition suffix.
+
+    OWASP's own documents write LLM01:2025 and MCP06:2025. A bare LLM06 is
+    ambiguous the moment any new edition lands, and an edition that reorders
+    rather than appends turns a stale identifier into a wrong one rather than
+    an old one. 310 unsuffixed identifiers were carried across 47 files while
+    the only edition context in the repo sat in CITATIONS.md.
+    """
+    findings = Findings("owasp-ids")
+    for path in iter_files((".md", ".yaml", ".yml"), staged):
+        for lineno, line in enumerate(
+            path.read_text(encoding="utf-8", errors="replace").splitlines(), start=1
+        ):
+            for hit in OWASP_ID.findall(line):
+                findings.add(path, lineno,
+                             f"{hit} has no edition suffix; write {hit}:<year>")
+    return findings
+
+
 CHECKS: dict[str, Callable[[bool], Findings]] = {
     "assurance": check_assurance,
+    "owasp-ids": check_owasp_ids,
     "counts": check_counts,
     "root": check_root,
     "diagrams": check_diagrams,

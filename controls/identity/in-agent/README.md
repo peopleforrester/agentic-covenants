@@ -26,4 +26,4 @@ You cannot verify this layer the way you verify the others. The "verification" i
 
 ## Citation
 
-Advisory; no direct framework mapping. For thematic alignment: NIST AI RMF GOVERN 1.5 (ongoing monitoring); MAP 4.1 (third-party risks). OWASP LLM07 (System Prompt Leakage) is the related risk.
+Advisory; no direct framework mapping. For thematic alignment: NIST AI RMF GOVERN 1.5 (ongoing monitoring); MAP 4.1 (third-party risks). OWASP LLM07:2025 (System Prompt Leakage) is the related risk.

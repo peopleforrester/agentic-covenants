@@ -41,4 +41,4 @@ docker ps --filter "label=agent=claude-code-prod"
 
 ## Citation
 
-NIST CSF 2.0 RS.MI-01, RS.MI-02. NIST SP 800-160 Vol. 1. OWASP ASI05, ASI08. NIST AI RMF MANAGE 4.1.
+NIST CSF 2.0 RS.MI-01, RS.MI-02. NIST SP 800-160 Vol. 1. OWASP ASI05:2026, ASI08:2026. NIST AI RMF MANAGE 4.1.

@@ -69,7 +69,7 @@ cells:
     citations:
       nist_csf_2_0: ["RS.MI-01", "RS.MI-02"]
       nist_ai_rmf: ["MANAGE 4.1"]
-      owasp_agentic: ["ASI03", "ASI10"]
+      owasp_agentic: ["ASI03:2026", "ASI10:2026"]
       other: ["NIST SP 800-61 Rev. 2"]
     primary_failure_modes:
       - daemonized agents survive pkill
@@ -82,7 +82,7 @@ cells:
     citations:
       nist_csf_2_0: ["RS.MI-01", "RS.MI-02", "PR.AA-01"]
       nist_ai_rmf: ["MANAGE 4.1"]
-      owasp_agentic: ["ASI03", "ASI10"]
+      owasp_agentic: ["ASI03:2026", "ASI10:2026"]
       other: ["NIST SP 800-63B Rev. 4", "NIST SP 800-207"]
     primary_failure_modes:
       - JWT TTL window remains valid until expiry
@@ -104,7 +104,7 @@ cells:
     citations:
       nist_csf_2_0: ["RS.MI-01", "RS.MI-02"]
       nist_ai_rmf: ["MANAGE 4.1"]
-      owasp_agentic: ["ASI02", "ASI05"]
+      owasp_agentic: ["ASI02:2026", "ASI05:2026"]
     primary_failure_modes:
       - chattr +i not supported on tmpfs/NFS/FAT
       - in-flight agent uses old hook until killed
@@ -116,7 +116,7 @@ cells:
     citations:
       nist_csf_2_0: ["RS.MI-01", "RS.MI-02", "PR.AA-05"]
       nist_ai_rmf: ["MANAGE 4.1"]
-      owasp_agentic: ["ASI02", "ASI03", "ASI05"]
+      owasp_agentic: ["ASI02:2026", "ASI03:2026", "ASI05:2026"]
       other: ["NIST SP 800-207"]
     primary_failure_modes:
       - Kyverno in audit-only mode does not block
@@ -138,7 +138,7 @@ cells:
     citations:
       nist_csf_2_0: ["RS.MI-01", "RS.MI-02"]
       nist_ai_rmf: ["MANAGE 4.1"]
-      owasp_agentic: ["ASI05", "ASI08"]
+      owasp_agentic: ["ASI05:2026", "ASI08:2026"]
       other: ["NIST SP 800-160 Vol. 1"]
     primary_failure_modes:
       - pkill -f matches partials; wrapper survives
@@ -152,7 +152,7 @@ cells:
     citations:
       nist_csf_2_0: ["RS.MI-01", "RS.MI-02", "PR.IR-01"]
       nist_ai_rmf: ["MANAGE 4.1"]
-      owasp_agentic: ["ASI05", "ASI08"]
+      owasp_agentic: ["ASI05:2026", "ASI08:2026"]
       other: ["NIST SP 800-61 Rev. 2", "NISTIR 8596"]
     primary_failure_modes:
       - drain without --grace-period=0 honors 5-min terminationGracePeriodSeconds
@@ -175,7 +175,7 @@ cells:
     citations:
       nist_csf_2_0: ["RS.MI-01"]
       nist_ai_rmf: ["MANAGE 4.1"]
-      owasp_agentic: ["ASI09"]
+      owasp_agentic: ["ASI09:2026"]
       other: ["EU AI Act Art. 14 (response dimension)"]
     primary_failure_modes:
       - Auto Mode disabled but hook still permissive
@@ -188,7 +188,7 @@ cells:
     citations:
       nist_csf_2_0: ["RS.MI-01", "RS.CO-02", "GV.RR-02"]
       nist_ai_rmf: ["GOVERN 4.1", "MANAGE 4.1"]
-      owasp_agentic: ["ASI02", "ASI09"]
+      owasp_agentic: ["ASI02:2026", "ASI09:2026"]
       other: ["EU AI Act Art. 14, Art. 26"]
     primary_failure_modes:
       - enforce_admins false in locked config
@@ -211,8 +211,8 @@ cells:
     citations:
       nist_csf_2_0: ["RS.MI-01", "RS.MI-02"]
       nist_ai_rmf: ["MANAGE 3.1"]
-      owasp_agentic: ["ASI04", "ASI06"]
-      owasp_mcp: ["MCP04", "MCP09"]
+      owasp_agentic: ["ASI04:2026", "ASI06:2026"]
+      owasp_mcp: ["MCP04:2025", "MCP09:2025"]
     primary_failure_modes:
       - in-memory state retains malicious imports until restart
       - chattr +i not durable on tmpfs
@@ -225,7 +225,7 @@ cells:
     citations:
       nist_csf_2_0: ["RS.MI-01", "RS.MI-02", "ID.RA-09", "GV.SC-07"]
       nist_ai_rmf: ["MANAGE 3.1"]
-      owasp_agentic: ["ASI04"]
+      owasp_agentic: ["ASI04:2026"]
       other: ["NIST SP 800-218A", "SLSA framework"]
     primary_failure_modes:
       - cached images on nodes keep running after registry deletion
