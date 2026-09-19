@@ -61,6 +61,7 @@ Issue #5's definition of done is that every [`BYPASSES.md`](./BYPASSES.md) entry
 | **Check Point CVE-2025-59536 / CVE-2026-21852** | Nothing here | **Not prevented.** Hook auto-execution from repo-local config is a client platform defect. Operator-owned config placement mitigates; the artifact for it is advisory |
 | **Claude Code symlink sandbox escape** (CVE-2026-39861) | Nothing here | **Not prevented.** A sandbox escape defeats the cell that would otherwise contain it. Patch is the only control |
 | **Agent-framework CVE wave** (CVE-2026-25592, -25253, -32922) | [`inventory/`](../inventory), [`blast-radius/`](../controls/blast-radius) | **Not prevented.** Inventory tells you what to patch; blast radius buys time between disclosure and patch |
+| **MCP advisory wave incl. official SDKs** (46 advisories, Aug to Sep 2026) | [`supply-chain/server-side/`](../controls/supply-chain/server-side/) egress allowlist, [`blast-radius/client-side/`](../controls/blast-radius/client-side/) sandbox | **Bounded, not prevented, and it removed a mitigation.** Hash-pinning an official SDK that carries CVE-2026-63127 pins the vulnerability exactly. Allowlisting answers which server runs, not whether it is safe. Only the controls indifferent to the server's identity still bound it, and one entry in the wave has no patch at all |
 | **Agent CLI read-only bypass** (CVE-2025-66032) | Nothing here | **Not prevented, and the worst case in the table.** The client-side allowlist was present, enforcing, and wrong: it parsed the command and decided it was read-only. A control that fails *open while reporting closed* is worse than an absent one. Only the server-side column bounds this, because RBAC does not consult a shell parser |
 | **Semantic Kernel RCE and file write** (CVE-2026-26030, CVE-2026-25592) | [`inventory/`](../inventory/), [`blast-radius/`](../controls/blast-radius/) | **Not prevented.** Framework defects reachable through function calling and the retrieval filter. Inventory tells you what to patch; blast radius buys time between disclosure and patch |
 | **Taiwan government campaign** (July 2026) | Not applicable | **Out of scope, deliberately.** This is agentic tooling used *against* a target. Nothing in a framework for governing your own agents defends against someone else's. It is in the corpus because the capability is symmetric and the tooling is free |
@@ -80,9 +81,9 @@ The first 29 entries in `BYPASSES.md` are bypasses *of* the controls this framew
 
 ### The tally, stated plainly
 
-Of the 17 ecosystem incidents: **3 prevented, 5 bounded or partial, 8 not prevented, 1 out of scope.**
+Of the 18 ecosystem incidents: **3 prevented, 6 bounded or partial, 8 not prevented, 1 out of scope.**
 
-Eight of seventeen is not a failure of the framework. It is what an honest coverage map looks like, and the alternative is a matrix that claims everything and is checked by nobody. The not-prevented column is dominated by two classes, and neither is closable by adding cells:
+Eight of eighteen is not a failure of the framework. It is what an honest coverage map looks like, and the alternative is a matrix that claims everything and is checked by nobody. The not-prevented column is dominated by two classes, and neither is closable by adding cells:
 
 1. **Platform defects.** A sandbox escape or a hook auto-execution bug is fixed by the vendor, not by policy.
 2. **Trusted-component compromise.** When the scanner, the signed extension, or the official marketplace is the vector, provenance controls confirm the wrong thing correctly.
