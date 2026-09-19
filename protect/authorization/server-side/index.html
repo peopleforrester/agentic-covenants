@@ -358,9 +358,9 @@ kubectl get clusterpolicyreport -A
 <li>- Webhook timeout <code>failurePolicy: Ignore</code>, under load, the policy fails open and admits the violating resource.</li>
 </ul>
 <h3>Citation</h3>
-<p>NIST CSF 2.0 PR.AA-05 (least privilege, separation of duties), PR.PS-01 (configuration management practices), PR.PS-05 (unauthorized software prevented). NIST SP 800-207 (Zero Trust). OWASP ASI02, ASI03, ASI05. CIS Kubernetes Benchmark.</p></section>
+<p>NIST CSF 2.0 PR.AA-05 (least privilege, separation of duties), PR.PS-01 (configuration management practices), PR.PS-05 (unauthorized software prevented). NIST SP 800-207 (Zero Trust). OWASP ASI02:2026, ASI03:2026, ASI05:2026. CIS Kubernetes Benchmark.</p></section>
   <section class="risks"><h2>Primary bypasses</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>escalate/bind/impersonate in RBAC</li><li>subresource access not denied</li><li>admission webhook fail-open</li></ul></section>
-  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>PR.AA-05, PR.PS-01, PR.PS-05</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 2.4, MANAGE 4.1</td></tr><tr><th>OWASP LLM</th><td>LLM05, LLM06</td></tr><tr><th>OWASP AGENTIC</th><td>ASI02, ASI03, ASI05</td></tr><tr><th>OTHER</th><td>NIST SP 800-207, CIS Kubernetes Benchmark</td></tr></tbody></table></div></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>PR.AA-05, PR.PS-01, PR.PS-05</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 2.4, MANAGE 4.1</td></tr><tr><th>OWASP LLM</th><td>LLM05:2025, LLM06:2025</td></tr><tr><th>OWASP AGENTIC</th><td>ASI02:2026, ASI03:2026, ASI05:2026</td></tr><tr><th>OTHER</th><td>NIST SP 800-207, CIS Kubernetes Benchmark</td></tr></tbody></table></div></section>
   <p class="permalink">Cite this cell:
      <code>https://agenticcovenants.com/protect/authorization/server-side/</code></p>
 </article>

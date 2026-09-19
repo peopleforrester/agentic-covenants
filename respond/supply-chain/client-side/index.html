@@ -147,9 +147,9 @@ lsattr /etc/agents/claude-code-prod/package-lock.json
 <li>- Forgetting that the agent may have credentials cached in OS keychain that the quarantined package planted.</li>
 </ul>
 <h3>Citation</h3>
-<p>NIST CSF 2.0 RS.MI-01, RS.MI-02. NIST AI RMF MANAGE 3.1. OWASP ASI04, ASI06. OWASP MCP04, MCP09.</p></section>
+<p>NIST CSF 2.0 RS.MI-01, RS.MI-02. NIST AI RMF MANAGE 3.1. OWASP ASI04:2026, ASI06:2026. OWASP MCP04:2025, MCP09:2025.</p></section>
   <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>in-memory state retains malicious imports until restart</li><li>chattr +i not durable on tmpfs</li><li>keychain credentials planted by package survive</li></ul></section>
-  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RS.MI-01, RS.MI-02</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 3.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI04, ASI06</td></tr><tr><th>OWASP MCP</th><td>MCP04, MCP09</td></tr></tbody></table></div></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RS.MI-01, RS.MI-02</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 3.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI04:2026, ASI06:2026</td></tr><tr><th>OWASP MCP</th><td>MCP04:2025, MCP09:2025</td></tr></tbody></table></div></section>
   <p class="permalink">Cite this cell:
      <code>https://agenticcovenants.com/respond/supply-chain/client-side/</code></p>
 </article>

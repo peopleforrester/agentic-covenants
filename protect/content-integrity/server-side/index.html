@@ -204,7 +204,7 @@ kubectl run egress-probe --rm -i --restart=Never \
 </code></pre>
 <p>Both directions, for the same reason the Kyverno suite tests both: a policy that denies everything is an outage rather than a control.</p></section>
   <section class="risks"><h2>Primary bypasses</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>exfiltration through an allowlisted write-capable host</li><li>DNS and timing channels</li><li>end-to-end encrypted destinations defeating DLP</li></ul></section>
-  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>PR.DS-02, DE.CM-01, PR.IR-01</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 2.2</td></tr><tr><th>OWASP LLM</th><td>LLM02</td></tr><tr><th>OWASP AGENTIC</th><td>ASI02</td></tr></tbody></table></div></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>PR.DS-02, DE.CM-01, PR.IR-01</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 2.2</td></tr><tr><th>OWASP LLM</th><td>LLM02:2025</td></tr><tr><th>OWASP AGENTIC</th><td>ASI02:2026</td></tr></tbody></table></div></section>
   <p class="permalink">Cite this cell:
      <code>https://agenticcovenants.com/protect/content-integrity/server-side/</code></p>
 </article>

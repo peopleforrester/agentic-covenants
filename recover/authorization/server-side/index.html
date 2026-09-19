@@ -197,7 +197,7 @@ kubectl --as=system:serviceaccount:agent-claude-code-prod:claude-code get pods
 <h3>Citation</h3>
 <p>NIST CSF 2.0 RC.RP-01, RC.IM-01; PR.AA-05 (recovery dimension). NIST SP 800-207 (Zero Trust). CIS Kubernetes Benchmark. NIST AI RMF MANAGE 4.1.</p></section>
   <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>declarative source itself was compromised during incident</li><li>reapply does not delete drift; only adds/updates declared resources</li><li>emergency-deny ClusterPolicy not removed</li></ul></section>
-  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RC.RP-01, RC.IM-01, PR.AA-05</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 4.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI02, ASI03, ASI05</td></tr><tr><th>OTHER</th><td>NIST SP 800-207, CIS Kubernetes Benchmark</td></tr></tbody></table></div></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RC.RP-01, RC.IM-01, PR.AA-05</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 4.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI02:2026, ASI03:2026, ASI05:2026</td></tr><tr><th>OTHER</th><td>NIST SP 800-207, CIS Kubernetes Benchmark</td></tr></tbody></table></div></section>
   <p class="permalink">Cite this cell:
      <code>https://agenticcovenants.com/recover/authorization/server-side/</code></p>
 </article>

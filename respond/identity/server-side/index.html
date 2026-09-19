@@ -158,9 +158,9 @@ aws iam list-role-policies --role-name claude-code-prod | grep EmergencyDenyAll
 <li>- Not testing the IdP API path before the incident. The emergency is the wrong time to learn that your Okta API token expired.</li>
 </ul>
 <h3>Citation</h3>
-<p>NIST CSF 2.0 RS.MI-01, RS.MI-02; PR.AA-01 (response dimension). NIST SP 800-63B Rev. 4 (credential lifecycle). NIST SP 800-207 (Zero Trust). OWASP ASI03, ASI10. NIST AI RMF MANAGE 4.1.</p></section>
+<p>NIST CSF 2.0 RS.MI-01, RS.MI-02; PR.AA-01 (response dimension). NIST SP 800-63B Rev. 4 (credential lifecycle). NIST SP 800-207 (Zero Trust). OWASP ASI03:2026, ASI10:2026. NIST AI RMF MANAGE 4.1.</p></section>
   <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>JWT TTL window remains valid until expiry</li><li>existing pods retain mounted tokens until restart</li></ul></section>
-  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RS.MI-01, RS.MI-02, PR.AA-01</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 4.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI03, ASI10</td></tr><tr><th>OTHER</th><td>NIST SP 800-63B Rev. 4, NIST SP 800-207</td></tr></tbody></table></div></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RS.MI-01, RS.MI-02, PR.AA-01</td></tr><tr><th>NIST AI RMF</th><td>MANAGE 4.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI03:2026, ASI10:2026</td></tr><tr><th>OTHER</th><td>NIST SP 800-63B Rev. 4, NIST SP 800-207</td></tr></tbody></table></div></section>
   <p class="permalink">Cite this cell:
      <code>https://agenticcovenants.com/respond/identity/server-side/</code></p>
 </article>

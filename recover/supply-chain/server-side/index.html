@@ -156,7 +156,7 @@ kubectl exec -n agent-claude-code-prod $(kubectl get pods -n agent-claude-code-p
 <h3>Citation</h3>
 <p>NIST CSF 2.0 RC.RP-01, RC.IM-01; ID.RA-09 (recovery dimension); GV.SC-07 (recovery dimension). NIST SP 800-218 Rev. 1. NIST SP 800-218A. SLSA framework. NIST AI RMF MAP 4.1, MANAGE 3.1.</p></section>
   <section class="risks"><h2>Primary failure modes</h2><p class="note">Documented, not hypothetical. A control whose bypass is undocumented is worse than no control, because somebody trusted it.</p><ul><li>signing key rebuild without rotation when key was exposed</li><li>SBOM diff not used; regeneration alone does not surface what changed</li><li>registry-cached compromised images survive</li></ul></section>
-  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RC.RP-01, RC.IM-01, ID.RA-09, GV.SC-07</td></tr><tr><th>NIST AI RMF</th><td>MAP 4.1, MANAGE 3.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI04</td></tr><tr><th>OTHER</th><td>NIST SP 800-218 Rev. 1, NIST SP 800-218A, SLSA framework</td></tr></tbody></table></div></section>
+  <section class="cites"><h2>Crosswalk</h2><div class="tw"><table><tbody><tr><th>NIST CSF 2 0</th><td>RC.RP-01, RC.IM-01, ID.RA-09, GV.SC-07</td></tr><tr><th>NIST AI RMF</th><td>MAP 4.1, MANAGE 3.1</td></tr><tr><th>OWASP AGENTIC</th><td>ASI04:2026</td></tr><tr><th>OTHER</th><td>NIST SP 800-218 Rev. 1, NIST SP 800-218A, SLSA framework</td></tr></tbody></table></div></section>
   <p class="permalink">Cite this cell:
      <code>https://agenticcovenants.com/recover/supply-chain/server-side/</code></p>
 </article>
