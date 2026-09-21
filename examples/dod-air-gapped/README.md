@@ -1,6 +1,6 @@
 # Example: air-gapped / DoD IL4–IL5 deployment
 
-The rest of this repo assumes internet egress: public Sigstore (Fulcio/Rekor), `ghcr.io`, `api.anthropic.com`, PyPI, npm. **In a DoD IL4/IL5 enclave, none of those exist.** This example is the same fifteen Covenants cells with every public dependency replaced by an in-enclave equivalent, plus the identity binding that DoD ICAM actually requires.
+The rest of this repo assumes internet egress: public Sigstore (Fulcio/Rekor), `ghcr.io`, `api.anthropic.com`, PyPI, npm. **In a DoD IL4/IL5 enclave, none of those exist.** This example takes the cells whose controls carry a public dependency, across Covenants, Sentinels and Interventions, and replaces every one of those dependencies by an in-enclave equivalent, plus the identity binding that DoD ICAM actually requires.
 
 It is written for a program office that has to defend this to an AO, so every substitution names the controls it crosswalks to. A crosswalk is a defensible starting point for that conversation and not a compliance claim; the AO decides what is satisfied, and the three artifacts in this directory say so in their own headers for the same reason.
 
@@ -32,7 +32,7 @@ Federal ICAM guidance treats a **Non-Person Entity** as being **under the contro
 Two consequences worth stating to an AO:
 
 1. **The Charter file becomes an ICAM artifact, not just governance paperwork.** [`charter/templates/agent-charter.yaml`](../../charter/templates/agent-charter.yaml) already carries `ownership.owner_name`, `agent.identifier`, and the approval signatures. In an ICAM context those fields are the PE-to-NPE binding record.
-2. **Agent NPEs must be in the same lifecycle as every other NPE.** Provisioning, rotation, and, critically, **de-provisioning**. The charter's `retirement_criteria` is the de-provisioning trigger. An agent whose owner departs and whose backup owner does not accept handoff has no controlling PE, which under FICAM means the NPE account should not continue to exist.
+2. **Agent NPEs must be in the same lifecycle as every other NPE.** Provisioning, rotation, and, critically, **de-provisioning**. The charter's `retirement_criteria` is the de-provisioning trigger. An agent whose owner departs and whose backup owner does not accept handoff has no controlling PE. Treating that as a reason to retire the account is our inference, not a cited rule: the CISA text presupposes that a PE *has the ability to* destroy the account and says nothing about what follows when no PE is in control.
 
 See [`icam-npe-binding.md`](./icam-npe-binding.md) for the field-by-field mapping.
 

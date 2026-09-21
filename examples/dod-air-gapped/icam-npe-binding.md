@@ -14,7 +14,7 @@ It applies here anyway, and that is an inference rather than a citation: an agen
 |---|---|---|
 | NPE identifier | `agent.identifier` | Must be the same string in both systems. This is the join key. |
 | NPE display name / description | `agent.name`, `agent.description` | |
-| **Controlling PE** | `ownership.owner_name` + `ownership.owner_email` | The named human accountable. Not a group mailbox. FICAM wants a person who can destroy the account. |
+| **Controlling PE** | `ownership.owner_name` + `ownership.owner_email` | The named human accountable. Not a group mailbox. The CISA assumption above presupposes a PE who can destroy the account. |
 | Alternate / delegate PE | `ownership.backup_owner_name` | Required, or departure of the owner orphans the NPE. |
 | Sponsoring organization | `ownership.domain` (via the parent domain charter) | |
 | Credential type and lifecycle | `dependencies` + the identity cell in use | DoD PKI certificate preferred over long-lived secrets; short-lived where the CA supports it. |
@@ -29,7 +29,7 @@ It applies here anyway, and that is an inference rather than a citation: an agen
 These charter fields have **no ICAM equivalent**, which is precisely the gap this framework exists to fill. Carry them in the charter and reference the charter from the NPE record:
 
 - `damage_cap`, records-per-session, spend-per-day, forbidden operations. ICAM has no concept of a bounded blast radius for an authenticated entity.
-- `risk_tier` driving *which controls are mandatory*, Tier 1 read-only agents do not need every cell; Tier 4 production agents need all fifteen.
+- `risk_tier` driving *which controls are mandatory*, Tier 1 read-only agents do not need every cell; Tier 4 production agents need all eighteen.
 - `approvals`, multi-party signature for Tier 3+, which is the Approval gating column expressed as governance rather than runtime.
 
 ## Where ICAM says more than the charter does
@@ -38,7 +38,7 @@ Do not duplicate these into the charter; reference them:
 
 - Certificate serial numbers, issuing CA, revocation status. These belong in the credential system of record.
 - Enterprise IdP group membership and attribute assertions.
-- The DD Form 2875 replacement workflow record (the automated access-request workflow required by the September 2026 deadline).
+- The DD Form 2875 replacement workflow record (the automated access-request workflow; September 2026 for systems already onboarded to an approved ICAM provider, with the paper form fully retired by September 2027).
 
 ## Practical guidance
 

@@ -38,7 +38,7 @@ These checklists cover the **Covenants (Protect)** matrix. Detection, response, 
 
 Two facts to establish up front, because they change what "good" looks like:
 
-- **Risk tier** (1 read-only, 2 scoped writes, 3 destructive, 4 production-critical), from the agent's charter. A Tier 1 agent does not need every cell populated. A Tier 4 agent needs all fifteen.
+- **Risk tier** (1 read-only, 2 scoped writes, 3 destructive, 4 production-critical), from the agent's charter. A Tier 1 agent does not need every cell populated. A Tier 4 agent needs all fifteen cells these five checklists cover. Note that is fifteen and not the Covenants matrix's eighteen: content integrity has no checklist here, because its controls are probabilistic and an audit sheet that scores them pass or fail would misrepresent what they do. Audit that row against [`controls/content-integrity/`](../controls/content-integrity/) directly.
 - **Reach**: operator laptop only, or cloud/cluster? Client-side-only postures are defensible for the former and not the latter.
 
 If the agent has no charter, stop and write one first ([`charter/templates/agent-charter.yaml`](../charter/templates/agent-charter.yaml)). You cannot audit scope against an intent nobody recorded.
