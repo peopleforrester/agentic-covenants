@@ -27,7 +27,7 @@ It is written for a program office that has to defend this to an AO, so every su
 
 Everything else on that list is a mirroring exercise. Identity is not.
 
-DoD ICAM requires that every **Non-Person Entity** be **under the control of an authorized Person Entity** who can create, modify, or destroy the NPE account. That is a stronger constraint than anything in the commercial framing of this repo, and it maps directly onto the Charter matrix: the agent charter's **named human owner** *is* the controlling PE, and the charter's `identifier` *is* what the NPE registry entry must reference.
+Federal ICAM guidance treats a **Non-Person Entity** as being **under the control of an authorized Person Entity** who can create, modify, or destroy the NPE account. The sentence comes from CISA's CDM ICAM Reference Architecture v1.3 (September 2023), where it is an assumption scoped to privileged NPEs rather than a requirement over all of them; see [`icam-npe-binding.md`](./icam-npe-binding.md) for the exact wording and what it does and does not say. That is a stronger constraint than anything in the commercial framing of this repo, and it maps directly onto the Charter matrix: the agent charter's **named human owner** *is* the controlling PE, and the charter's `identifier` *is* what the NPE registry entry must reference.
 
 Two consequences worth stating to an AO:
 

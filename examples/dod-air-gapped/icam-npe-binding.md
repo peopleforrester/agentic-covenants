@@ -6,7 +6,9 @@ In an enclave you should not maintain those as two disconnected records. This is
 
 ## The PE-to-NPE control relationship
 
-FICAM requires an NPE to be "under the control of an authorized Person Entity (PE) who has the ability to create, modify, or destroy the NPE account." For an AI agent this is not a formality. It is the accountability anchor that the Five Eyes joint guidance calls out as *accountability opacity* when it is missing.
+CISA's **CDM ICAM Reference Architecture v1.3** (September 2023) states that "an NPE would be under the control of an authorized PE who has the ability to create, modify, or destroy the NPE account." Quoted exactly, because the wording matters: the sentence sits in the document's Section 3, headed **Assumptions**, and the same list scopes the architecture's focus to NPEs "that are considered privileged." So this is a stated assumption about privileged NPEs, not a blanket mandate over every NPE, and an earlier version of this file called it a FICAM requirement, which it is not.
+
+It applies here anyway, and that is an inference rather than a citation: an agent holding credentials that can reach agency systems is privileged by any reading of the term, so the assumption covers it. Check the conclusion against your own AO rather than against this sentence. For an AI agent this is not a formality. It is the accountability anchor that the Five Eyes joint guidance calls out as *accountability opacity* when it is missing.
 
 | ICAM / NPE registry attribute | Agent charter field | Notes |
 |---|---|---|
