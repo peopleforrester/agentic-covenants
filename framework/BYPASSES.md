@@ -62,7 +62,7 @@ If a layer here lacks a bypass entry, that's a documentation gap, not a hardness
 ### PreToolUse pattern hooks
 
 - Command obfuscation: base64-encoded payloads, `eval`, env-variable indirection, write-payload-to-tmpfile-and-execute.
-- Equivalent commands not in the pattern list:
+- Equivalent commands that reach the same end state by another name:
   - `find /target -delete` instead of `rm`.
   - `kubectl scale --replicas=0` instead of `kubectl delete`.
   - `TRUNCATE` instead of `DROP TABLE`.
@@ -70,6 +70,10 @@ If a layer here lacks a bypass entry, that's a documentation gap, not a hardness
   - `dd if=/dev/zero of=$file` instead of `rm`.
 - Hook bypass if the hook script is on a path the agent can write to.
 - Race condition if the hook timeout is short enough to skip via `sleep`.
+
+**The shipped hook now denies all five of the equivalents above, and the obfuscations above them.** [`controls/authorization/client-side/pre_tool_use.sh`](../controls/authorization/client-side/pre_tool_use.sh) covers flag reordering, case folding, quote splitting, `$IFS` substitution, variable indirection, encode-then-pipe-to-shell, and each named equivalent, with tests asserting both the denials and that ordinary work still runs.
+
+That closes these specific items and changes nothing about the class. The list was never the boundary. Enumerating equivalents is unbounded work against an adversary who only has to find one, and every entry above was added after somebody thought the list was finished. Read the section as a record of what this artifact catches today, not as a claim that a pattern hook can be completed. The boundary is the server-side column.
 
 ### Claude Code "allow" precedence regression (pre-May 2026)
 
