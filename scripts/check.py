@@ -300,6 +300,34 @@ def check_placeholders(staged: bool) -> Findings:
 # --------------------------------------------------------------------------
 
 
+def shell_files(staged: bool) -> list[Path]:
+    """Every file the shell checks should see, found by shebang as well as suffix.
+
+    The incident runbooks are deliberately extensionless, because
+    `agent-revoke-local` reads as a command under pressure and
+    `agent-revoke-local.sh` does not. The cost of that choice was that a suffix
+    glob never saw them. Twenty three files carry a shell shebang with no
+    extension; `bash -n` and the executable-bit check saw none of them, and
+    shellcheck saw three, named one at a time in a list that had to be edited
+    by hand every time a runbook was added. Two were committed non-executable.
+
+    A shebang is the file's own declaration of what it is, so it is the right
+    thing to dispatch on. Adding a runbook now enrolls it automatically.
+    """
+    out = list(iter_files((".sh",), staged))
+    seen = {p.resolve() for p in out}
+    for path in iter_files(("",), staged):
+        if path.suffix or path.resolve() in seen:
+            continue
+        try:
+            first = path.open("rb").readline(200)
+        except OSError:
+            continue
+        if first.startswith(b"#!") and (b"bash" in first or b"sh" in first):
+            out.append(path)
+    return out
+
+
 def check_shell(staged: bool) -> Findings:
     """Runbooks must parse under `bash -n` and carry the executable bit.
 
@@ -308,7 +336,7 @@ def check_shell(staged: bool) -> Findings:
     """
     findings = Findings("shell")
 
-    for path in iter_files((".sh",), staged):
+    for path in shell_files(staged):
         result = subprocess.run(
             ["bash", "-n", str(path)], capture_output=True, text=True, check=False
         )
@@ -350,10 +378,7 @@ def check_shellcheck(staged: bool) -> Findings:
         )
         return findings
 
-    files = iter_files((".sh",), staged) + [
-        p for p in iter_files(("",), staged) if p.name in {"agent-bwrap", "mcp-launch", "launch-agent"}
-    ]
-    for path in files:
+    for path in shell_files(staged):
         result = subprocess.run(
             ["shellcheck", "--severity=error", "--format=gcc", str(path)],
             capture_output=True,
