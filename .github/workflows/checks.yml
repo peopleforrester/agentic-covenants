@@ -1,0 +1,66 @@
+# ABOUTME: Runs the repo's own check suite and tests on every push and pull request.
+# ABOUTME: Asserts its tools are installed, because a check that skips reports green.
+
+name: checks
+
+on:
+  push:
+    branches: [staging, main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Pinned so a CLI release cannot change what "passing" means without a commit
+  # that says so. Upgrading is tracked in issue #11.
+  KYVERNO_VERSION: v1.17.1
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install Kyverno CLI
+        run: |
+          set -euo pipefail
+          url="https://github.com/kyverno/kyverno/releases/download/${KYVERNO_VERSION}/kyverno-cli_${KYVERNO_VERSION}_linux_x86_64.tar.gz"
+          curl -fsSL "$url" -o /tmp/kyverno.tar.gz
+          tar -xzf /tmp/kyverno.tar.gz -C /tmp kyverno
+          sudo install -m 0755 /tmp/kyverno /usr/local/bin/kyverno
+
+      - name: Install Python dependencies
+        run: pip install --quiet pyyaml pytest
+
+      # check.py skips the shellcheck and Kyverno checks when the tool is
+      # absent, which is right for a contributor's laptop and wrong for CI: a
+      # silent skip is a green run that verified nothing. This repo argues that
+      # a control failing open while reporting closed is the worst kind, so the
+      # same standard applies to its own pipeline.
+      - name: Assert the toolchain is present
+        run: |
+          set -euo pipefail
+          missing=0
+          for tool in kyverno shellcheck jq; do
+            if command -v "$tool" >/dev/null 2>&1; then
+              printf '  ok      %s (%s)\n' "$tool" "$(command -v "$tool")"
+            else
+              printf '  MISSING %s\n' "$tool"; missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ] || { echo "a required tool is absent; checks would skip silently"; exit 1; }
+
+      - name: Run the check suite
+        run: ./scripts/check.py
+
+      - name: Run the tests
+        run: pytest tests/ -q
+
+      - name: Verify the site still builds
+        run: python3 site/build.py

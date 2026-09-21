@@ -6,7 +6,7 @@ _Repo context file for AI coding CLIs (Claude Code, Codex, OpenCode, Gemini, etc
 
 A practitioner framework for autonomous-agent governance: **six matrices mapped to the six NIST CSF 2.0 functions**, each with working artifacts in every populated cell. Charter (Govern) authorizes → Inventory (Identify) tracks → Covenants (Protect) binds → Sentinels (Detect) watches → Interventions (Respond) stops → Restorations (Recover) rebuilds. Every matrix is five concerns (identity, authorization, blast-radius, approval-gating, supply-chain) × three layers. Covenants carries a sixth, content-integrity, whose controls are probabilistic rather than deterministic; see the scope boundary in README.md.
 
-This is **not** a code project. There is no build, no test suite, no package manifest. The deliverables are Markdown (framework essays, per-cell READMEs, citations) and copy-ready **template artifacts** (Kubernetes/Kyverno YAML, RBAC, seccomp/AppArmor profiles, PreToolUse hooks, Terraform, cosign policies, Falco/Sigma rules, runbook shell scripts). Placeholders like `agent-claude-prod`, `123456789012`, and `sha256:REPLACE_WITH_DIGEST` are intentional. They are meant to be substituted by the person adopting a cell.
+This is **not** a code project, but it is not unverified either. There is no package manifest and no runtime dependency, so nothing here executes in anyone's pipeline. There is a test suite and a check suite, and both exist to hold this repo's own artifacts to the standard it argues for. The deliverables are Markdown (framework essays, per-cell READMEs, citations) and copy-ready **template artifacts** (Kubernetes/Kyverno YAML, RBAC, seccomp/AppArmor profiles, PreToolUse hooks, Terraform, cosign policies, Falco/Sigma rules, runbook shell scripts). Placeholders like `agent-claude-prod`, `123456789012`, and `sha256:REPLACE_WITH_DIGEST` are intentional. They are meant to be substituted by the person adopting a cell.
 
 ## Stack
 
@@ -26,7 +26,10 @@ Markdown + YAML + shell + a little Python/Terraform/Rego, all as **illustrative 
 
 ## Commands
 
-- **Build / Test / Lint:** none. This repo has no test suite by design; do not scaffold one.
+- **Check:** `./scripts/check.py` runs sixteen checks (`--only <name>` for one, `--staged` for the pre-commit path). The pre-commit hook in `.githooks/` runs it.
+- **Test:** `uvx --with pyyaml --from pytest pytest tests/ -q`. 147 tests over the charter validator, the inventory reconciler, and the PreToolUse hook, plus a Kyverno suite under `tests/kyverno/`.
+- **Build:** `site/build.py` generates agenticcovenants.com from `data/*.yaml`. `assets/build-diagrams.py` regenerates the SVGs.
+- **Nothing runs any of this automatically.** There is no `.github/workflows/`, so the checks and tests are local-only and the site is published by hand.
 - **Preview Markdown:** any Markdown viewer; the matrices are GitHub-flavored tables.
 
 ## Conventions
