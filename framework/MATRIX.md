@@ -1,6 +1,6 @@
 # The Agentic Covenants Matrix
 
-A prevention framework for agent governance. Three layers of enforcement, six concerns, eighteen cells, every cell populated honestly. Every control mapped to authoritative governmental and standards-body citations in [`CITATIONS.md`](./CITATIONS.md), with known bypass paths catalogued in [`BYPASSES.md`](./BYPASSES.md). Designed to be walked left-to-right by a platform engineer asking one question per row: *if the agent decides to violate this concern, what stops it at this layer?*
+A prevention framework for agent governance. Three layers of enforcement, six concerns, eighteen cells, every cell populated honestly. Every control mapped to authoritative governmental and standards-body citations in [`CITATIONS.md`](./CITATIONS.md), with known bypass paths cataloged in [`BYPASSES.md`](./BYPASSES.md). Designed to be walked left-to-right by a platform engineer asking one question per row: *if the agent decides to violate this concern, what stops it at this layer?*
 
 ## What this is not
 
@@ -16,7 +16,7 @@ A covenant binds. The agent operates under a set of constraints it cannot unilat
 
 Some covenants are advisory and breakable through language alone. Others sit outside the model's reasoning and require flags, filesystem access, or pattern evasion to break. Others sit outside the agent's operating envelope entirely and require compromise, policy gaps, or operator manipulation. The matrix makes that gradient visible.
 
-No layer is unbypassable. The known bypass paths are catalogued in [`BYPASSES.md`](./BYPASSES.md), including 2026 incidents and disclosed CVEs. Stacking layers is the entire point of the framework. If any single layer were sufficient, the matrix would have one column.
+No layer is unbypassable. The known bypass paths are cataloged in [`BYPASSES.md`](./BYPASSES.md), including 2026 incidents and disclosed CVEs. Stacking layers is the entire point of the framework. If any single layer were sufficient, the matrix would have one column.
 
 ## The two axes
 
@@ -98,7 +98,7 @@ Old 1 and 3 were one idea said twice. Old 2, 4, and 6 were three mechanisms answ
 
 ## The five concerns are not idiosyncratic
 
-On April 30, 2026, six allied cyber agencies (CISA, NSA, ACSC, Canadian Centre for Cyber Security, NZ NCSC, UK NCSC) published **"Careful Adoption of Agentic AI Services"**, the first multi-nation joint guidance dedicated to agentic AI. It names five risk categories, and they map almost one-to-one onto the five concerns of this matrix:
+On April 30, 2026, six allied cyber agencies (CISA, NSA, ACSC, Canadian Centre for Cyber Security, NZ NCSC, UK NCSC) published **"Careful Adoption of Agentic AI Services"**, the first multi-nation joint guidance dedicated to agentic AI. It names five risk categories, and they map almost one-to-one onto the five concerns of this matrix: <!-- lexicon: proper noun, Canadian Centre for Cyber Security -->
 
 | Five Eyes risk category | Concern in this matrix |
 |---|---|

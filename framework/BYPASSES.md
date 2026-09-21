@@ -4,7 +4,7 @@ The matrix makes a defense-in-depth argument. That argument requires honesty abo
 
 If a layer here lacks a bypass entry, that's a documentation gap, not a hardness claim. File an issue.
 
-> **The failure classes here are not idiosyncratic.** On April 30, 2026, CISA, NSA, Australia's ACSC, the Canadian Centre for Cyber Security, NZ NCSC, and UK NCSC published **"Careful Adoption of Agentic AI Services"**, the first multi-nation joint guidance on agentic AI. It names five risk categories: **privilege escalation, design and configuration flaws, behavioral misalignment, structural cascading failures, and accountability opacity.** Every bypass catalogued below falls into one of those five. The crosswalk to this matrix's concerns is in [`CITATIONS.md`](./CITATIONS.md#five-eyes-risk-categories-mapped-to-the-five-concerns).
+> **The failure classes here are not idiosyncratic.** On April 30, 2026, CISA, NSA, Australia's ACSC, the Canadian Centre for Cyber Security, NZ NCSC, and UK NCSC published **"Careful Adoption of Agentic AI Services"**, the first multi-nation joint guidance on agentic AI. It names five risk categories: **privilege escalation, design and configuration flaws, behavioral misalignment, structural cascading failures, and accountability opacity.** Every bypass catalogued below falls into one of those five. The crosswalk to this matrix's concerns is in [`CITATIONS.md`](./CITATIONS.md#five-eyes-risk-categories-mapped-to-the-five-concerns). <!-- lexicon: proper noun, Canadian Centre for Cyber Security -->
 
 ## In-agent layer
 
@@ -389,6 +389,6 @@ These are documented incidents and disclosures from 2025 and 2026 that defeated 
 
 ## What this list is for
 
-When you populate a cell, you are buying the cell's strength minus the cell's bypass surface. A reviewer's first job is to ensure the bypasses are documented and consciously accepted. **An undocumented control that fails to its bypass is the worst kind of governance theatre.**
+When you populate a cell, you are buying the cell's strength minus the cell's bypass surface. A reviewer's first job is to ensure the bypasses are documented and consciously accepted. **An undocumented control that fails to its bypass is the worst kind of governance theater.**
 
 When you skip a cell, you are accepting that an attack at this layer will be unstopped. The threat model in your repo should say so explicitly.

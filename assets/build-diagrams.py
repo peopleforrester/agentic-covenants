@@ -106,7 +106,7 @@ def fig_social(t: Theme) -> str:
                     "Governance for autonomous agents, enforced by infrastructure "
                     "instead of by prompt.", w, h)]
 
-    # Accent rule at the top, in the three layer colours, so the card carries
+    # Accent rule at the top, in the three layer colors, so the card carries
     # the framework's own visual key even at thumbnail size.
     for i, c in enumerate((t.l1, t.l2, t.l3)):
         out.append(f'<rect x="{i * w / 3:.1f}" y="0" width="{w / 3:.1f}" height="9" fill="{c}"/>')
@@ -147,7 +147,7 @@ def fig_social(t: Theme) -> str:
 # --------------------------------------------------------------------------
 
 # The figure walks ONE concrete action down the three layers, naming the real
-# mechanism and the real verdict at each. An earlier version drew three labelled
+# mechanism and the real verdict at each. An earlier version drew three labeled
 # bands and an arrow, which restated the prose beside it and showed no mechanism.
 # A diagram that duplicates adjacent text earns nothing.
 
@@ -247,7 +247,7 @@ def fig_six_matrices(t: Theme) -> str:
     m_left, m_right, top, bh = 80, 1520, 236, 372
     gap = 18
     bw = (m_right - m_left - gap * (n - 1)) / n
-    # One colour per function. Govern and Identify previously shared the accent,
+    # One color per function. Govern and Identify previously shared the accent,
     # which read as though they were the same kind of thing.
     colors = ["#8b7ce8", t.accent, t.l3, t.l2, t.l1, t.danger]
 

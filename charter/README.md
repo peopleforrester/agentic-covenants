@@ -31,7 +31,7 @@ python3 scripts/validate_charter.py --bundle charter/examples
 python3 scripts/validate_charter.py --bundle charter/examples --format json
 ```
 
-[`examples/`](./examples/) holds a worked bundle for a synthetic organisation that satisfies
+[`examples/`](./examples/) holds a worked bundle for a synthetic organization that satisfies
 every cell. It is the reference for what a filled charter looks like. The templates in
 [`templates/`](./templates/) deliberately do not pass: they carry placeholders, and a bundle
 that still carries them has not been filled in.

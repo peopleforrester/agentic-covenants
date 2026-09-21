@@ -154,7 +154,7 @@ In Interventions and Restorations **every** in-agent cell is empty. An agent tha
 
 ## Why you should believe the decomposition
 
-Independent work converged on the same five concerns. On 30 April 2026, six allied cyber agencies (CISA, NSA, ACSC, Canadian Centre for Cyber Security, NZ NCSC, UK NCSC) published *Careful Adoption of Agentic AI Services*, the first multi-nation joint guidance on agentic AI. Its five risk categories:
+Independent work converged on the same five concerns. On 30 April 2026, six allied cyber agencies (CISA, NSA, ACSC, Canadian Centre for Cyber Security, NZ NCSC, UK NCSC) published *Careful Adoption of Agentic AI Services*, the first multi-nation joint guidance on agentic AI. Its five risk categories: <!-- lexicon: proper noun, Canadian Centre for Cyber Security -->
 
 | Five Eyes risk category | Concern here |
 |---|---|

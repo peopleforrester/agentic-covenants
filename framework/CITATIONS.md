@@ -23,7 +23,7 @@ This file is the line of defense against "you just made this up" reviewer attack
 - **NIST SP 800-161 Rev. 1** (Cybersecurity Supply Chain Risk Management Practices, May 2022).
 - **NIST SP 800-34 Rev. 1** (Contingency Planning Guide, May 2010).
 - **CISA / NSA / FBI / international partners, "AI Data Security" Cybersecurity Information Sheet** (May 22, 2025).
-- **CISA / NSA / ACSC / Canadian Centre for Cyber Security / NZ NCSC / UK NCSC, "Careful Adoption of Agentic AI Services"** (April 30, 2026). **The first multi-nation joint guidance dedicated to agentic AI**, and the closest thing to authoritative doctrine this framework maps to. Thirty pages covering the full adoption lifecycle. Its five named risk categories map almost one-to-one onto this matrix's five concerns, see [Five Eyes crosswalk](#five-eyes-risk-categories-mapped-to-the-five-concerns) below.
+- **CISA / NSA / ACSC / Canadian Centre for Cyber Security / NZ NCSC / UK NCSC, "Careful Adoption of Agentic AI Services"** (April 30, 2026). **The first multi-nation joint guidance dedicated to agentic AI**, and the closest thing to authoritative doctrine this framework maps to. Thirty pages covering the full adoption lifecycle. Its five named risk categories map almost one-to-one onto this matrix's five concerns, see [Five Eyes crosswalk](#five-eyes-risk-categories-mapped-to-the-five-concerns) below. <!-- lexicon: proper noun, Canadian Centre for Cyber Security -->
 - **CISA / Australian Signals Directorate ACSC, "Principles for the Secure Integration of AI in Operational Technology"** (December 3, 2025).
 - **CISA, "Deploying AI Systems Securely"** (joint guidance, April 2024).
 - **EO 14179 and the AI Action Plan** (January and July 2025). EO 14110 (October 30, 2023) was **rescinded January 23, 2025**; the operative executive document is now the AI Action Plan, which drives ongoing NIST work.
@@ -124,7 +124,7 @@ finding being laundered into fact.
   discovered agents in their environment they did not know about** and **21% having any formal
   decommissioning process**. **Sponsorship, stated because it matters:** Token Security
   commissioned the report and co-developed the questionnaire, which CSA discloses. It remains
-  the best available number on a question most organisations cannot answer about themselves,
+  the best available number on a question most organizations cannot answer about themselves,
   and the sponsorship should travel with the figure every time it is quoted.
 - **IBM Cost of a Data Breach 2026** (announced July 29, 2026). See
   [`ECONOMICS.md`](../briefing/ECONOMICS.md) for the provenance caveat: the 92% access-control finding
@@ -226,7 +226,7 @@ The precedent for the move already exists in DoD doctrine: RMF to cATO relocated
 
 Subcategory identifiers follow each framework's published format. NIST CSF 2.0 uses `Function.Category-Number` (PR.AA-01) with a hyphen, never a period. NIST AI RMF uses `FUNCTION Category.Number` (MANAGE 2.4). OWASP LLM uses `LLMnn:2025`. OWASP Agentic uses `ASInn`. OWASP MCP uses `MCPnn`. EU AI Act citations are by Article number from Regulation (EU) 2024/1689. ISO/IEC standards cite section number where relevant.
 
-Cells marked "(advisory; no enforcement)" or "(no enforcement; advisory only)" in the in-agent column reflect the matrix's central thesis: in-agent controls are nudges, not enforceable controls. They do not have a counterpart in frameworks that catalogue technical safeguards because frameworks correctly treat in-model instructions as design hints, not security boundaries.
+Cells marked "(advisory; no enforcement)" or "(no enforcement; advisory only)" in the in-agent column reflect the matrix's central thesis: in-agent controls are nudges, not enforceable controls. They do not have a counterpart in frameworks that catalog technical safeguards because frameworks correctly treat in-model instructions as design hints, not security boundaries.
 
 ### Notes on framework subcategories that have changed
 

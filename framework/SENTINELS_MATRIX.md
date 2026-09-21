@@ -78,7 +78,7 @@ A complete agent governance posture has all six. Most teams start with Covenants
 
 ## Two principles before the cells
 
-1. **Every detection must have a defined response.** Sentinels alerts that do not page someone or trigger an Interventions runbook are theatre. Build the alert and the runbook together.
+1. **Every detection must have a defined response.** Sentinels alerts that do not page someone or trigger an Interventions runbook are theater. Build the alert and the runbook together.
 2. **Detection has false-positive cost.** Anthropic's Auto Mode reports an 8.5% first-stage classifier rate; acceptable when the false-positive cost is "ask a human." Unacceptable when the false-positive cost is "page the on-call at 3 a.m." A SIEM rule with 8.5% FP at 10,000 events/day is 850 unnecessary pages. **Tune.**
 
 ## Reading order

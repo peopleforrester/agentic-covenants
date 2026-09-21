@@ -6,7 +6,7 @@ An identification framework for autonomous-agent discovery, registration, and th
 
 Inventory is the matrix that answers *what agents exist, what they touch, what threats they face.* [Charter](./CHARTER_MATRIX.md) authorizes agents to exist. Inventory tracks the agents that actually do. **Without Inventory, every other matrix has unclear scope:** Covenants protects an undefined population, Sentinels alerts on an undefined baseline, and post-incident response has to start by figuring out which agent did what.
 
-The matrix recognizes a hard truth about real environments: not every agent shows up where you expect. Some agents declare themselves. Some are catalogued by an operator who took the time. Some are running in the corner of an account or cluster that no one knew about. **A defensible Inventory accounts for all three.**
+The matrix recognizes a hard truth about real environments: not every agent shows up where you expect. Some agents declare themselves. Some are cataloged by an operator who took the time. Some are running in the corner of an account or cluster that no one knew about. **A defensible Inventory accounts for all three.**
 
 ## Why discovery matters
 
@@ -24,7 +24,7 @@ Three failure modes when Inventory is absent or incomplete:
 
 1. **Self-declared.** Agent registers itself with a central registry on startup. Sends heartbeats. Reports its identity, owner, charter reference, dependency manifest, and current state. Strong signal when present, but missing entirely for agents that do not implement the registration protocol or that are deliberately hidden.
 2. **Operator-declared.** Human-maintained inventory: spreadsheet, internal portal, ServiceNow CMDB, GitOps repo. The operator commits to keeping it current. Strong source of intent and ownership, weak source of liveness. Almost always drifts from reality.
-3. **Discovered.** Passive discovery from cloud audit logs, Kubernetes API watches, network telemetry, and behavioral analysis. Finds agents that did not declare themselves and were not catalogued. **The truth source for "what is actually running," weakest source for "what was supposed to be running."**
+3. **Discovered.** Passive discovery from cloud audit logs, Kubernetes API watches, network telemetry, and behavioral analysis. Finds agents that did not declare themselves and were not cataloged. **The truth source for "what is actually running," weakest source for "what was supposed to be running."**
 
 The three layers are complementary and partially overlapping. A complete Inventory cross-references all three: an agent that self-declares should also appear in operator-declared (intent) and discovered (liveness). **Mismatches across layers are themselves Sentinels-level alerts.**
 

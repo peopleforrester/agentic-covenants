@@ -660,9 +660,82 @@ def check_owasp_ids(staged: bool) -> Findings:
     return findings
 
 
+# British forms and their American replacements. Deliberately a fixed list
+# rather than a dictionary lookup: a spell-checker would need a dependency and
+# would flag far more than this repo cares about. These are the forms that
+# actually appeared, plus the neighbours most likely to follow them in.
+BRITISH_FORMS: dict[str, str] = {
+    "analyse": "analyze", "analysed": "analyzed", "analysing": "analyzing",
+    "artefact": "artifact", "artefacts": "artifacts",
+    "behaviour": "behavior", "behaviours": "behaviors",
+    "cancelled": "canceled", "catalogue": "catalog", "catalogued": "cataloged",
+    "centre": "center", "centres": "centers",
+    "colour": "color", "colours": "colors", "coloured": "colored",
+    "defence": "defense", "defences": "defenses",
+    "enrol": "enroll", "enrolment": "enrollment",
+    "favour": "favor", "fibre": "fiber", "fulfil": "fulfill",
+    "grey": "gray", "honour": "honor", "initialise": "initialize",
+    "judgement": "judgment", "labelled": "labeled", "labelling": "labeling",
+    "licence": "license", "metre": "meter", "minimise": "minimize",
+    "modelling": "modeling", "normalise": "normalize",
+    "offence": "offense", "optimise": "optimize", "optimised": "optimized",
+    "organisation": "organization", "organisations": "organizations",
+    "organise": "organize", "organised": "organized",
+    "practise": "practice", "prioritise": "prioritize",
+    "programme": "program", "recognise": "recognize", "recognised": "recognized",
+    "realise": "realize", "sceptic": "skeptic", "serialise": "serialize",
+    "signalling": "signaling", "standardise": "standardize",
+    "summarise": "summarize", "synchronise": "synchronize",
+    "theatre": "theater", "travelling": "traveling", "tyre": "tire",
+    "utilise": "utilize", "whilst": "while",
+}
+BRITISH_RE = re.compile(r"\b(" + "|".join(sorted(BRITISH_FORMS)) + r")\b", re.IGNORECASE)
+# One culture-specific token does not need a whole-file exemption. The live
+# case is the Canadian Centre for Cyber Security, whose name is spelled that  # lexicon: proper noun
+# way because that is the agency's name.
+LEXICON_MARKER = "lexicon:"
+
+
+def check_american_english(staged: bool) -> Findings:
+    """Prose and code comments use American spelling.
+
+    A mixed lexicon reads as careless in a document whose whole claim is that
+    it is precise about sources. Nothing about the audience explains the split;
+    it is only what the text drifts to when nothing pins it. Proper nouns are
+    exempt via an inline `lexicon:` marker, because renaming a real agency to
+    match a house style would be a worse error than the inconsistency.
+    """
+    findings = Findings("american-english")
+
+    for path in iter_files((".md", ".py", ".sh"), staged):
+        comments_only = path.suffix in (".py", ".sh")
+        in_fence = False
+        for lineno, line in enumerate(
+            path.read_text(encoding="utf-8", errors="replace").splitlines(), start=1
+        ):
+            if LEXICON_MARKER in line:
+                continue
+            stripped = line.lstrip()
+            if not comments_only:
+                if stripped.startswith("```"):
+                    in_fence = not in_fence
+                    continue
+                if in_fence:
+                    continue
+            elif not stripped.startswith("#"):
+                # Identifiers still follow the rule, but telling a vendor's
+                # field name from ours is not something this can do reliably.
+                continue
+            for hit in BRITISH_RE.findall(line):
+                findings.add(path, lineno,
+                             f"{hit} -> {BRITISH_FORMS[hit.lower()]}")
+    return findings
+
+
 CHECKS: dict[str, Callable[[bool], Findings]] = {
     "assurance": check_assurance,
     "owasp-ids": check_owasp_ids,
+    "american-english": check_american_english,
     "counts": check_counts,
     "root": check_root,
     "diagrams": check_diagrams,

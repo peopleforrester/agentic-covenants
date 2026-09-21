@@ -30,7 +30,7 @@ Every cell directory has the same six-section README:
 
 These come from the matrix; repeating them here because they govern every cell:
 
-1. **Every detection must have a defined response.** Alerts without runbooks are theatre. Where Sentinels detects something, [Interventions Matrix] should have a runbook keyed to the alert.
+1. **Every detection must have a defined response.** Alerts without runbooks are theater. Where Sentinels detects something, [Interventions Matrix] should have a runbook keyed to the alert.
 2. **Detection has false-positive cost.** Tune thresholds against your traffic; the defaults in these artifacts are starting points, not production-ready values.
 
 ## Order of operations (rollout)
