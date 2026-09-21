@@ -12,7 +12,7 @@ ________________________________________________________________________________
 
 ## L1, In-agent
 
-**No enforcement at this layer.** The model is unreliable about provenance, roughly 24% of hallucinated imports in code generation point at nonexistent packages, which is the same surface slopsquatting attacks target.
+**No enforcement at this layer.** The model is unreliable about provenance, a measured 5.2% of packages recommended by commercial models and 21.7% by open-source models do not exist (Spracklen et al., *We Have a Package for You!*, USENIX Security 2025: 576,000 generated samples across 16 models, 205,474 unique hallucinated names), which is the same surface slopsquatting attacks target.
 
 - [ ] Prompt tells the agent to install only what the lockfile pins
 - [ ] Nobody treats "this package looks fine" from the model as a signal

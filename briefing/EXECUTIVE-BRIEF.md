@@ -30,14 +30,14 @@ That single difference breaks the assumption every existing control rests on. Yo
 
 | | |
 |---|---|
-| Average cost of a data breach, 2026 | **USD 4.99M**, up 12% year over year, a record |
+| Average cost of a data breach, 2026 | **USD 4.99M** (the +12% and "record" are derived, see note) |
 | Average cost when the breach was AI-enabled | **USD 6M**, about USD 1M above the global average |
 | Share of malicious breaches that were AI-enabled | **1 in 4**, up 56% in one year |
 | Organizations with an AI-model incident that lacked access controls | **92%** |
 | Security incidents involving unapproved AI tools | **43%**, more than double the prior year |
 | Savings where AI and automation were used in security operations | **~USD 2M** per breach |
 
-*All figures: IBM Cost of a Data Breach 2026.*
+*Source: IBM Cost of a Data Breach 2026, announced 29 July 2026. Three rows are not in IBM's own release and are reported second-hand: the 92% access-control finding and the 43% unapproved-tool share come from [Help Net Security's coverage](https://www.helpnetsecurity.com/2026/07/30/ibm-cost-of-a-data-breach-2026/), which quotes the report directly; "up 12% year over year, a record" is derived, not quoted (USD 4.99M against USD 4.44M in 2025 is +12.4%, above the USD 4.88M 2024 high). IBM's release carries the USD 4.99M, the USD 6M, the one-in-four with a 56% rise, the "more than 20%", and the ~USD 2M saving. See [`ECONOMICS.md`](./ECONOMICS.md) for the full provenance note.*
 
 ## What good looks like
 

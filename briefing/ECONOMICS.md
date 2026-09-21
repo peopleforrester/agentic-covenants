@@ -17,7 +17,7 @@ From **IBM Cost of a Data Breach 2026**, published 29 July 2026:
 
 | Figure | Value |
 |---|---|
-| Global average cost of a breach | USD 4.99M, up 12% year over year, a record |
+| Global average cost of a breach | USD 4.99M (the +12% and "record" are derived, not quoted) |
 | Average when the breach was AI-enabled | USD 6M |
 | Share of malicious breaches that were AI-enabled | 1 in 4, a 56% increase in one year |
 | Organizations reporting a breach targeting AI models or applications | More than 20% |
@@ -106,14 +106,14 @@ State the conditions under which this document becomes wrong, so a later reader 
 
 - **A credible incidence study.** The moment someone publishes agent-incident rates by governance level, the unknown row above gets filled in and the argument should be rebuilt around it.
 - **Platform defaults improving.** Several controls here exist because the platform does not enforce them. If sandbox-at-launch or deny-by-default becomes the shipped default, the Level 2 and Level 3 estimates fall sharply.
-- **Regulatory scope changes.** The Digital Omnibus deferral is provisional. If Article 73's application to a given system class moves, the compliance-driven half of the Level 4 case moves with it.
+- **Regulatory scope changes.** The Digital Omnibus deferral is **no longer provisional**: Regulation (EU) 2026/1744 entered into force 27 July 2026 with fixed application dates of 2 December 2027 (Annex III) and 2 August 2028 (Annex I). Article 73's incident-reporting clocks are unaffected. What could still move this line is a change in which system class a given agent falls into, not a change in the dates.
 - **A large public agentic incident with disclosed costs.** Present incident cost figures are averages across all breach types. A disclosed agentic incident with a real number attached would replace the USD 6M proxy with something specific.
 
 ---
 
 ## Sources
 
-- IBM, *Cost of a Data Breach Report 2026*, announced 29 July 2026. [IBM newsroom release](https://newsroom.ibm.com/2026-07-29-ibm-study-one-in-four-malicious-breaches-are-ai-enabled,-costing-companies-6-million-on-average). Figures not carried in the release (the 92% access-control finding, the 43% unapproved-tool share, and the outcome breakdown) are as reported in [Help Net Security's coverage, 30 July 2026](https://www.helpnetsecurity.com/2026/07/30/ibm-cost-of-a-data-breach-2026/), which quotes the report directly. IBM's own report landing page returned HTTP 403 to automated retrieval, so the primary PDF was not read directly and these figures are attributed to the release and that coverage rather than to a page that was opened.
+- IBM, *Cost of a Data Breach Report 2026*, announced 29 July 2026. [IBM newsroom release](https://newsroom.ibm.com/2026-07-29-ibm-study-one-in-four-malicious-breaches-are-ai-enabled,-costing-companies-6-million-on-average). Figures not carried in the release (the 92% access-control finding, the 43% unapproved-tool share, and the outcome breakdown) are as reported in [Help Net Security's coverage, 30 July 2026](https://www.helpnetsecurity.com/2026/07/30/ibm-cost-of-a-data-breach-2026/), which quotes the report directly. Separately, "up 12% year over year, a record" is **derived rather than quoted**: USD 4.99M against USD 4.44M in 2025 is +12.4%, above the USD 4.88M 2024 high. IBM's release states the USD 4.99M without either characterization. IBM's own report landing page returned HTTP 403 to automated retrieval, so the primary PDF was not read directly and these figures are attributed to the release and that coverage rather than to a page that was opened.
 - EU AI Act Articles 72 and 73, serious-incident reporting. See [`CITATIONS.md`](../framework/CITATIONS.md) for the full entry and the Digital Omnibus caveat.
 - Incident corpus behind the qualitative claims: [`BYPASSES.md`](../framework/BYPASSES.md).
 

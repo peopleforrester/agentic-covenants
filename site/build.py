@@ -508,7 +508,7 @@ def index_page(loaded: dict[str, dict], totals: dict) -> str:
   it, or simply ignored. Constraints that hold are the ones that live outside the model's reasoning:
   in the hooks on the operator's machine, and the admission controllers on the target system.</p>
   <p class="evidence">Of organizations that reported a security incident involving an AI model or
-  application, <strong>92% were missing role-based access, MFA, and similar controls</strong> on it.
+  application, <strong>92% were missing role-based access, MFA, and similar controls</strong> on it. (Reported in Help Net Security's coverage of the report, not in IBM's own release.)
   <span class="src">IBM Cost of a Data Breach 2026, 29 July 2026.</span> Those are not exotic
   controls. The same organizations apply them to their databases. They did not apply them to the
   agent.</p>
