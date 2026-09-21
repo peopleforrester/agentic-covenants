@@ -202,6 +202,8 @@ spec:
           - keyless:
               subject: &quot;https://github.com/example-org/*&quot;
               issuer: &quot;https://token.actions.githubusercontent.com&quot;
+              rekor:
+                url: https://rekor.sigstore.dev
 </code></pre></figure><figure class="artifact"><figcaption><code>kyverno-verify-image-signatures.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/supply-chain/server-side/kyverno-verify-image-signatures.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Kyverno ClusterPolicy verifying cosign keyless signatures + SPDX SBOM attestation. Requires Kyverno 1.18+.
 # ABOUTME: Substitute example-org for your GitHub org. The keyless subject regex pins signatures to your org&#x27;s workflow runs only.
 apiVersion: kyverno.io/v1
@@ -259,6 +261,8 @@ spec:
           - keyless:
               subject: &quot;https://github.com/example-org/*&quot;
               issuer: &quot;https://token.actions.githubusercontent.com&quot;
+              rekor:
+                url: https://rekor.sigstore.dev
 
   - name: deny-non-allowlisted-registries
     match:
@@ -377,9 +381,19 @@ jobs:
 <p>&gt; <strong>Kyverno API deprecation, verified 2026-09-17.</strong> The policies here are legacy</p>
 <p>&gt; <code>kyverno.io/v1</code> <code>ClusterPolicy</code> resources. Kyverno <strong>1.19 deprecates</strong> that API</p>
 <p>&gt; group and emits an admission warning naming the <code>policies.kyverno.io</code></p>
-<p>&gt; replacement, and <strong>1.20 removes it</strong>. Current release is <strong>v1.19.1</strong></p>
-<p>&gt; (2026-09-10). These policies still load and enforce on 1.19; they will not on</p>
-<p>&gt; 1.20. Migration is tracked in</p>
+<p>&gt; replacement. Current release is <strong>v1.19.1</strong> (2026-09-10). These policies load</p>
+<p>&gt; and enforce on 1.19; verified with the 1.19.1 CLI, the repo&#x27;s suite passes</p>
+<p>&gt; 14 of 14 with three deprecation warnings.</p>
+<p>&gt;</p>
+<p>&gt; <strong>What 1.20 does is not settled.</strong> The upstream removal plan</p>
+<p>&gt; (<a href="https://github.com/kyverno/kyverno/issues/17214">kyverno#17214</a>, open, last</p>
+<p>&gt; updated 2026-09-16) carries a &quot;DO NOT submit PRs, under discussion&quot; banner and</p>
+<p>&gt; proposes that all CRDs stay served in 1.20 with stored policies still</p>
+<p>&gt; enforcing, while <strong>submitting</strong> a policy outside <code>policies.kyverno.io</code> becomes</p>
+<p>&gt; a hard error and full deletion moves to 1.21. For a template you copy into</p>
+<p>&gt; your own cluster, rejected-on-apply is the failure that matters, and it is a</p>
+<p>&gt; different failure from stopping working. Treat the November 2026 date as an</p>
+<p>&gt; estimate. Migration is tracked in</p>
 <p>&gt; <a href="https://github.com/peopleforrester/agentic-covenants/issues/11">#11</a>.</p>
 <p><strong>Control.</strong> Image registry restrictions in admission policy. OCI signature verification (cosign). SBOM admission requirements. Egress NetworkPolicy to approved registries only. OPA policy denying images without provenance attestation. SLSA build-provenance attestation gates. MCP domain allowlist enforced at the network layer. Server-side lockfile-integrity validation.</p>
 <p><strong>Strength.</strong> Deterministic at admission. Bypass requires compromise of signing infrastructure (KMS key theft), signature stripping at a registry mirror, policy misconfigured to allow unsigned images in some namespaces (&quot;the tools namespace exception&quot;), or cosign trust policy with <code>subject: &quot;*&quot;</code> accepting anyone&#x27;s keyless signature.</p>

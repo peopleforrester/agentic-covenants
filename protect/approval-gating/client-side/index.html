@@ -139,7 +139,7 @@ if __name__ == &quot;__main__&quot;:
     main()
 </code></pre></figure><figure class="artifact"><figcaption><code>pre_tool_use_tiered.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/approval-gating/client-side/pre_tool_use_tiered.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
 # ABOUTME: Tiered PreToolUse hook. Tier 1 auto-allow; tier 2 quick confirm; tier 3 typed verbatim; tier 4 out-of-band approval.
-# ABOUTME: Pairs with pre_tool_use.sh from controls/authorization/client-side/ — that one denies; this one gates.
+# ABOUTME: Pairs with pre_tool_use.sh from controls/authorization/client-side/. That one denies; this one gates.
 
 set -euo pipefail
 
@@ -163,7 +163,7 @@ log() {
     &gt;&gt; &quot;$LOG_DIR/pre_tool_use_tiered.log&quot; 2&gt;/dev/null || true
 }
 
-# ----- Tier 1: read-only — allow silently -----
+# ----- Tier 1: read-only, allow silently -----
 TIER1_PATTERNS=(
   &#x27;^(ls|cat|grep|find|head|tail|wc|stat|file|pwd|whoami|date|hostname)\b&#x27;
   &#x27;^kubectl\s+(get|describe|logs|version|api-resources|api-versions)\b&#x27;

@@ -134,7 +134,7 @@ logger -t agent-incident -p user.warning \
 
 echo &quot;Server-side supply chain quarantined for $AGENT_NAME (suspect: $SUSPECT_IMAGE, incident: $INCIDENT_ID)&quot;
 </code></pre></figure><figure class="artifact"><figcaption><code>cilium-deny-suspect-fqdns.yaml</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/interventions/supply-chain/server-side/cilium-deny-suspect-fqdns.yaml">view on GitHub</a></figcaption><pre><code># ABOUTME: Pre-staged CiliumNetworkPolicy denying egress to known-suspect FQDNs. Edit before applying or pre-populate at incident start.
-# ABOUTME: Requires Cilium with enable-l7-proxy: true. The toFQDNs list is the deny mechanism — DNS resolution to these names returns NXDOMAIN.
+# ABOUTME: Requires Cilium with enable-l7-proxy: true. The toFQDNs list is the deny mechanism: DNS resolution to these names returns NXDOMAIN.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:

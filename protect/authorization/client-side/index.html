@@ -98,6 +98,12 @@ repos:
 </code></pre></figure><figure class="artifact"><figcaption><code>pre_tool_use.sh</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/client-side/pre_tool_use.sh">view on GitHub</a></figcaption><pre><code>#!/usr/bin/env bash
 # ABOUTME: Claude Code PreToolUse hook with deny-then-ask-then-allow precedence.
 # ABOUTME: Receives JSON on stdin. Exit 0 = allow. Exit 2 = deny (Claude Code shows the message). Exit other = error.
+#
+# This is a FILTER, not a BOUNDARY. It raises the cost of the casual and the
+# careless path. An adversarial agent with shell access and time gets past it.
+# The boundary is the server-side column: RBAC on the target, an admission
+# controller, a pre-receive hook, a credential the agent never holds.
+# See ../../../framework/BYPASSES.md for the evasion classes this cannot close.
 
 set -euo pipefail
 
@@ -106,17 +112,54 @@ mkdir -p &quot;$LOG_DIR&quot; 2&gt;/dev/null || true
 
 # Hook receives JSON on stdin per Claude Code hook spec.
 INPUT=&quot;$(cat)&quot;
-TOOL_NAME=&quot;$(echo &quot;$INPUT&quot; | jq -r &#x27;.tool_name // empty&#x27;)&quot;
-TOOL_INPUT=&quot;$(echo &quot;$INPUT&quot; | jq -r &#x27;.tool_input.command // empty&#x27;)&quot;
-SESSION_ID=&quot;$(echo &quot;$INPUT&quot; | jq -r &#x27;.session_id // &quot;default&quot;&#x27;)&quot;
+TOOL_NAME=&quot;$(printf &#x27;%s&#x27; &quot;$INPUT&quot; | jq -r &#x27;.tool_name // empty&#x27;)&quot;
+RAW_COMMAND=&quot;$(printf &#x27;%s&#x27; &quot;$INPUT&quot; | jq -r &#x27;.tool_input.command // empty&#x27;)&quot;
+FILE_PATH=&quot;$(printf &#x27;%s&#x27; &quot;$INPUT&quot; | jq -r &#x27;.tool_input.file_path // empty&#x27;)&quot;
+SESSION_ID=&quot;$(printf &#x27;%s&#x27; &quot;$INPUT&quot; | jq -r &#x27;.session_id // &quot;default&quot;&#x27;)&quot;
+
+deny() {
+    local kind=&quot;$1&quot;
+    local detail=&quot;$2&quot;
+    printf &#x27;BLOCKED: %s: %s\n&#x27; &quot;$kind&quot; &quot;$detail&quot; &gt;&amp;2
+    printf &#x27;%s DENY %s %s %s=%s command=%s path=%s\n&#x27; \
+        &quot;$(date -Iseconds)&quot; &quot;$SESSION_ID&quot; &quot;$TOOL_NAME&quot; &quot;$kind&quot; &quot;$detail&quot; \
+        &quot;$RAW_COMMAND&quot; &quot;$FILE_PATH&quot; \
+        2&gt;/dev/null &gt;&gt; &quot;$LOG_DIR/pre_tool_use.log&quot; || true
+    exit 2
+}
+
+# ----- Normalization -----
+# Patterns match against a normalized copy; the raw string is what gets logged.
+# Normalization folds the cheapest evasions into one shape so the pattern list
+# does not have to enumerate every spelling of the same command. It closes the
+# splitting tricks below and nothing beyond them.
+#
+#   r&quot;&quot;m -rf /            quote splitting
+#   r\m -rf /             escape splitting
+#   rm${IFS}-rf${IFS}/    $IFS word splitting
+#   rm   -rf     /        whitespace padding
+normalize() {
+    local s=&quot;$1&quot;
+    s=&quot;${s//&#x27;&quot;&quot;&#x27;/}&quot;
+    s=&quot;${s//&quot;&#x27;&#x27;&quot;/}&quot;
+    s=&quot;${s//&#x27;\&#x27;/}&quot;
+    s=&quot;${s//&#x27;${IFS}&#x27;/ }&quot;
+    s=&quot;${s//&#x27;$IFS&#x27;/ }&quot;
+    printf &#x27;%s&#x27; &quot;$s&quot; | tr &#x27;\n\t&#x27; &#x27;  &#x27; | sed -E &#x27;s/[[:space:]]+/ /g; s/^ //; s/ $//&#x27;
+}
+
+COMMAND=&quot;$(normalize &quot;$RAW_COMMAND&quot;)&quot;
 
 # ----- Tier-4 hard-deny patterns -----
 # These cannot be confirmed past at the client side. The agent must not even
-# be asked to run them. Each pattern is a regex applied to TOOL_INPUT.
+# be asked to run them. Each pattern is a regex applied case-insensitively to
+# the normalized command. Case folding matters: `drop table` and `TerraForm
+# destroy` are the same instruction to the machine that runs them.
+#
+# `rm` is handled by the flag parser below rather than by a regex here, because
+# -rf, -fr, -Rf, -f -r, and --recursive --force are one command with five
+# spellings and a regex per spelling is a list that is always one short.
 DENY_PATTERNS=(
-  &#x27;\brm\s+-rf\s+/&#x27;
-  &#x27;\brm\s+-rf\s+~&#x27;
-  &#x27;\brm\s+-rf\s+\$HOME&#x27;
   &#x27;\bterraform\s+destroy&#x27;
   &#x27;\bterraform\s+apply.*-auto-approve&#x27;
   &#x27;\bDROP\s+TABLE&#x27;
@@ -134,16 +177,83 @@ DENY_PATTERNS=(
   &#x27;\bdd\s+if=/dev/zero\s+of=&#x27;
   &#x27;\bmkfs\b&#x27;
   &#x27;:\(\)\s*\{\s*:\|:&amp;\s*\};:&#x27;
+  # Equivalent commands, enumerated in framework/BYPASSES.md as evasions of the
+  # patterns above. `find` rooted outside the working tree with a delete action
+  # is `rm -rf` with a different name, so it gets the same answer.
+  &#x27;\bfind\s+(/|~|\$HOME|\$\{HOME\})[^;|&amp;]*(-delete\b|-exec(dir)?\s+(rm|shred)\b|-ok\s+(rm|shred)\b)&#x27;
+  &#x27;\bshred\s+(-[a-z]+\s+)*(/|~|\$HOME)&#x27;
 )
 
 for pattern in &quot;${DENY_PATTERNS[@]}&quot;; do
-  if echo &quot;$TOOL_INPUT&quot; | grep -qE &quot;$pattern&quot;; then
-    echo &quot;BLOCKED: command matches deny pattern: ${pattern}&quot; &gt;&amp;2
-    echo &quot;$(date -Iseconds) DENY $SESSION_ID $TOOL_NAME pattern=${pattern} input=${TOOL_INPUT}&quot; \
-      &gt;&gt; &quot;$LOG_DIR/pre_tool_use.log&quot; 2&gt;/dev/null || true
-    exit 2
+  if printf &#x27;%s&#x27; &quot;$COMMAND&quot; | grep -qiE &quot;$pattern&quot;; then
+    deny &quot;deny-pattern&quot; &quot;$pattern&quot;
   fi
 done
+
+# ----- rm flag analysis -----
+# Parse the flags instead of pattern-matching them, so flag order, flag case,
+# combined flags, separated flags, and long flags all reach the same verdict.
+#
+# The policy line: a recursive delete aimed at an absolute path, $HOME, or ~ is
+# denied. The same delete aimed inside the working tree (`rm -rf ./node_modules`)
+# is ordinary work and is allowed. A hook that denies both is an outage.
+segment_is_recursive_root_rm() {
+    local segment=&quot;$1&quot;
+    local -a tokens=()
+    local tok base flags
+    local seen_rm=0 recursive=0 root_target=0
+
+    read -r -a tokens &lt;&lt;&lt; &quot;$segment&quot;
+    if (( ${#tokens[@]} == 0 )); then
+        return 1
+    fi
+
+    for tok in &quot;${tokens[@]}&quot;; do
+        tok=&quot;${tok//&#x27;&quot;&#x27;/}&quot;
+        tok=&quot;${tok//&quot;&#x27;&quot;/}&quot;
+        if [[ -z &quot;$tok&quot; ]]; then
+            continue
+        fi
+        if (( seen_rm == 0 )); then
+            # Skip leading env assignments and wrappers such as sudo, and match
+            # on the basename so /bin/rm counts.
+            base=&quot;${tok##*/}&quot;
+            if [[ &quot;${base,,}&quot; == &quot;rm&quot; ]]; then
+                seen_rm=1
+            fi
+            continue
+        fi
+        case &quot;${tok,,}&quot; in
+            --recursive|--no-preserve-root)
+                recursive=1
+                ;;
+            --*)
+                ;;
+            -*)
+                flags=&quot;${tok,,}&quot;
+                if [[ &quot;${flags#-}&quot; == *r* ]]; then
+                    recursive=1
+                fi
+                ;;
+            /*|&#x27;~&#x27;*|&#x27;$home&#x27;*|&#x27;${home}&#x27;*)
+                root_target=1
+                ;;
+        esac
+    done
+
+    if (( seen_rm == 1 &amp;&amp; recursive == 1 &amp;&amp; root_target == 1 )); then
+        return 0
+    fi
+    return 1
+}
+
+# Judge each simple command on its own, so `rm -r ./build &amp;&amp; ls /etc` is not
+# read as a recursive delete of /etc.
+while IFS= read -r segment; do
+    if segment_is_recursive_root_rm &quot;$segment&quot;; then
+        deny &quot;recursive-delete&quot; &quot;rm -r aimed at an absolute path, \$HOME, or ~: ${segment}&quot;
+    fi
+done &lt; &lt;(printf &#x27;%s\n&#x27; &quot;$COMMAND&quot; | sed -E &#x27;s/[;|&amp;]/\n/g&#x27;)
 
 # ----- Obfuscation defenses -----
 # Catches the trivial cases. Not a guarantee. An adversarial agent has more
@@ -157,20 +267,41 @@ OBFUSCATION_PATTERNS=(
   &#x27;\bcurl\s+[^|]+\|\s*(bash|sh)\b&#x27;
   &#x27;\bwget\s+[^|]+\|\s*(bash|sh)\b&#x27;
   &#x27;\bxargs\s+rm\b&#x27;
+  # Env-variable indirection: binding a destructive binary to a name so the
+  # pattern list never sees the binary. Heuristic, and it will occasionally
+  # deny a harmless assignment.
+  &#x27;(^|[^[:alnum:]_])[A-Za-z_][A-Za-z0-9_]*=[&#x27;\&#x27;&#x27;&quot;]?(/[A-Za-z0-9_./-]*/)?(rm|shred|mkfs)\b&#x27;
 )
 
 for pattern in &quot;${OBFUSCATION_PATTERNS[@]}&quot;; do
-  if echo &quot;$TOOL_INPUT&quot; | grep -qE &quot;$pattern&quot;; then
-    echo &quot;BLOCKED: obfuscation pattern detected: ${pattern}&quot; &gt;&amp;2
-    echo &quot;$(date -Iseconds) DENY-OBFUSCATION $SESSION_ID $TOOL_NAME pattern=${pattern} input=${TOOL_INPUT}&quot; \
-      &gt;&gt; &quot;$LOG_DIR/pre_tool_use.log&quot; 2&gt;/dev/null || true
-    exit 2
+  if printf &#x27;%s&#x27; &quot;$COMMAND&quot; | grep -qiE &quot;$pattern&quot;; then
+    deny &quot;obfuscation&quot; &quot;$pattern&quot;
   fi
 done
 
+# ----- Protected write paths -----
+# Editing Terraform state or production Terraform by hand is the documented
+# stand-in for running `terraform destroy`, and the Edit and Write tools carry a
+# file path rather than a command. Only the detectable cases are covered. Adjust
+# these to your own repository layout; they are not a substitute for the
+# server-side pre-receive hook or for filesystem ownership.
+PROTECTED_PATH_PATTERNS=(
+  &#x27;\.tfstate(\.backup)?$&#x27;
+  &#x27;(^|/)(infrastructure|infra|terraform|deploy)/prod(uction)?/.*\.(tf|tfvars)$&#x27;
+)
+
+if [[ -n &quot;$FILE_PATH&quot; ]]; then
+  for pattern in &quot;${PROTECTED_PATH_PATTERNS[@]}&quot;; do
+    if printf &#x27;%s&#x27; &quot;$FILE_PATH&quot; | grep -qE &quot;$pattern&quot;; then
+      deny &quot;protected-path&quot; &quot;$pattern&quot;
+    fi
+  done
+fi
+
 # ----- Allow with logging -----
-echo &quot;$(date -Iseconds) ALLOW $SESSION_ID $TOOL_NAME input=${TOOL_INPUT}&quot; \
-  &gt;&gt; &quot;$LOG_DIR/pre_tool_use.log&quot; 2&gt;/dev/null || true
+printf &#x27;%s ALLOW %s %s command=%s path=%s\n&#x27; \
+  &quot;$(date -Iseconds)&quot; &quot;$SESSION_ID&quot; &quot;$TOOL_NAME&quot; &quot;$RAW_COMMAND&quot; &quot;$FILE_PATH&quot; \
+  2&gt;/dev/null &gt;&gt; &quot;$LOG_DIR/pre_tool_use.log&quot; || true
 
 exit 0
 </code></pre></figure><figure class="artifact"><figcaption><code>settings.json</code><a class="src" href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/client-side/settings.json">view on GitHub</a></figcaption><pre><code>{
@@ -241,10 +372,47 @@ exit 0
 <h3>Files in this directory</h3>
 <ul>
 <li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/client-side/settings.json"><code>settings.json</code></a>, Claude Code project settings with <code>permissions</code> <code>defaultMode: deny</code>, an explicit <code>allow</code> list (read-only ops), an <code>ask</code> list (mutation ops), a <code>deny</code> list (destructive ops). Drop in your project at <code>.claude/settings.json</code> (operator-owned, agent runs as a different user).</li>
-<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/client-side/pre_tool_use.sh"><code>pre_tool_use.sh</code></a>, PreToolUse hook that receives JSON on stdin per the Claude Code hook spec. Hard-deny patterns (<code>rm -rf /</code>, <code>terraform destroy</code>, fork bombs) and obfuscation patterns (base64 decode, eval). Deploy to <code>/etc/agents/hooks/</code> with mode 0755 and owner root.</li>
+<li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/client-side/pre_tool_use.sh"><code>pre_tool_use.sh</code></a>, PreToolUse hook that receives JSON on stdin per the Claude Code hook spec. Hard-deny patterns (<code>terraform destroy</code>, <code>DROP TABLE</code>, fork bombs), a flag parser for <code>rm</code>, the equivalent-command evasions listed in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/framework/BYPASSES.md"><code>BYPASSES.md</code></a>, and obfuscation patterns (base64 decode, eval, env-variable indirection). Deploy to <code>/etc/agents/hooks/</code> with mode 0755 and owner root. Behavior is locked by <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/tests/test_pre_tool_use.py"><code>tests/test_pre_tool_use.py</code></a>.</li>
 <li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/client-side/pre-commit-config.yaml"><code>pre-commit-config.yaml</code></a>, pre-commit framework config that runs gitleaks plus a deny-protected-paths hook. Drop at the repo root as <code>.pre-commit-config.yaml</code> and run <code>pre-commit install</code>.</li>
 <li>- <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/client-side/deny-protected-paths.sh"><code>deny-protected-paths.sh</code></a>, pre-commit hook that fails when the diff touches <code>infrastructure/prod/</code>, <code>.github/workflows/</code>, or <code>secrets/</code>. Operator commits to those paths; agent commits do not.</li>
 </ul>
+<h3>What the hook catches, and what it does not</h3>
+<p><strong>This is a filter, not a boundary.</strong> It raises the cost of the casual and the careless path. It does not stop an adversary. Anyone with shell access and time gets past a pattern matcher, and GHSA-xq4m-mc3c-vvg3 is the proof that even the runtime&#x27;s own allowlist parser can be talked into the wrong answer about a command it read correctly. The boundary is the <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/server-side">server-side column</a>: RBAC on the target, an admission controller, a pre-receive hook, a credential the agent never holds. Nothing in this directory is a substitute for those, and the hardening below does not change that.</p>
+<p>What it does catch, because these are cheap to catch and are what casual misuse actually looks like:</p>
+<div class="tw"><table><tbody>
+<tr><td>Evasion class</td><td>Handling</td></tr>
+<tr><td>Case variation (<code>drop table</code>, <code>TerraForm destroy</code>)</td><td>All patterns match case-insensitively.</td></tr>
+<tr><td><code>rm</code> flag permutation (<code>-fr</code>, <code>-Rf</code>, <code>-f -r</code>, <code>--recursive --force</code>)</td><td>Flags are parsed, not pattern-matched. One rule covers every spelling.</td></tr>
+<tr><td>Word splitting (<code>r&quot;&quot;m</code>, <code>r\m</code>, <code>rm${IFS}-rf${IFS}/</code>)</td><td>The command is normalized before matching: empty quote pairs removed, escapes stripped, <code>$IFS</code> expanded, whitespace collapsed.</td></tr>
+<tr><td>Equivalent commands (<code>find / -delete</code>, <code>kubectl scale --replicas=0</code>, <code>TRUNCATE</code>)</td><td>Denied by name, from the list in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/framework/BYPASSES.md"><code>BYPASSES.md</code></a>.</td></tr>
+<tr><td>Env-variable indirection (<code>X=rm; $X -rf /</code>)</td><td>Heuristic: binding a destructive binary to a variable name is denied.</td></tr>
+<tr><td>Hand-editing Terraform state or production <code>.tf</code></td><td>Denied on the Edit and Write tools by file path, where the path is detectable.</td></tr>
+</tbody></table></div>
+<p>What it deliberately does not catch, so nobody mistakes an untested gap for a covered one:</p>
+<ul>
+<li>- <strong>Anything that reaches the shell through an interpreter.</strong> A Python or Node one-liner, a script written to a file and then executed, a Makefile target. The hook sees a command string, not a syscall.</li>
+<li>- <strong>Indirection the normalizer cannot resolve.</strong> <code>$(echo cm0K | base64 -d)</code>, a function defined earlier in the session, an alias, a wrapper script on <code>PATH</code>. Some spellings trip the obfuscation list; the class is open-ended.</li>
+<li>- <strong>Absolute-path deletes below the recursion rule.</strong> <code>rm /etc/passwd</code> is a single-file delete, so it is allowed. Deny-by-default on paths belongs in the filesystem, not here.</li>
+<li>- <strong><code>DELETE FROM</code> without a <code>WHERE</code> clause</strong>, and most data-destroying SQL that is not <code>DROP</code> or <code>TRUNCATE</code>. Distinguishing a routine delete from a table wipe needs a parser, and a half-parser produces false denials.</li>
+<li>- <strong>Shell redirection into a protected path.</strong> <code>echo x &gt; infrastructure/prod/main.tf</code> is a Bash command, not an Edit call, and the path check only reads the Edit and Write tool inputs.</li>
+<li>- <strong>A hook the agent can rewrite.</strong> File ownership answers this, not the hook&#x27;s own content.</li>
+</ul>
+<p>The policy line for deletes is that a recursive delete aimed at an absolute path, <code>$HOME</code>, or <code>~</code> is denied, while the same delete inside the working tree is ordinary work. <code>rm -rf /var/lib</code> is denied; <code>rm -rf ./node_modules</code> is allowed. A hook that denies both is an outage, not a control.</p>
+<h4>Writing about a dangerous command is the same as running one</h4>
+<p>The hook is handed a command string. It cannot tell a command that uses a dangerous pattern from one that quotes it, and it does not try. Both of these are harmless and both are denied:</p>
+<pre><code>
+grep -rn &quot;drop table&quot; docs/
+echo &quot;find /target -delete is a known bypass&quot; &gt;&gt; notes.md
+</code></pre>
+<p>Case folding widens this. <code>git commit -m &quot;drop table rendering from the docs&quot;</code> is denied for the same reason <code>drop table users</code> is.</p>
+<p>A quote-aware exemption for read-only commands (<code>grep</code>, <code>echo</code>, <code>printf</code>, <code>cat</code>) was considered and rejected. These are the same shape as the two above, and all three are destructive:</p>
+<pre><code>
+echo &quot;drop table users&quot; | psql prod
+echo &quot;rm -rf /&quot; &gt; payload.sh; sh payload.sh
+printf &quot;%s&quot; &quot;find /target -delete&quot; &gt; p.sh &amp;&amp; bash p.sh
+</code></pre>
+<p>They are denied today precisely because quoted text is matched, and write-payload-then-execute is an obfuscation class <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/framework/BYPASSES.md"><code>BYPASSES.md</code></a> already lists. An exemption broad enough to clear the false positives clears these too. Separating them needs a shell interpreter, not a rule, and deciding what counts as &quot;inside a quote&quot; is the defect in GHSA-xq4m-mc3c-vvg3, where the parser read the command correctly and still reached the wrong verdict. A filter that cannot parse intent is wrong in one direction or the other. For a control whose failure mode is destruction, erring toward denial is the right default, and a loud false denial is a better failure than a quiet exploitable exemption.</p>
+<p>The trade is survivable because the Edit and Write tools carry a file path rather than a command, so the hook never sees the text. Documenting an evasion in <code>BYPASSES.md</code> goes through unaffected. Use the file tools rather than a shell heredoc, and if a specific denied string blocks real work, tune the pattern list to your own traffic rather than adding a general exemption.</p>
 <h3>Verification</h3>
 <pre><code>
 # 1. Hook fires on a denied command
@@ -272,11 +440,33 @@ git checkout -b test-protected
 echo &quot;test&quot; &gt;&gt; infrastructure/prod/main.tf
 git add . &amp;&amp; git commit -m &quot;test&quot;
 # expected: failure at the deny-protected-paths hook
+
+# 6. Known evasions are denied, not just the canonical spelling
+for cmd in &#x27;rm -fr /&#x27; &#x27;find /target -delete&#x27; &#x27;drop table users&#x27; &#x27;TerraForm destroy&#x27;; do
+  printf &#x27;{&quot;tool_name&quot;:&quot;Bash&quot;,&quot;tool_input&quot;:{&quot;command&quot;:&quot;%s&quot;}}&#x27; &quot;$cmd&quot; \
+    | /etc/agents/hooks/pre_tool_use.sh &gt;/dev/null 2&gt;&amp;1
+  echo &quot;$? &lt;- $cmd&quot;
+done
+# expected: 2 on every line
+
+# 7. Ordinary work still runs
+for cmd in &#x27;git status&#x27; &#x27;kubectl get pods&#x27; &#x27;rm -rf ./node_modules&#x27;; do
+  printf &#x27;{&quot;tool_name&quot;:&quot;Bash&quot;,&quot;tool_input&quot;:{&quot;command&quot;:&quot;%s&quot;}}&#x27; &quot;$cmd&quot; \
+    | /etc/agents/hooks/pre_tool_use.sh &gt;/dev/null 2&gt;&amp;1
+  echo &quot;$? &lt;- $cmd&quot;
+done
+# expected: 0 on every line
+</code></pre>
+<p>Both directions are covered by the test suite, which drives the hook over the same JSON-on-stdin contract Claude Code uses:</p>
+<pre><code>
+uvx --with pyyaml --from pytest pytest tests/test_pre_tool_use.py -q
 </code></pre>
 <h3>Common mistakes</h3>
 <ul>
 <li>- Allowing <code>Bash(*)</code> in the allow list, which gates nothing.</li>
-<li>- Pattern hooks that match <code>kubectl delete</code> but not <code>kubectl scale --replicas=0</code>. Pattern hooks catch casual misuse, not adversarial agents. Document the equivalent-command bypass and accept the matrix&#x27;s framing.</li>
+<li>- Pattern hooks that match <code>kubectl delete</code> but not <code>kubectl scale --replicas=0</code>, or <code>DROP TABLE</code> but not <code>drop table</code>. Every deny pattern needs its equivalent commands and its case variants tested, in both directions, or the list is a guess. Even then, pattern hooks catch casual misuse and not adversarial agents. Document the residual bypass and accept the matrix&#x27;s framing.</li>
+<li>- Treating a hardened pattern list as a boundary. Closing the known evasions makes the filter better at being a filter. It does not make it a control the server-side column can lean on.</li>
+<li>- Reading a false positive as a bug in the pattern list. <code>grep -rn &quot;drop table&quot; docs/</code> and <code>echo &quot;find /target -delete is a known bypass&quot; &gt;&gt; notes.md</code> are both denied, and both are harmless. Adding a quote-aware exemption to fix that also un-blocks <code>echo &quot;drop table users&quot; | psql prod</code>, which is the same shape and is not harmless. See the trade above before loosening anything.</li>
 <li>- Hook config owned by the agent&#x27;s own user. The agent edits its own deny list at runtime.</li>
 <li>- Forgetting to enable the May 2026 Claude Code patch where <code>allow</code> no longer beats <code>deny</code>. Verify with <code>claude --version</code> and check the changelog.</li>
 <li>- Pre-commit only on the operator&#x27;s machine. The agent runs <code>git commit --no-verify</code> and skips it. Mitigation is the server-side pre-receive hook in <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/controls/authorization/server-side"><code>../server-side/</code></a>.</li>

@@ -280,7 +280,7 @@ repos:
         args: [&quot;--strict&quot;]
         files: &#x27;^(requirements.*\.txt|pyproject\.toml|Pipfile\.lock|poetry\.lock)$&#x27;
 
-  # Trivy was compromised twice in 2026 (malicious v0.69.4, March 2026) — its own
+  # Trivy was compromised twice in 2026 (malicious v0.69.4, March 2026). Its own
   # release pipeline is part of YOUR supply chain. Pin the rev, and in CI verify
   # the binary by digest/signature rather than trusting the tag. See BYPASSES.md.
   - repo: https://github.com/aquasecurity/trivy

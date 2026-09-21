@@ -296,9 +296,19 @@ spec:
 <p>&gt; <strong>Kyverno API deprecation, verified 2026-09-17.</strong> The policies here are legacy</p>
 <p>&gt; <code>kyverno.io/v1</code> <code>ClusterPolicy</code> resources. Kyverno <strong>1.19 deprecates</strong> that API</p>
 <p>&gt; group and emits an admission warning naming the <code>policies.kyverno.io</code></p>
-<p>&gt; replacement, and <strong>1.20 removes it</strong>. Current release is <strong>v1.19.1</strong></p>
-<p>&gt; (2026-09-10). These policies still load and enforce on 1.19; they will not on</p>
-<p>&gt; 1.20. Migration is tracked in</p>
+<p>&gt; replacement. Current release is <strong>v1.19.1</strong> (2026-09-10). These policies load</p>
+<p>&gt; and enforce on 1.19; verified with the 1.19.1 CLI, the repo&#x27;s suite passes</p>
+<p>&gt; 14 of 14 with three deprecation warnings.</p>
+<p>&gt;</p>
+<p>&gt; <strong>What 1.20 does is not settled.</strong> The upstream removal plan</p>
+<p>&gt; (<a href="https://github.com/kyverno/kyverno/issues/17214">kyverno#17214</a>, open, last</p>
+<p>&gt; updated 2026-09-16) carries a &quot;DO NOT submit PRs, under discussion&quot; banner and</p>
+<p>&gt; proposes that all CRDs stay served in 1.20 with stored policies still</p>
+<p>&gt; enforcing, while <strong>submitting</strong> a policy outside <code>policies.kyverno.io</code> becomes</p>
+<p>&gt; a hard error and full deletion moves to 1.21. For a template you copy into</p>
+<p>&gt; your own cluster, rejected-on-apply is the failure that matters, and it is a</p>
+<p>&gt; different failure from stopping working. Treat the November 2026 date as an</p>
+<p>&gt; estimate. Migration is tracked in</p>
 <p>&gt; <a href="https://github.com/peopleforrester/agentic-covenants/issues/11">#11</a>.</p>
 <p><strong>Control.</strong> Scoped RBAC Roles, never ClusterRoles. IAM policies scoped to specific resources with explicit ARN. Kyverno or OPA admission policies. Namespace-scoped permissions. Deny <code>*</code> verbs. Deny prod namespaces from agent ServiceAccounts. Server-side Git pre-receive hooks for repo-level enforcement.</p>
 <p><strong>Strength.</strong> Deterministic and external to both the agent and the operator&#x27;s machine. Bypass requires escalation primitives in RBAC (<code>escalate</code>, <code>bind</code>, impersonation), aggregated roles missed by the policy author, subresource access not denied (<code>pods/exec</code> when only <code>pods</code> is denied), admission webhook fail-open, IAM condition logic bugs, or operator manipulation through a persuasive PR description.</p>

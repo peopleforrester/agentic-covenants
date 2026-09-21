@@ -138,7 +138,7 @@ detection:
     | aggregate avg(response_ms) as avg_ms, count() as n by user
     | where avg_ms &lt; 2000 and n &gt; 50
 falsepositives:
-  - Operator running a batch script that pre-types confirmations (legitimate but indicates a scope mismatch — those operations probably don&#x27;t need tiered approval at all).
+  - Operator running a batch script that pre-types confirmations (legitimate but indicates a scope mismatch, those operations probably don&#x27;t need tiered approval at all).
   - Single very-long approval inflating one user&#x27;s average without other indicators (re-check; the rule uses mean, not median).
 level: medium
 tags:
