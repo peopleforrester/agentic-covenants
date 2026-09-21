@@ -2,7 +2,7 @@
 
 The rest of this repo assumes internet egress: public Sigstore (Fulcio/Rekor), `ghcr.io`, `api.anthropic.com`, PyPI, npm. **In a DoD IL4/IL5 enclave, none of those exist.** This example is the same fifteen Covenants cells with every public dependency replaced by an in-enclave equivalent, plus the identity binding that DoD ICAM actually requires.
 
-It is written for a program office that has to defend this to an AO, so every substitution names what it satisfies.
+It is written for a program office that has to defend this to an AO, so every substitution names the controls it crosswalks to. A crosswalk is a defensible starting point for that conversation and not a compliance claim; the AO decides what is satisfied, and the three artifacts in this directory say so in their own headers for the same reason.
 
 ## What changes and what does not
 
@@ -10,7 +10,7 @@ It is written for a program office that has to defend this to an AO, so every su
 
 **Does change.** Every cell that depended on a public service needs an in-enclave substitute, and the identity cells need to bind to ICAM rather than to a commercial IdP.
 
-| Cell | Connected assumption | Air-gapped substitute | Satisfies |
+| Cell | Connected assumption | Air-gapped substitute | Crosswalks to (not a compliance claim) |
 |---|---|---|---|
 | Identity / client-side | Commercial IdP (Okta, Auth0) issues per-agent tokens | DoD PKI: NPE certificate issued under the enterprise ICAM NPE certificate lifecycle; short-lived where the CA supports it | IA-5, IA-9; ZT **User** pillar |
 | Identity / server-side | Public OIDC discovery, `sts.amazonaws.com` audience | In-enclave OIDC provider (cluster issuer or enclave IdP); SPIFFE/SPIRE with an enclave trust domain; audience pinned to the enclave | IA-2, IA-8; ZT **User**; DoD ICAM NPE |

@@ -450,6 +450,27 @@ in-agent cell populated is an audit finding, because the model can be talked out
     return shell(title, str(data.get("question", ""))[:180], body, 1, f"/{m.slug}/")
 
 
+def assurance_tally() -> str:
+    """The coverage sentence, read from ASSURANCE.md rather than restated here.
+
+    This was hardcoded, and it drifted. The page kept the original fifteen
+    incident tally while ASSURANCE.md was revised twice, so the public site
+    published "5 bounded, 6 not prevented" against a real "6 bounded, 8 not
+    prevented". The drift ran in the direction that flattered the framework,
+    on the one section whose entire purpose is not to.
+
+    Deriving it means the page cannot be wrong about this again, and cannot
+    silently lose the denominator either.
+    """
+    text = (REPO / "framework" / "ASSURANCE.md").read_text(encoding="utf-8")
+    m = re.search(
+        r"Of the (\d+) ecosystem incidents: \*\*(.+?)\*\*", text)
+    if not m:
+        raise SystemExit("ASSURANCE.md tally sentence not found; site/build.py "
+                         "derives the homepage tally from it")
+    return f"Of the {m.group(1)} ecosystem incidents in the corpus: <strong>{esc(m.group(2))}</strong>"
+
+
 def index_page(loaded: dict[str, dict], totals: dict) -> str:
     flow = "".join(
         f'<a class="fn" href="{m.slug}/index.html">'
@@ -537,12 +558,11 @@ def index_page(loaded: dict[str, dict], totals: dict) -> str:
 
 <section class="honest">
   <h2>Every control here can be bypassed</h2>
-  <p>The coverage map publishes the tally rather than hiding it. Of the ecosystem incidents in the
-  corpus: <strong>3 prevented, 5 bounded or partial, 6 not prevented, 1 out of scope.</strong>
+  <p>The coverage map publishes the tally rather than hiding it. """ + assurance_tally() + """
   The not-prevented column is dominated by platform defects and trusted-component compromise,
   neither of which is closable by adding cells.</p>
-  <p><a href="https://github.com/peopleforrester/agentic-covenants/blob/main/ASSURANCE.md">Read the coverage map</a> ·
-     <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/BYPASSES.md">Read the bypass corpus</a></p>
+  <p><a href="https://github.com/peopleforrester/agentic-covenants/blob/main/framework/ASSURANCE.md">Read the coverage map</a> ·
+     <a href="https://github.com/peopleforrester/agentic-covenants/blob/main/framework/BYPASSES.md">Read the bypass corpus</a></p>
 </section>
 """
     return shell(
