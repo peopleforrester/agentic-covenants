@@ -175,6 +175,20 @@ agentic breach cost".
 | Client-side | MCP server allowlist with manifest hash pinning, **tool-description hashing**, Sigstore verification, lockfile pinning, pre-commit dependency scan, skill or extension allowlist | PR.PS-02; PR.PS-01; **GV.SC-07** (risks from suppliers, products, services, and other third parties identified, recorded, prioritized, assessed, responded to, monitored) | MAP 4.1; MANAGE 3.1 | LLM03:2025; LLM04:2025 | ASI04:2026; ASI06:2026 | EU AI Act Art. 15; ISO/IEC 42001 §A.10 | NIST SP 800-218 v1.1 PS.2; **NIST SP 800-218 Rev. 1 draft (Dec 17, 2025)**; NIST SP 800-218A; OWASP MCP01:2025, MCP03:2025, MCP04:2025 |
 | Server-side | OCI signature verification (cosign), SBOM admission, egress NetworkPolicy, OPA attestation policy, MCP domain allowlist at network layer, SLSA build-provenance attestation gates | PR.PS-02; PR.PS-05; PR.IR-01; **GV.SC-07**; ID.RA-09 (authenticity and integrity of hardware and software assessed prior to acquisition and use) | MAP 4.1; MANAGE 3.1 | LLM03:2025; LLM04:2025 | ASI04:2026 | EU AI Act Art. 15; ISO/IEC 42001 §A.10 | NIST SP 800-218 v1.1 PS.3; NIST SP 800-161 Rev. 1; SLSA framework; **CISA/NSA/FBI "AI Data Security" CSI (May 2025)**; **CISA/ASD ACSC "Principles for Secure Integration of AI in OT" (Dec 2025)**; OWASP MCP04:2025, MCP09:2025 |
 
+## Content integrity row
+
+The sixth concern, and the only one whose server-side column is deliberately weak. The controls here are **probabilistic**: they score and threshold rather than admit and deny, so they belong in the Detect column of anyone's mental model rather than the Protect one. Cited accordingly, and the row is thinner than the other five because the mappings genuinely are.
+
+| Layer | Control | NIST CSF 2.0 | NIST AI RMF | OWASP LLM | OWASP Agentic | EU AI Act / ISO | Other |
+|---|---|---|---|---|---|---|---|
+| In-agent | System-prompt hardening, instruction hierarchy, provenance framing of untrusted content (advisory; no enforcement) | (no mapping) | MEASURE 2.7 | LLM01:2025 (related risk) | ASI02:2026 (mitigation principle) | | |
+| Client-side | Input scanning before the model sees fetched content, output scanning before a response or tool argument leaves, tool-result sanitization, provenance tagging | DE.CM-09; PR.DS-02 | MEASURE 2.7; MANAGE 2.2 | LLM01:2025; LLM02:2025; LLM05:2025 | ASI02:2026 | | NIST AI 100-2 E2025 (indirect prompt injection taxonomy) |
+| Server-side | Egress NetworkPolicy so exfiltration has nowhere to post, DLP at the boundary, send-side audit | PR.DS-02; DE.CM-01; PR.IR-01 | MANAGE 2.2 | LLM02:2025 | ASI02:2026 | | |
+
+**Why this row has no strong server-side mapping.** The other five concerns each have a control that frameworks describe as binary: authenticate, authorize, isolate, approve, verify provenance. Content integrity's failure is semantic. A prompt injection inside a retrieved document is well-formed text arriving over an authorized channel from an approved source, and no admission controller distinguishes it from the document hiding it. The frameworks do not offer a deterministic control here because there is not one to offer, and citing a control family harder than the frameworks do would be the overstatement this file exists to avoid.
+
+The strongest available control for this concern is not in this row at all. It is blast radius and authorization: an injected agent can only do what its credentials, RBAC, sandbox and egress policy permit. See the [blast radius](#blast-radius-row) and [authorization](#authorization-row) rows.
+
 ## US DoD / federal crosswalk
 
 For program offices, ISSMs, ISSOs, and AOs. Same cells, expressed in 800-53 families, DoD Zero Trust pillars, and the RAI principles. **These are defensible crosswalks, not compliance claims**, your AO makes the determination.
