@@ -732,11 +732,61 @@ def check_american_english(staged: bool) -> Findings:
     return findings
 
 
+def check_coverage(staged: bool) -> Findings:
+    """A cell with no artifact must be flagged empty_by_design, and the reverse.
+
+    This is the framework's most load-bearing honesty claim: that it does not
+    quietly ship empty cells as if they were populated. The in-agent cells in
+    Interventions and Restorations are deliberately empty, because the thesis
+    is that an agent cannot be trusted to stop or repair itself, and saying so
+    is the finding. An undeclared empty cell is a different thing entirely. It
+    overstates coverage, and the overstatement is invisible in a matrix that
+    renders a directory as a populated square either way.
+
+    Both directions are checked. A stale flag on a cell that has since been
+    populated understates the work and rots the same way.
+    """
+    findings = Findings("coverage")
+    try:
+        import yaml
+    except ImportError:
+        return findings
+
+    data_dir = REPO_ROOT / "data"
+    if not data_dir.is_dir():
+        return findings
+
+    for f in sorted(data_dir.glob("*.yaml")):
+        doc = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+        for cell in doc.get("cells", []):
+            rel = next((v for k, v in cell.items() if k.endswith("_path")), None)
+            if not rel:
+                findings.add(f, None,
+                             f"cell {cell.get('concern')}/{cell.get('layer')} has no *_path key")
+                continue
+            d = REPO_ROOT / str(rel).rstrip("/")
+            if not d.is_dir():
+                findings.add(f, None, f"{rel} is declared but not on disk")
+                continue
+            has_artifact = any(
+                x.is_file() and x.name != "README.md" for x in d.iterdir()
+            )
+            flagged = bool(cell.get("empty_by_design"))
+            if not has_artifact and not flagged:
+                findings.add(f, None,
+                             f"{rel} has only a README; flag it empty_by_design or populate it")
+            elif has_artifact and flagged:
+                findings.add(f, None,
+                             f"{rel} is flagged empty_by_design but carries an artifact")
+    return findings
+
+
 CHECKS: dict[str, Callable[[bool], Findings]] = {
     "assurance": check_assurance,
     "owasp-ids": check_owasp_ids,
     "american-english": check_american_english,
     "counts": check_counts,
+    "coverage": check_coverage,
     "root": check_root,
     "diagrams": check_diagrams,
     "site": check_site,
