@@ -14,8 +14,9 @@ permissions:
 
 env:
   # Pinned so a CLI release cannot change what "passing" means without a commit
-  # that says so. Upgrading is tracked in issue #11.
-  KYVERNO_VERSION: v1.17.1
+  # that says so. On the current release, because a pin behind the deprecation
+  # is a pin that cannot see it. Migration off the legacy API is issue #11.
+  KYVERNO_VERSION: v1.19.1
 
 jobs:
   verify:

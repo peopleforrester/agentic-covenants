@@ -3,9 +3,19 @@
 > **Kyverno API deprecation, verified 2026-09-17.** The policies here are legacy
 > `kyverno.io/v1` `ClusterPolicy` resources. Kyverno **1.19 deprecates** that API
 > group and emits an admission warning naming the `policies.kyverno.io`
-> replacement, and **1.20 removes it**. Current release is **v1.19.1**
-> (2026-09-10). These policies still load and enforce on 1.19; they will not on
-> 1.20. Migration is tracked in
+> replacement. Current release is **v1.19.1** (2026-09-10). These policies load
+> and enforce on 1.19; verified with the 1.19.1 CLI, the repo's suite passes
+> 14 of 14 with three deprecation warnings.
+>
+> **What 1.20 does is not settled.** The upstream removal plan
+> ([kyverno#17214](https://github.com/kyverno/kyverno/issues/17214), open, last
+> updated 2026-09-16) carries a "DO NOT submit PRs, under discussion" banner and
+> proposes that all CRDs stay served in 1.20 with stored policies still
+> enforcing, while **submitting** a policy outside `policies.kyverno.io` becomes
+> a hard error and full deletion moves to 1.21. For a template you copy into
+> your own cluster, rejected-on-apply is the failure that matters, and it is a
+> different failure from stopping working. Treat the November 2026 date as an
+> estimate. Migration is tracked in
 > [#11](https://github.com/peopleforrester/agentic-covenants/issues/11).
 
 **Control.** Scoped RBAC Roles, never ClusterRoles. IAM policies scoped to specific resources with explicit ARN. Kyverno or OPA admission policies. Namespace-scoped permissions. Deny `*` verbs. Deny prod namespaces from agent ServiceAccounts. Server-side Git pre-receive hooks for repo-level enforcement.
