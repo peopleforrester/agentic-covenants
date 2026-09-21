@@ -19,6 +19,6 @@ spec:
       patchStrategicMerge:
         metadata:
           annotations:
-            agent-sentinel/image-audit: "{{ request.object.spec.containers[].image | join(', ') }}"
+            agent-sentinel/image-audit: "{{ join(', ', request.object.spec.containers[].image) }}"
             agent-sentinel/image-pull-ts: "{{ time_now_utc() }}"
             agent-sentinel/namespace: "{{ request.object.metadata.namespace }}"

@@ -55,6 +55,8 @@ spec:
           - keyless:
               subject: "https://github.com/example-org/*"
               issuer: "https://token.actions.githubusercontent.com"
+              rekor:
+                url: https://rekor.sigstore.dev
 
   - name: deny-non-allowlisted-registries
     match:

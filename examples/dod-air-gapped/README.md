@@ -39,6 +39,7 @@ See [`icam-npe-binding.md`](./icam-npe-binding.md) for the field-by-field mappin
 ## Files in this directory
 
 - [`icam-npe-binding.md`](./icam-npe-binding.md), maps agent-charter fields to ICAM NPE registry attributes and the PE control relationship.
+- [`enclave-cosign-public-key.yaml`](./enclave-cosign-public-key.yaml), the enclave-held cosign **public** key as a ConfigMap. Apply this first.
 - [`offline-cosign-verify.yaml`](./offline-cosign-verify.yaml), Kyverno `verifyImages` using a **static public key from a ConfigMap** instead of keyless/Rekor, for enclaves with no transparency log.
 - [`enclave-registry-policy.yaml`](./enclave-registry-policy.yaml), admission policy restricting images to the enclave registry only, with an explicit deny on every public registry.
 - [`airgap-preflight.sh`](./airgap-preflight.sh), verifies the enclave actually has no egress to the public services this framework otherwise assumes, so you find out at deploy time rather than during an assessment.

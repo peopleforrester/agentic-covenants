@@ -1,0 +1,19 @@
+# ABOUTME: Enclave-held cosign PUBLIC key, mounted by offline-cosign-verify.yaml.
+# ABOUTME: Split from that policy so the policy file stays single-document and testable.
+#
+# Apply this before the policy. The private half lives in an enclave HSM or KMS and
+# never appears here. Replace the key body with your own enclave signing key.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: enclave-cosign-pubkey
+  namespace: kyverno
+data:
+  # Public half of the enclave signing key. The PRIVATE key lives in the enclave
+  # HSM/KMS and is never in the cluster. Rotate on the same cadence as any other
+  # code-signing key, and treat exposure as requiring re-signing of every image.
+  cosign.pub: |
+    -----BEGIN PUBLIC KEY-----
+    REPLACE_WITH_ENCLAVE_COSIGN_PUBLIC_KEY
+    -----END PUBLIC KEY-----
