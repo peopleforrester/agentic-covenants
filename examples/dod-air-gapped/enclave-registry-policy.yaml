@@ -58,8 +58,20 @@ spec:
         agentic-covenants.io/role: agent
 ---
 # Kyverno equivalent, for enclaves already running Kyverno and preferring one policy
-# engine. Functionally the same constraint; pick one, do not run both and get two
+# engine. Same image constraint, DIFFERENT selector; pick one, do not run both and get two
 # different denial messages for the same cause.
+#
+# The selectors cannot be made identical, and the difference is load-bearing. A
+# ValidatingAdmissionPolicyBinding selects namespaces by LABEL; Kyverno here selects
+# by NAME GLOB. A namespace labelled agentic-covenants.io/role=agent but not named
+# agent-* is governed by the VAP and not by this policy, and the reverse for a
+# namespace named agent-something that carries no label. Whichever engine you pick,
+# enforce the other half of the pair by convention: every agent namespace gets both
+# the agent- prefix and the label. Verify with:
+#   kubectl get ns -l agentic-covenants.io/role=agent -o name
+#   kubectl get ns -o name | grep '/agent-'
+# The two lists must match. If they do not, some namespace is ungoverned under one
+# engine, which is exactly the failure this file exists to prevent.
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -85,8 +97,8 @@ spec:
       pattern:
         spec:
           =(initContainers):
-          - image: "registry.enclave.mil/*"
+          - image: "registry.enclave.mil/*@sha256:*"
           =(ephemeralContainers):
-          - image: "registry.enclave.mil/*"
+          - image: "registry.enclave.mil/*@sha256:*"
           containers:
-          - image: "registry.enclave.mil/*"
+          - image: "registry.enclave.mil/*@sha256:*"
