@@ -54,7 +54,7 @@ say "-- Public endpoints (expected UNREACHABLE) --"
 for url in "${PUBLIC_ENDPOINTS[@]}"; do
   CHECKED=$((CHECKED + 1))
   if reachable "$url"; then
-    fail "$url is REACHABLE — the enclave has egress it should not have."
+    fail "$url is REACHABLE. The enclave has egress it should not have."
   else
     pass "$url unreachable"
   fi
@@ -67,7 +67,7 @@ for url in "${ENCLAVE_ENDPOINTS[@]}"; do
   if reachable "$url"; then
     pass "$url reachable"
   else
-    fail "$url is UNREACHABLE — the deployment cannot pull what it needs."
+    fail "$url is UNREACHABLE. The deployment cannot pull what it needs."
   fi
 done
 
@@ -80,7 +80,7 @@ if command -v getent >/dev/null 2>&1; then
   for host in ghcr.io pypi.org rekor.sigstore.dev; do
     CHECKED=$((CHECKED + 1))
     if getent hosts "$host" >/dev/null 2>&1; then
-      fail "$host RESOLVES — a DNS forwarder is reaching public resolvers."
+      fail "$host RESOLVES. A DNS forwarder is reaching public resolvers."
     else
       pass "$host does not resolve"
     fi

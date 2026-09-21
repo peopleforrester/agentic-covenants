@@ -1,5 +1,5 @@
 # ABOUTME: Pre-staged CiliumNetworkPolicy denying egress to known-suspect FQDNs. Edit before applying or pre-populate at incident start.
-# ABOUTME: Requires Cilium with enable-l7-proxy: true. The toFQDNs list is the deny mechanism — DNS resolution to these names returns NXDOMAIN.
+# ABOUTME: Requires Cilium with enable-l7-proxy: true. The toFQDNs list is the deny mechanism: DNS resolution to these names returns NXDOMAIN.
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:

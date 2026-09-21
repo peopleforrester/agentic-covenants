@@ -211,6 +211,25 @@ def check_prose(staged: bool) -> Findings:
     """
     findings = Findings("prose")
 
+    # Markdown is not the only place prose lives. The summary fields in data/
+    # are published verbatim to the site, and the comment blocks in the shipped
+    # YAML and shell artifacts are the first thing an adopter reads. Scanning
+    # only .md left fifteen em-dashes in those, including one in the ABOUTME of
+    # the air-gapped cosign policy.
+    #
+    # YAML is scanned whole, because its string values are prose. Shell and
+    # Python are scanned on comment lines only, so a dash inside a command or a
+    # pattern constant is not mistaken for writing.
+    for path in iter_files((".yaml", ".yml", ".sh", ".py"), staged):
+        comments_only = path.suffix in (".sh", ".py")
+        for lineno, line in enumerate(
+            path.read_text(encoding="utf-8", errors="replace").splitlines(), start=1
+        ):
+            if comments_only and not line.lstrip().startswith("#"):
+                continue
+            if EM_DASH in line:
+                findings.add(path, lineno, "em-dash (U+2014); rewrite without it")
+
     for path in iter_files((".md",), staged):
         in_fence = False
         for lineno, line in enumerate(

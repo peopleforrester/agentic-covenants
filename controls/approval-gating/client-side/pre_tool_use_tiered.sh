@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ABOUTME: Tiered PreToolUse hook. Tier 1 auto-allow; tier 2 quick confirm; tier 3 typed verbatim; tier 4 out-of-band approval.
-# ABOUTME: Pairs with pre_tool_use.sh from controls/authorization/client-side/ — that one denies; this one gates.
+# ABOUTME: Pairs with pre_tool_use.sh from controls/authorization/client-side/. That one denies; this one gates.
 
 set -euo pipefail
 
@@ -24,7 +24,7 @@ log() {
     >> "$LOG_DIR/pre_tool_use_tiered.log" 2>/dev/null || true
 }
 
-# ----- Tier 1: read-only — allow silently -----
+# ----- Tier 1: read-only, allow silently -----
 TIER1_PATTERNS=(
   '^(ls|cat|grep|find|head|tail|wc|stat|file|pwd|whoami|date|hostname)\b'
   '^kubectl\s+(get|describe|logs|version|api-resources|api-versions)\b'
