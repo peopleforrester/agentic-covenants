@@ -17,6 +17,7 @@ Usage:
     ./scripts/check.py              # check the whole repository
     ./scripts/check.py --staged     # check only git-staged files (pre-commit)
     ./scripts/check.py --only links # run a single check
+    ./scripts/check.py --skip policies  # run every check but one
 """
 
 from __future__ import annotations
@@ -852,15 +853,23 @@ def main() -> int:
         action="store_true",
         help="check only git-staged files (used by the pre-commit hook)",
     )
-    parser.add_argument(
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument(
         "--only",
         choices=sorted(CHECKS),
         action="append",
         help="run only the named check; repeatable",
     )
+    selection.add_argument(
+        "--skip",
+        choices=sorted(CHECKS),
+        action="append",
+        default=[],
+        help="run every check except the named one; repeatable",
+    )
     args = parser.parse_args()
 
-    selected = args.only or sorted(CHECKS)
+    selected = args.only or [name for name in sorted(CHECKS) if name not in args.skip]
     failed: list[Findings] = []
 
     for name in selected:

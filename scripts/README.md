@@ -20,6 +20,7 @@ The only dependency is `python3`. PyYAML is used if present and the YAML check r
 ./scripts/check.py                  # whole repository
 ./scripts/check.py --staged         # only staged files, as the hook does
 ./scripts/check.py --only links     # one check; repeatable
+./scripts/check.py --skip policies  # every check but one; repeatable
 ```
 
 Exit code 0 means clean, 1 means findings.
