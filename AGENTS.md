@@ -42,3 +42,6 @@ Markdown + YAML + shell + a little Python/Terraform/Rego, all as **illustrative 
 - **Don't touch:** `docs/` (gitignored source material), and don't commit `transcripts/` or `claude-ai-context/` (local-only, gitignored).
 
 _Seeded 2026-07-10; filled in 2026-07-21._
+
+Test command: `uvx --with pyyaml --from pytest pytest tests/ -q && uv run --no-project --with pyyaml python scripts/check.py --skip shellcheck --skip policies`
+E2E command: `./scripts/check.py --only shellcheck --only policies`
